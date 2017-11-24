@@ -10,7 +10,7 @@ type command struct {
 }
 
 func (o *command) Flag(sname string, lname string, opts *Options) *bool {
-	var result *bool
+	var result bool
 
 	a := arg{
 		resultPointerType: reflect.TypeOf(result),
@@ -29,5 +29,30 @@ func (o *command) Flag(sname string, lname string, opts *Options) *bool {
 		o.args["--"+lname] = a
 	}
 
-	return result
+	return &result
+}
+
+// Will parse provided list of arguments
+// common usage would be to pass directly os.Args
+func (o *command) Parse(args []string) {
+	// If user did not set progname in advance, set progname from os.Args
+	if o.name == "" {
+		o.name = args[0]
+	}
+
+	args = args[1:]
+
+	// TODO: Implement sub-commands parsing
+
+	// FIXME: Below is wrong, must iterate over reduced argument list o.args, not over args ([]string)
+	// Iterate over the rest of args
+	for i := 0; i < len(args); {
+		v := args[i]
+		if arg, ok := o.args[v]; ok {
+			arg.parse(args[i : i+1])
+			i = i + arg.size
+		} else {
+			i++
+		}
+	}
 }
