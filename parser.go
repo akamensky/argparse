@@ -1,6 +1,5 @@
 package argparse
 
-
 type parser struct {
 	command
 }
@@ -12,11 +11,11 @@ func (o *parser) Parse(args []string) {
 	if o.name == "" {
 		o.name = args[0]
 	}
-	
+
 	args = args[1:]
-	
+
 	// TODO: Implement sub-commands parsing
-	
+
 	// Iterate over the rest of args
 	for i, v := range args {
 		i++
