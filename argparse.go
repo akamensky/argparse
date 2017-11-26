@@ -1,3 +1,4 @@
+// Package argparse provides users with more flexible and configurable option for command line arguments parsing.
 package argparse
 
 import (
