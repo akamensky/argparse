@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/akamensky/argparse"
 	"fmt"
+	"github.com/akamensky/argparse"
 	"os"
 )
 
@@ -10,7 +10,7 @@ func main() {
 	fmt.Println(os.Args)
 	parser := argparse.NewParser("print", "Prints provided string to stdout")
 
-	s := parser.String("s", "string", &argparse.Options{Required:true, Help: "String to pring"})
+	s := parser.String("s", "string", &argparse.Options{Required: true, Help: "String to pring"})
 
 	err := parser.Parse(os.Args)
 	if err != nil {

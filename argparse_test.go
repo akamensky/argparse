@@ -146,7 +146,7 @@ func TestFailCaseSensitive(t *testing.T) {
 	testArgs := []string{"progname", "-F"}
 
 	p := NewParser("", "description")
-	_ = p.Flag("f", "", &Options{Required:true})
+	_ = p.Flag("f", "", &Options{Required: true})
 
 	err := p.Parse(testArgs)
 	if err == nil {
@@ -519,7 +519,6 @@ func TestOptsValidatePass1(t *testing.T) {
 	}
 }
 
-
 var pUsage = `usage: verylongprogname <command> [-h|--help] [-s|--verylongstring-flag1 "<value>"]
 
                         prog description
@@ -569,9 +568,9 @@ func TestUsageSimple1(t *testing.T) {
 	p := NewParser("verylongprogname", "prog description")
 
 	cmd1 := p.NewCommand("veryverylongcmd1", "cmd1 description")
-	_ = cmd1.Flag("f", "verylongflag1", &Options{Help:"flag1 description"})
+	_ = cmd1.Flag("f", "verylongflag1", &Options{Help: "flag1 description"})
 	_ = cmd1.Flag("a", "verylongflagA", &Options{Required: true, Help: "flag1 description"})
-	_ = p.String("s", "verylongstring-flag1", &Options{Help:"string1 description"})
+	_ = p.String("s", "verylongstring-flag1", &Options{Help: "string1 description"})
 
 	cmd2 := p.NewCommand("cmd2", "cmd2 description")
 

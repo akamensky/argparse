@@ -24,10 +24,10 @@ type arg struct {
 	fileFlag int         // File mode to open file with
 	filePerm os.FileMode // File permissions to set a file
 	selector *[]string   // Used in Selector type to allow to choose only one from list of options
-	parent *command // Used to get access to specific command
+	parent   *command    // Used to get access to specific command
 }
 
-type help struct {}
+type help struct{}
 
 func (o *arg) check(argument string) bool {
 	// Shortcut to showing help
@@ -75,7 +75,7 @@ func (o *arg) reduce(position int, args *[]string) {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				for i:=position; i < position+o.size; i++{
+				for i := position; i < position+o.size; i++ {
 					(*args)[i] = ""
 				}
 			}
@@ -97,7 +97,7 @@ func (o *arg) reduce(position int, args *[]string) {
 			default:
 				// For all other types it must be separate argument
 				if argument[1:] == o.sname {
-					for i:=position; i < position+o.size; i++{
+					for i := position; i < position+o.size; i++ {
 						(*args)[i] = ""
 					}
 				}
@@ -212,7 +212,7 @@ func (o *arg) usage() string {
 		break
 	}
 	if o.opts == nil || o.opts.Required == false {
-		result = "["+result+"]"
+		result = "[" + result + "]"
 	}
 	return result
 }

@@ -148,7 +148,7 @@ func (o *command) Usage() string {
 	}
 	// Reverse the slice
 	last := len(chain) - 1
-	for i:=0;i<len(chain)/2;i++ {
+	for i := 0; i < len(chain)/2; i++ {
 		chain[i], chain[last-i] = chain[last-i], chain[i]
 	}
 	// If this command has sub-commands we need their list
@@ -164,14 +164,13 @@ func (o *command) Usage() string {
 	var result string = "usage:"
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
-	for _, v := range chain{
+	for _, v := range chain {
 		result = addToLastLine(result, v, maxWidth, leftPadding, true)
 	}
 	// Add arguments from this and all preceding commands
 	for _, v := range arguments {
 		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 	}
-
 
 	// Add program/command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
@@ -184,14 +183,14 @@ func (o *command) Usage() string {
 		// Get biggest padding
 		var cmdPadding int
 		for _, com := range commands {
-			if len("   " + com.name + "   ") > cmdPadding {
+			if len("   "+com.name+"   ") > cmdPadding {
 				cmdPadding = len("   " + com.name + "   ")
 			}
 		}
 		// Now add commands with known padding
 		for _, com := range commands {
 			cmd := "   " + com.name
-			cmd = cmd + strings.Repeat(" ", cmdPadding - len(cmd))
+			cmd = cmd + strings.Repeat(" ", cmdPadding-len(cmd))
 			cmd = addToLastLine(cmd, com.description, maxWidth, cmdPadding, true)
 			cmdContent = cmdContent + cmd + "\n"
 		}
@@ -205,7 +204,7 @@ func (o *command) Usage() string {
 		var argPadding int
 		// Find biggest padding
 		for _, argument := range arguments {
-			if len(argument.lname) + 13 > argPadding {
+			if len(argument.lname)+13 > argPadding {
 				argPadding = len(argument.lname) + 13
 			}
 		}
@@ -218,7 +217,7 @@ func (o *command) Usage() string {
 				arg = arg + "     "
 			}
 			arg = arg + "--" + argument.lname
-			arg = arg + strings.Repeat(" ", argPadding - len(arg))
+			arg = arg + strings.Repeat(" ", argPadding-len(arg))
 			if argument.opts != nil && argument.opts.Help != "" {
 				arg = addToLastLine(arg, argument.opts.Help, maxWidth, argPadding, true)
 			}
@@ -232,13 +231,13 @@ func (o *command) Usage() string {
 
 func getLastLine(input string) string {
 	slice := strings.Split(input, "\n")
-	return slice[len(slice) - 1]
+	return slice[len(slice)-1]
 }
 
 func addToLastLine(base string, add string, width int, padding int, canSplit bool) string {
 	// If last line has less than 10% space left, do not try to fill in by splitting else just try to split
 	hasTen := (width - len(getLastLine(base))) > width/10
-	if len(getLastLine(base) + " " + add) >= width {
+	if len(getLastLine(base)+" "+add) >= width {
 		if hasTen && canSplit {
 			adds := strings.Split(add, " ")
 			for _, v := range adds {

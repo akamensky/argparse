@@ -26,7 +26,7 @@ func (o *command) help() {
 		sname:  "h",
 		lname:  "help",
 		size:   1,
-		opts:   &Options{Help:"Print help information"},
+		opts:   &Options{Help: "Print help information"},
 		unique: true,
 		parent: o,
 	}
