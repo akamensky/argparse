@@ -523,14 +523,12 @@ var pUsage = `usage: verylongprogname <command> [-h|--help] [-s|--verylongstring
 
                         prog description
 
-
-   Commands:
+Commands:
 
    veryverylongcmd1    cmd1 description
    cmd2                cmd2 description
 
-
-   Arguments:
+Arguments:
 
    -h   --help                    Print help information
    -s   --verylongstring-flag1    string1 description
@@ -542,8 +540,7 @@ var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-f|--verylongflag1] -
 
                         cmd1 description
 
-
-   Arguments:
+Arguments:
 
    -f   --verylongflag1           flag1 description
    -a   --verylongflagA           flag1 description
@@ -556,8 +553,7 @@ var cmd2Usage = `usage: verylongprogname cmd2 [-h|--help] [-s|--verylongstring-f
 
                         cmd2 description
 
-
-   Arguments:
+Arguments:
 
    -h   --help                    Print help information
    -s   --verylongstring-flag1    string1 description
