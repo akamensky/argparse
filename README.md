@@ -1,4 +1,7 @@
 # Go's own `argparse`
+
+[![GoDoc](https://godoc.org/github.com/akamensky/argparse?status.svg)](https://godoc.org/github.com/akamensky/argparse) [![Go Report Card](https://goreportcard.com/badge/github.com/akamensky/argparse)](https://goreportcard.com/report/github.com/akamensky/argparse)
+
 Let's be honest -- Go's standard command line arguments parser `flag` terribly sucks. 
 It cannot come anywhere close to the Python's `argparse` module. This is why this project exists.
 
