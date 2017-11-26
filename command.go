@@ -8,7 +8,7 @@ import (
 type command struct {
 	name        string
 	description string
-	args        []arg
+	args        []*arg
 	commands    []*command
 	parsed      bool
 	parent      *command
@@ -21,20 +21,19 @@ type parser struct {
 func (o *command) help() {
 	result := &help{}
 
-	a := arg{
+	a := &arg{
 		result: &result,
 		sname:  "h",
 		lname:  "help",
 		size:   1,
 		opts:   &Options{Help: "Print help information"},
 		unique: true,
-		parent: o,
 	}
 
 	o.addArg(a)
 }
 
-func (o *command) addArg(a arg) {
+func (o *command) addArg(a *arg) {
 	if a.lname != "" {
 		if a.sname == "" || len(a.sname) == 1 {
 			// Search parents for overlapping commands and fail silently if any
@@ -49,6 +48,7 @@ func (o *command) addArg(a arg) {
 				}
 				current = current.parent
 			}
+			a.parent = o
 			o.args = append(o.args, a)
 		}
 	}

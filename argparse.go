@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-func NewParser(name string, description string) parser {
-	p := parser{}
+func NewParser(name string, description string) *parser {
+	p := &parser{}
 
 	p.name = name
 	p.description = description
 
-	p.args = make([]arg, 0)
+	p.args = make([]*arg, 0)
 	p.commands = make([]*command, 0)
 
 	p.help()
@@ -41,7 +41,7 @@ func (o *command) NewCommand(name string, description string) *command {
 func (o *command) Flag(sname string, lname string, opts *Options) *bool {
 	var result bool
 
-	a := arg{
+	a := &arg{
 		result: &result,
 		sname:  sname,
 		lname:  lname,
@@ -58,7 +58,7 @@ func (o *command) Flag(sname string, lname string, opts *Options) *bool {
 func (o *command) String(sname string, lname string, opts *Options) *string {
 	var result string
 
-	a := arg{
+	a := &arg{
 		result: &result,
 		sname:  sname,
 		lname:  lname,
@@ -75,7 +75,7 @@ func (o *command) String(sname string, lname string, opts *Options) *string {
 func (o *command) File(sname string, lname string, flag int, perm os.FileMode, opts *Options) *os.File {
 	var result os.File
 
-	a := arg{
+	a := &arg{
 		result:   &result,
 		sname:    sname,
 		lname:    lname,
@@ -94,7 +94,7 @@ func (o *command) File(sname string, lname string, flag int, perm os.FileMode, o
 func (o *command) List(sname string, lname string, opts *Options) *[]string {
 	result := make([]string, 0)
 
-	a := arg{
+	a := &arg{
 		result: &result,
 		sname:  sname,
 		lname:  lname,
@@ -111,7 +111,7 @@ func (o *command) List(sname string, lname string, opts *Options) *[]string {
 func (o *command) Selector(sname string, lname string, options []string, opts *Options) *string {
 	var result string
 
-	a := arg{
+	a := &arg{
 		result:   &result,
 		sname:    sname,
 		lname:    lname,
@@ -134,7 +134,7 @@ func (o *command) Usage() string {
 	// Stay classy
 	maxWidth := 100
 	// List of arguments from all preceding commands
-	arguments := make([]arg, 0)
+	arguments := make([]*arg, 0)
 	// First get line of commands until root
 	var chain []string
 	current := o
@@ -179,7 +179,7 @@ func (o *command) Usage() string {
 
 	// Add list of sub-commands to the result
 	if len(commands) > 0 {
-		cmdContent := "\n   Commands:\n\n"
+		cmdContent := "Commands:\n\n"
 		// Get biggest padding
 		var cmdPadding int
 		for _, com := range commands {
@@ -199,7 +199,7 @@ func (o *command) Usage() string {
 
 	// Add list of arguments to the result
 	if len(arguments) > 0 {
-		argContent := "\n   Arguments:\n\n"
+		argContent := "Arguments:\n\n"
 		// Get biggest padding
 		var argPadding int
 		// Find biggest padding
