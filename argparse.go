@@ -9,18 +9,14 @@ import (
 
 // Options are specific options for every argument. They can be provided if necessary.
 // Possible fields are:
-//     Options.Required - tells parser that this argument is required to be provided.
-//                        useful when specific command requires some data provided
-//     Options.Validate - is a validation function. Using this field anyone can implement
-//                        a custom validation for argument. If provided and argument is
-//                        present, then function is called. If argument also consumes
-//                        any following values (e.g. as String does), then these are
-//                        provided as args to function. If validation fails the error
-//                        must be returned, which will be the output of parser.Parse
-//                        method.
-//     Options.Help -     A help message to be displayed in Usage output. Can be of any
-//                        length as the message will be formatted to fit max sceen width
-//                        of 100 characters.
+// Options.Required - tells parser that this argument is required to be provided.
+// useful when specific command requires some data provided.
+// Options.Validate - is a validation function. Using this field anyone can implement a custom validation for argument.
+// If provided and argument is present, then function is called. If argument also consumes any following values
+// (e.g. as String does), then these are provided as args to function. If validation fails the error must be returned,
+// which will be the output of `parser.Parse` method.
+// Options.Help - A help message to be displayed in Usage output. Can be of any length as the message will be
+// formatted to fit max screen width of 100 characters.
 type Options struct {
 	Required bool
 	Validate func(args []string) error
