@@ -1,3 +1,9 @@
+# Since binary files on Linux/Darwin have no extension need to ignore all and explicitly allow only certain files
+*
+!*.go
+!*.md
+!.gitignore
+
 # Binaries for programs and plugins
 *.exe
 *.dll
