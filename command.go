@@ -117,7 +117,7 @@ func (o *command) parse(args *[]string) error {
 
 		// Check if arg is required and not provided
 		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
-			return errors.New(fmt.Sprintf("[%s] is required", oarg.name()))
+			return fmt.Errorf("[%s] is required", oarg.name())
 		}
 	}
 

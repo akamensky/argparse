@@ -1,17 +1,10 @@
 package argparse
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
-
-type Options struct {
-	Required bool
-	Validate func(args []string) error
-	Help     string
-}
 
 type arg struct {
 	result   interface{} // Pointer to the resulting value
@@ -109,7 +102,7 @@ func (o *arg) reduce(position int, args *[]string) {
 func (o *arg) parse(args []string) error {
 	// If unique do not allow more than one time
 	if o.unique && o.parsed {
-		return errors.New(fmt.Sprintf("[%s] can only be present once", o.name()))
+		return fmt.Errorf("[%s] can only be present once", o.name())
 	}
 
 	// If validation function provided -- execute, on error return it immediately
@@ -130,10 +123,10 @@ func (o *arg) parse(args []string) error {
 		o.parsed = true
 	case *string:
 		if len(args) < 1 {
-			return errors.New(fmt.Sprintf("[%s] must be followed by a string", o.name()))
+			return fmt.Errorf("[%s] must be followed by a string", o.name())
 		}
 		if len(args) > 1 {
-			return errors.New(fmt.Sprintf("[%s] followed by too many arguments", o.name()))
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
 		}
 		// Selector case
 		if o.selector != nil {
@@ -144,20 +137,17 @@ func (o *arg) parse(args []string) error {
 				}
 			}
 			if !match {
-				return errors.New(fmt.Sprintf("Bad value for [%s]. Allowed values are %v", o.name(), *o.selector))
+				return fmt.Errorf("bad value for [%s]. Allowed values are %v", o.name(), *o.selector)
 			}
 		}
 		*o.result.(*string) = args[0]
 		o.parsed = true
 	case *os.File:
 		if len(args) < 1 {
-			return errors.New(fmt.Sprintf("[%s] must be followed by a path to file", o.name()))
+			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
 		}
 		if len(args) > 1 {
-			return errors.New(fmt.Sprintf("[%s] followed by too many arguments", o.name()))
-		}
-		if _, err := os.Stat(args[0]); os.IsNotExist(err) {
-			return errors.New(fmt.Sprintf("[%s] does not exist or not accessible", args[0]))
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
 		}
 		f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
 		if err != nil {
@@ -167,15 +157,15 @@ func (o *arg) parse(args []string) error {
 		o.parsed = true
 	case *[]string:
 		if len(args) < 1 {
-			return errors.New(fmt.Sprintf("[%s] must be followed by a string", o.name()))
+			return fmt.Errorf("[%s] must be followed by a string", o.name())
 		}
 		if len(args) > 1 {
-			return errors.New(fmt.Sprintf("[%s] followed by too many arguments", o.name()))
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
 		}
 		*o.result.(*[]string) = append(*o.result.(*[]string), args[0])
 		o.parsed = true
 	default:
-		return errors.New(fmt.Sprintf("unsupported type [%t]", o.result))
+		return fmt.Errorf("unsupported type [%t]", o.result)
 	}
 	return nil
 }
