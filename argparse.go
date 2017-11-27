@@ -17,7 +17,7 @@ import (
 // If provided and argument is present, then function is called. If argument also consumes any following values
 // (e.g. as String does), then these are provided as args to function. If validation fails the error must be returned,
 // which will be the output of `parser.Parse` method.
-// 
+//
 // Options.Help - A help message to be displayed in Usage output. Can be of any length as the message will be
 // formatted to fit max screen width of 100 characters.
 type Options struct {
@@ -26,7 +26,7 @@ type Options struct {
 	Help     string
 }
 
-// Get new parser that will allow to add arguments for parsing
+// NewParser creates new parser object that will allow to add arguments for parsing
 // It takes program name and description which will be used as part of Usage output
 // Returns pointer to parser object
 func NewParser(name string, description string) *parser {
