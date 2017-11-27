@@ -110,6 +110,21 @@ There are a few caveats (or more like design choices) to know about:
 
 #### Contributing
 
+Can you write in Go? Then this projects needs your help!
+
+Take a look at open issues, specially the ones tagged as `help-wanted`.
+If you have any improvements to offer, please open an issue first to ensure this improvement is discussed.
+
+There are following tasks to be done:
+* Add more examples
+* Improve code quality (it is messy right now and could use a major revamp to improve gocyclo report)
+* Add more argument options (such as numbers parsing)
+* Improve test coverage
+* Write a wiki for this project
+
+However note that the logic outlined in method comments must be preserved 
+as the the library must stick with backward compatibility promise!
+
 #### Acknowledgments
 
 Thanks to Python developers for making a great `argparse` which inspired this package to match for greatness of Go
