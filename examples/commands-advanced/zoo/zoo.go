@@ -2,7 +2,7 @@ package zoo
 
 import (
 	"fmt"
-	"gitlab.service.chinanetcloud.com/internal-products/remote-config-manager/rcm-agent/log"
+	"log"
 )
 
 var actions = map[string]int{
