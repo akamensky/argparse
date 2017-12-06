@@ -25,7 +25,7 @@ type help struct{}
 func (o *arg) check(argument string) bool {
 	// Shortcut to showing help
 	if argument == "-h" || argument == "--help" {
-		helpText := o.parent.Usage()
+		helpText := o.parent.Usage(nil)
 		fmt.Print(helpText)
 		os.Exit(0)
 	}
@@ -115,7 +115,7 @@ func (o *arg) parse(args []string) error {
 
 	switch o.result.(type) {
 	case *help:
-		helpText := o.parent.Usage()
+		helpText := o.parent.Usage(nil)
 		fmt.Print(helpText)
 		os.Exit(0)
 	case *bool:

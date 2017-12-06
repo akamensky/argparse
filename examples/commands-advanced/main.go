@@ -39,8 +39,7 @@ func main() {
 	// Now parse the arguments
 	err := parser.Parse(os.Args)
 	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println(parser.Usage())
+		fmt.Println(parser.Usage(err))
 		return
 	}
 

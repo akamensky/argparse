@@ -1,7 +1,6 @@
 package argparse
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -83,9 +82,9 @@ func (o *command) parse(args *[]string) error {
 	// Parse subcommands if any
 	if o.commands != nil && len(o.commands) > 0 {
 		// If we have subcommands and 0 args left
-		// that is an error
+		// that is an error of SubCommandError type
 		if len(*args) < 1 {
-			return errors.New("[sub]command required")
+			return newSubCommandError(o)
 		}
 		for _, v := range o.commands {
 			err := v.parse(args)

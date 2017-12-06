@@ -3,6 +3,7 @@ package argparse
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -192,7 +193,7 @@ func (o *command) Happened() bool {
 // Since parser is a command as well, they work in exactly same way. Meaning that usage string
 // can be retrieved for any level of commands. It will only include information about this command,
 // its sub-commands, current command arguments and arguments of all preceding commands (if any)
-func (o *command) Usage() string {
+func (o *command) Usage(err interface{}) string {
 	// Stay classy
 	maxWidth := 100
 	// List of arguments from all preceding commands
@@ -200,6 +201,17 @@ func (o *command) Usage() string {
 	// First get line of commands until root
 	var chain []string
 	current := o
+	if err != nil {
+		switch err.(type) {
+		case subCommandError:
+			fmt.Println(err.(error).Error())
+			if err.(subCommandError).cmd != nil {
+				return err.(subCommandError).cmd.Usage(nil)
+			}
+		case error:
+			fmt.Println(err.(error).Error())
+		}
+	}
 	for current != nil {
 		chain = append(chain, current.name)
 		// Also add arguments
