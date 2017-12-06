@@ -572,13 +572,13 @@ func TestUsageSimple1(t *testing.T) {
 
 	p.Parse(os.Args)
 
-	if pUsage != p.Usage() {
-		t.Errorf("%s", p.Usage())
+	if pUsage != p.Usage(nil) {
+		t.Errorf("%s", p.Usage(nil))
 	}
-	if cmd1Usage != cmd1.Usage() {
-		t.Errorf("%s", cmd1.Usage())
+	if cmd1Usage != cmd1.Usage(nil) {
+		t.Errorf("%s", cmd1.Usage(nil))
 	}
-	if cmd2Usage != cmd2.Usage() {
-		t.Errorf("%s", cmd2.Usage())
+	if cmd2Usage != cmd2.Usage(nil) {
+		t.Errorf("%s", cmd2.Usage(nil))
 	}
 }
