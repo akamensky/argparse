@@ -21,16 +21,16 @@ func main() {
 	// dog sub-commands
 	dogSpeak := dogCmd.NewCommand("speak", "Make the dog speak")
 	dogFeed := dogCmd.NewCommand("feed", "Make the dog eat")
-	dogSummon := dogCmd.NewCommand("speak", "Make the dog come over")
-	dogPlay := dogCmd.NewCommand("speak", "Make the dog play")
+	dogSummon := dogCmd.NewCommand("summon", "Make the dog come over")
+	dogPlay := dogCmd.NewCommand("play", "Make the dog play")
 
 	// cat command
 	catCmd := parser.NewCommand("cat", "We are going to see cat")
 	// cat sub-commands
 	catSpeak := catCmd.NewCommand("speak", "Make the cat speak")
 	catFeed := catCmd.NewCommand("feed", "Make the cat eat")
-	catSummon := catCmd.NewCommand("speak", "Make the cat come over")
-	catPlay := catCmd.NewCommand("speak", "Make the cat play")
+	catSummon := catCmd.NewCommand("summon", "Make the cat come over")
+	catPlay := catCmd.NewCommand("play", "Make the cat play")
 
 	// Optional argument for dog.
 	// Note that we create this argument for dogCmd, which means catCmd will not have this argument
