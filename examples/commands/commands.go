@@ -20,8 +20,7 @@ func main() {
 	// Parse command line arguments and in case of any error print error and help information
 	err := parser.Parse(os.Args)
 	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Print(parser.Usage())
+		fmt.Print(parser.Usage(err))
 		return
 	}
 
@@ -35,7 +34,7 @@ func main() {
 	} else {
 		// In fact we will never hit this one
 		// because commands and sub-commands are considered as required
-		fmt.Println(fmt.Errorf("bad arguments, please check usage"))
-		fmt.Print(parser.Usage())
+		err := fmt.Errorf("bad arguments, please check usage")
+		fmt.Print(parser.Usage(err))
 	}
 }
