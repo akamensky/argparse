@@ -12,15 +12,6 @@ var actions = map[string]int{
 	"play":   4,
 }
 
-func GetActions() []string {
-	result := make([]string, 0, len(actions))
-	for key := range actions {
-		result = append(result, key)
-	}
-
-	return result
-}
-
 type animal struct {
 	Name   string
 	says   string
@@ -73,6 +64,7 @@ type cat struct {
 	animal
 }
 
+// NewDog makes new dog in the zoo
 func NewDog(name string) dog {
 	result := new(dog)
 	result.Name = name
@@ -84,6 +76,7 @@ func NewDog(name string) dog {
 	return *result
 }
 
+// NewCat makes new cat in the zoo (who has cats in the zoo like ever?)
 func NewCat(name string) cat {
 	result := new(cat)
 	result.Name = name
