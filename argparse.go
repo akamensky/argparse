@@ -8,16 +8,35 @@ import (
 	"strings"
 )
 
+// Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
+// Command MUST NOT ever be created manually. Instead one should call NewCommand method of Parser or Command,
+// which will setup appropriate fields and call methods that have to be called when creating new command.
+type Command struct {
+	name        string
+	description string
+	args        []*arg
+	commands    []*Command
+	parsed      bool
+	parent      *Command
+}
+
+// Parser is a top level object of argparse. It MUST NOT ever be created manually. Instead one should use
+// argparse.NewParser() method that will create new parser, propagate necessary private fields and call needed
+// functions.
+type Parser struct {
+	Command
+}
+
 // Options are specific options for every argument. They can be provided if necessary.
 // Possible fields are:
 //
-// Options.Required - tells parser that this argument is required to be provided.
-// useful when specific command requires some data provided.
+// Options.Required - tells Parser that this argument is required to be provided.
+// useful when specific Command requires some data provided.
 //
 // Options.Validate - is a validation function. Using this field anyone can implement a custom validation for argument.
 // If provided and argument is present, then function is called. If argument also consumes any following values
 // (e.g. as String does), then these are provided as args to function. If validation fails the error must be returned,
-// which will be the output of `parser.Parse` method.
+// which will be the output of `Parser.Parse` method.
 //
 // Options.Help - A help message to be displayed in Usage output. Can be of any length as the message will be
 // formatted to fit max screen width of 100 characters.
@@ -27,31 +46,31 @@ type Options struct {
 	Help     string
 }
 
-// NewParser creates new parser object that will allow to add arguments for parsing
+// NewParser creates new Parser object that will allow to add arguments for parsing
 // It takes program name and description which will be used as part of Usage output
-// Returns pointer to parser object
-func NewParser(name string, description string) *parser {
-	p := &parser{}
+// Returns pointer to Parser object
+func NewParser(name string, description string) *Parser {
+	p := &Parser{}
 
 	p.name = name
 	p.description = description
 
 	p.args = make([]*arg, 0)
-	p.commands = make([]*command, 0)
+	p.commands = make([]*Command, 0)
 
 	p.help()
 
 	return p
 }
 
-// Get new command. All commands are always at the beginning of the arguments.
+// Get new Command. All commands are always at the beginning of the arguments.
 // Parser can have commands and those commands can have sub-commands,
 // which allows for very flexible workflow.
 // All commands are considered as required and all commands can have their own argument set.
-// Commands are processed parser -> command -> sub-command.
-// Arguments will be processed in order of sub-command -> command -> parser.
-func (o *command) NewCommand(name string, description string) *command {
-	c := new(command)
+// Commands are processed Parser -> Command -> sub-Command.
+// Arguments will be processed in order of sub-Command -> Command -> Parser.
+func (o *Command) NewCommand(name string, description string) *Command {
+	c := new(Command)
 	c.name = name
 	c.description = description
 	c.parsed = false
@@ -60,7 +79,7 @@ func (o *command) NewCommand(name string, description string) *command {
 	c.help()
 
 	if o.commands == nil {
-		o.commands = make([]*command, 0)
+		o.commands = make([]*Command, 0)
 	}
 
 	o.commands = append(o.commands, c)
@@ -72,10 +91,10 @@ func (o *command) NewCommand(name string, description string) *command {
 // Takes short name, long name and pointer to options (optional).
 // Short name must be single character, but can be omitted by giving empty string.
 // Long name is required.
-// Returns pointer to boolean with starting value `false`. If parser finds the flag
-// provided on command line arguments, then the value is changed to true.
+// Returns pointer to boolean with starting value `false`. If Parser finds the flag
+// provided on Command line arguments, then the value is changed to true.
 // Only for Flag shorthand arguments can be combined together such as `rm -rf`
-func (o *command) Flag(short string, long string, opts *Options) *bool {
+func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	var result bool
 
 	a := &arg{
@@ -95,7 +114,7 @@ func (o *command) Flag(short string, long string, opts *Options) *bool {
 // Create new String argument, which will return whatever follows the argument on CLI.
 // Takes as arguments short name (must be single character or an empty string)
 // long name and (optional) options
-func (o *command) String(short string, long string, opts *Options) *string {
+func (o *Command) String(short string, long string, opts *Options) *string {
 	var result string
 
 	a := &arg{
@@ -117,9 +136,9 @@ func (o *command) String(short string, long string, opts *Options) *string {
 // It takes same as all other arguments short and long names, additionally it takes flags that specify
 // in which mode the file should be open (see os.OpenFile for details on that), file permissions that
 // will be applied to a file and argument options.
-// Returns a pointer to os.File which will be set to opened file on success. On error the parser.Parse
+// Returns a pointer to os.File which will be set to opened file on success. On error the Parser.Parse
 // will return error and the pointer might be nil.
-func (o *command) File(short string, long string, flag int, perm os.FileMode, opts *Options) *os.File {
+func (o *Command) File(short string, long string, flag int, perm os.FileMode, opts *Options) *os.File {
 	var result os.File
 
 	a := &arg{
@@ -142,7 +161,7 @@ func (o *command) File(short string, long string, flag int, perm os.FileMode, op
 // All appearances of this argument on CLI will be collected into the list of strings. If no argument
 // provided, then the list is empty. Takes same parameters as String
 // Returns a pointer the list of strings.
-func (o *command) List(short string, long string, opts *Options) *[]string {
+func (o *Command) List(short string, long string, opts *Options) *[]string {
 	result := make([]string, 0)
 
 	a := &arg{
@@ -165,7 +184,7 @@ func (o *command) List(short string, long string, opts *Options) *[]string {
 // for CLI argument.
 // Returns a pointer to a string. If argument is not required (as in argparse.Options.Required),
 // and argument was not provided, then the string is empty.
-func (o *command) Selector(short string, long string, options []string, opts *Options) *string {
+func (o *Command) Selector(short string, long string, options []string, opts *Options) *string {
 	var result string
 
 	a := &arg{
@@ -183,17 +202,17 @@ func (o *command) Selector(short string, long string, options []string, opts *Op
 	return &result
 }
 
-// Shows whether command was specified on CLI arguments or not. If command did not "happen", then
+// Shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
 // all its descendant commands and arguments are not parsed. Returns a boolean value.
-func (o *command) Happened() bool {
+func (o *Command) Happened() bool {
 	return o.parsed
 }
 
-// Usage returns a multiline string that is the same as a help message for this parser or command.
-// Since parser is a command as well, they work in exactly same way. Meaning that usage string
-// can be retrieved for any level of commands. It will only include information about this command,
-// its sub-commands, current command arguments and arguments of all preceding commands (if any)
-func (o *command) Usage(err interface{}) string {
+// Usage returns a multiline string that is the same as a help message for this Parser or Command.
+// Since Parser is a Command as well, they work in exactly same way. Meaning that usage string
+// can be retrieved for any level of commands. It will only include information about this Command,
+// its sub-commands, current Command arguments and arguments of all preceding commands (if any)
+func (o *Command) Usage(err interface{}) string {
 	// Stay classy
 	maxWidth := 100
 	// List of arguments from all preceding commands
@@ -225,10 +244,10 @@ func (o *command) Usage(err interface{}) string {
 	for i := 0; i < len(chain)/2; i++ {
 		chain[i], chain[last-i] = chain[last-i], chain[i]
 	}
-	// If this command has sub-commands we need their list
-	commands := make([]command, 0)
+	// If this Command has sub-commands we need their list
+	commands := make([]Command, 0)
 	if o.commands != nil && len(o.commands) > 0 {
-		chain = append(chain, "<command>")
+		chain = append(chain, "<Command>")
 		for _, v := range o.commands {
 			commands = append(commands, *v)
 		}
@@ -246,7 +265,7 @@ func (o *command) Usage(err interface{}) string {
 		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 	}
 
-	// Add program/command description to the result
+	// Add program/Command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
 	result = addToLastLine(result, o.description, maxWidth, leftPadding, true)
 	result = result + "\n\n"
@@ -303,14 +322,14 @@ func (o *command) Usage(err interface{}) string {
 	return result
 }
 
-// Parse method can be applied only on parser. It takes a slice of strings (as in os.Args)
+// Parse method can be applied only on Parser. It takes a slice of strings (as in os.Args)
 // and it will process this slice as arguments of CLI (the original slice is not modified).
 // Returns error on any failure. In case of failure recommended course of action is to
-// print received error alongside with usage information (might want to check which command
-// was active when error happened and print that specific command usage).
+// print received error alongside with usage information (might want to check which Command
+// was active when error happened and print that specific Command usage).
 // In case no error returned all arguments should be safe to use. Safety of using arguments
 // before Parse operation is complete is not guaranteed.
-func (o *parser) Parse(args []string) error {
+func (o *Parser) Parse(args []string) error {
 	subargs := make([]string, len(args))
 	copy(subargs, args)
 

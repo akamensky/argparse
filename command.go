@@ -4,20 +4,7 @@ import (
 	"fmt"
 )
 
-type command struct {
-	name        string
-	description string
-	args        []*arg
-	commands    []*command
-	parsed      bool
-	parent      *command
-}
-
-type parser struct {
-	command
-}
-
-func (o *command) help() {
+func (o *Command) help() {
 	result := &help{}
 
 	a := &arg{
@@ -32,7 +19,7 @@ func (o *command) help() {
 	o.addArg(a)
 }
 
-func (o *command) addArg(a *arg) {
+func (o *Command) addArg(a *arg) {
 	if a.lname != "" {
 		if a.sname == "" || len(a.sname) == 1 {
 			// Search parents for overlapping commands and fail silently if any
@@ -55,7 +42,7 @@ func (o *command) addArg(a *arg) {
 
 // Will parse provided list of arguments
 // common usage would be to pass directly os.Args
-func (o *command) parse(args *[]string) error {
+func (o *Command) parse(args *[]string) error {
 	// If we already been parsed do nothing
 	if o.parsed {
 		return nil
@@ -76,7 +63,7 @@ func (o *command) parse(args *[]string) error {
 		}
 	}
 
-	// Reduce arguments by removing command name
+	// Reduce arguments by removing Command name
 	*args = (*args)[1:]
 
 	// Parse subcommands if any

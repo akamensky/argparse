@@ -519,7 +519,7 @@ func TestOptsValidatePass1(t *testing.T) {
 	}
 }
 
-var pUsage = `usage: verylongprogname <command> [-h|--help] [-s|--verylongstring-flag1 "<value>"]
+var pUsage = `usage: verylongprogname <Command> [-h|--help] [-s|--verylongstring-flag1 "<value>"]
 
                         prog description
 

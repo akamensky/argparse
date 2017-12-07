@@ -2,13 +2,13 @@ package argparse
 
 type subCommandError struct {
 	error
-	cmd *command
+	cmd *Command
 }
 
 func (e subCommandError) Error() string {
-	return "[sub]command required"
+	return "[sub]Command required"
 }
 
-func newSubCommandError(cmd *command) error {
+func newSubCommandError(cmd *Command) error {
 	return subCommandError{cmd: cmd}
 }

@@ -9,15 +9,15 @@ import (
 type arg struct {
 	result   interface{} // Pointer to the resulting value
 	opts     *Options    // Options
-	sname    string      // Short name (in parser will start with "-"
-	lname    string      // Long name (in parser will start with "--"
+	sname    string      // Short name (in Parser will start with "-"
+	lname    string      // Long name (in Parser will start with "--"
 	size     int         // Size defines how many args after match will need to be consumed
 	unique   bool        // Specifies whether flag should be present only ones
 	parsed   bool        // Specifies whether flag has been parsed already
 	fileFlag int         // File mode to open file with
 	filePerm os.FileMode // File permissions to set a file
 	selector *[]string   // Used in Selector type to allow to choose only one from list of options
-	parent   *command    // Used to get access to specific command
+	parent   *Command    // Used to get access to specific Command
 }
 
 type help struct{}
