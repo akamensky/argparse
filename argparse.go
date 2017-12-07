@@ -63,7 +63,8 @@ func NewParser(name string, description string) *Parser {
 	return p
 }
 
-// Get new Command. All commands are always at the beginning of the arguments.
+// NewCommand will create a sub-command and propagate all necessary fields.
+// All commands are always at the beginning of the arguments.
 // Parser can have commands and those commands can have sub-commands,
 // which allows for very flexible workflow.
 // All commands are considered as required and all commands can have their own argument set.
@@ -87,7 +88,7 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	return c
 }
 
-// Create new Flag, which is boolean value showing if argument was provided or not.
+// Flag Creates new flag type of argument, which is boolean value showing if argument was provided or not.
 // Takes short name, long name and pointer to options (optional).
 // Short name must be single character, but can be omitted by giving empty string.
 // Long name is required.
@@ -111,7 +112,7 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	return &result
 }
 
-// Create new String argument, which will return whatever follows the argument on CLI.
+// String creates new string argument, which will return whatever follows the argument on CLI.
 // Takes as arguments short name (must be single character or an empty string)
 // long name and (optional) options
 func (o *Command) String(short string, long string, opts *Options) *string {
@@ -131,7 +132,7 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 	return &result
 }
 
-// Create new file argument, which is when provided will check if file exists or attempt to create it
+// File creates new file argument, which is when provided will check if file exists or attempt to create it
 // depending on provided flags (same as for os.OpenFile).
 // It takes same as all other arguments short and long names, additionally it takes flags that specify
 // in which mode the file should be open (see os.OpenFile for details on that), file permissions that
@@ -157,7 +158,7 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 	return &result
 }
 
-// Create new list argument. This is the argument that is allowed to be present multiple times on CLI.
+// List creates new list argument. This is the argument that is allowed to be present multiple times on CLI.
 // All appearances of this argument on CLI will be collected into the list of strings. If no argument
 // provided, then the list is empty. Takes same parameters as String
 // Returns a pointer the list of strings.
@@ -178,7 +179,7 @@ func (o *Command) List(short string, long string, opts *Options) *[]string {
 	return &result
 }
 
-// Creates a selector argument. Selector argument works in the same way as String argument, with
+// Selector creates a selector argument. Selector argument works in the same way as String argument, with
 // the difference that the string value must be from the list of options provided by the program.
 // Takes short and long names, argument options and a slice of strings which are allowed values
 // for CLI argument.
@@ -202,7 +203,7 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 	return &result
 }
 
-// Shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
+// Happened shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
 // all its descendant commands and arguments are not parsed. Returns a boolean value.
 func (o *Command) Happened() bool {
 	return o.parsed
