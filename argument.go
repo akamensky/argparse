@@ -197,7 +197,7 @@ func (o *arg) usage() string {
 	case *os.File:
 		result = result + " <file>"
 	case *[]string:
-		result = result + " \"<string>\""
+		result = result + " \"<value>\"" + " [" + result + " \"<value>\" ...]"
 	default:
 		break
 	}
