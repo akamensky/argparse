@@ -582,3 +582,20 @@ func TestUsageSimple1(t *testing.T) {
 		t.Errorf("%s", cmd2.Usage(nil))
 	}
 }
+
+func TestStringMissingArgFail(t *testing.T) {
+	testArgs := []string{"progname", "-s"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.String("s", "string", &Options{Required: true, Help: "A test string"})
+
+	err := p.Parse(testArgs)
+
+	if err != nil {
+		// Test should pass on failure
+		if err.Error() != "not enough arguments for -s|--string" {
+			t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "not enough arguments for -s|--string", err.Error())
+		}
+	}
+}
