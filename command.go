@@ -97,9 +97,7 @@ func (o *Command) parse(args *[]string) error {
 				if err != nil {
 					return err
 				}
-				//*args = append((*args)[:j], (*args)[j+oarg.size:]...)
 				oarg.reduce(j, args)
-				//j-- // Bump down j to account for reduced args size
 				continue
 			}
 		}
@@ -107,6 +105,14 @@ func (o *Command) parse(args *[]string) error {
 		// Check if arg is required and not provided
 		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
 			return fmt.Errorf("[%s] is required", oarg.name())
+		}
+
+		// Check for argument default value and if provided try to type cast and assign
+		if oarg.opts != nil && oarg.opts.Default != nil && !oarg.parsed {
+			err := oarg.setDefault()
+			if err != nil {
+				return err
+			}
 		}
 	}
 

@@ -206,3 +206,39 @@ func (o *arg) usage() string {
 	}
 	return result
 }
+
+func (o *arg) setDefault() error {
+	// Only set default if it was not parsed, and default value was defined
+	if !o.parsed && o.opts != nil && o.opts.Default != nil {
+		switch o.result.(type) {
+		case *bool:
+			if _, ok := o.opts.Default.(bool); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [bool]", o.opts.Default)
+			}
+			*o.result.(*bool) = o.opts.Default.(bool)
+		case *string:
+			if _, ok := o.opts.Default.(string); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [string]", o.opts.Default)
+			}
+			*o.result.(*string) = o.opts.Default.(string)
+		case *os.File:
+			// In case of File we should get string as default value
+			if v, ok := o.opts.Default.(string); ok {
+				f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+				if err != nil {
+					return err
+				}
+				*o.result.(*os.File) = *f
+			} else {
+				return fmt.Errorf("cannot use default type [%T] as type [string]", o.opts.Default)
+			}
+		case *[]string:
+			if _, ok := o.opts.Default.([]string); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
+			}
+			*o.result.(*[]string) = o.opts.Default.([]string)
+		}
+	}
+
+	return nil
+}

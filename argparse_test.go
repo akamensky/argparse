@@ -253,7 +253,7 @@ func TestFileSimple1(t *testing.T) {
 
 	p := NewParser("", "")
 
-	file1 := p.File("f", "file", os.O_RDWR, 0666, nil)
+	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: "./non-existent-file.tmp"})
 
 	err = p.Parse(testArgs)
 	if err != nil {
@@ -597,5 +597,199 @@ func TestStringMissingArgFail(t *testing.T) {
 		if err.Error() != "not enough arguments for -s|--string" {
 			t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "not enough arguments for -s|--string", err.Error())
 		}
+	}
+}
+
+func TestFlagDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	f := p.Flag("f", "flag", &Options{Default: true})
+
+	err := p.Parse(testArgs)
+
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not true
+	if *f != true {
+		t.Errorf("expected [true], got [%t]", *f)
+	}
+}
+
+func TestFlagDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.Flag("f", "flag", &Options{Default: "string"})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	if err == nil || err.Error() != "cannot use default type [string] as type [bool]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [string] as type [bool]", err.Error())
+	}
+}
+
+func TestStringDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testString := "test string"
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.String("s", "string", &Options{Default: testString})
+
+	err := p.Parse(testArgs)
+
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not true
+	if *s != testString {
+		t.Errorf("expected [string], got [%T]", *s)
+	}
+}
+
+func TestStringDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.String("s", "string", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
+	}
+}
+
+func TestFileDefaultValuePass(t *testing.T) {
+	// Test file location
+	fpath := "./test.tmp"
+	// Create test file
+	f, err := os.Create(fpath)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f.Close()
+	defer os.Remove(fpath)
+
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "")
+
+	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: fpath})
+
+	err = p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+	defer file1.Close()
+}
+
+func TestFileDefaultValueFail(t *testing.T) {
+	// Test file location
+	fpath := "./test.tmp"
+	// Create test file
+	f, err := os.Create(fpath)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f.Close()
+	defer os.Remove(fpath)
+
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "")
+
+	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: true})
+
+	err = p.Parse(testArgs)
+	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
+	}
+	defer file1.Close()
+}
+
+func TestListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testList := []string{"test", "list"}
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.List("s", "string", &Options{Default: testList})
+
+	err := p.Parse(testArgs)
+
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not true
+	if !reflect.DeepEqual(*s, testList) {
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
+func TestListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.List("s", "string", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	if err == nil || err.Error() != "cannot use default type [bool] as type [[]string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [[]string]", err.Error())
+	}
+}
+
+func TestSelectorDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testString := "test list"
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.Selector("s", "string", []string{"opt1", "opt2"}, &Options{Default: testString})
+
+	err := p.Parse(testArgs)
+
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not true
+	if *s != testString {
+		t.Errorf("expected [%v], got [%v]", testString, *s)
+	}
+}
+
+func TestSelectorDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.Selector("s", "string", []string{"opt1", "opt2"}, &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
 	}
 }

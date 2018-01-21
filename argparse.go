@@ -44,6 +44,7 @@ type Options struct {
 	Required bool
 	Validate func(args []string) error
 	Help     string
+	Default  interface{}
 }
 
 // NewParser creates new Parser object that will allow to add arguments for parsing
