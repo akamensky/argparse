@@ -40,6 +40,10 @@ type Parser struct {
 //
 // Options.Help - A help message to be displayed in Usage output. Can be of any length as the message will be
 // formatted to fit max screen width of 100 characters.
+//
+// Options.Default - A default value for an argument. This value will be assigned to the argument at the end of parsing
+// in case if this argument was not supplied on command line. File default value is a string which it will be open with
+// provided options. In case if provided value type does not match expected, the error will be returned on run-time.
 type Options struct {
 	Required bool
 	Validate func(args []string) error
