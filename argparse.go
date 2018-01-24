@@ -220,7 +220,7 @@ func (o *Command) Happened() bool {
 // its sub-commands, current Command arguments and arguments of all preceding commands (if any)
 func (o *Command) Usage(err interface{}) string {
 	// Stay classy
-	maxWidth := 100
+	maxWidth := 80
 	// List of arguments from all preceding commands
 	arguments := make([]*arg, 0)
 	// First get line of commands until root
@@ -318,7 +318,7 @@ func (o *Command) Usage(err interface{}) string {
 			arg = arg + "--" + argument.lname
 			arg = arg + strings.Repeat(" ", argPadding-len(arg))
 			if argument.opts != nil && argument.opts.Help != "" {
-				arg = addToLastLine(arg, argument.opts.Help, maxWidth, argPadding, true)
+				arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
 			}
 			argContent = argContent + arg + "\n"
 		}

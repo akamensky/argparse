@@ -207,6 +207,17 @@ func (o *arg) usage() string {
 	return result
 }
 
+func (o *arg) getHelpMessage() string {
+	message := ""
+	if len(o.opts.Help) > 0 {
+		message += o.opts.Help
+		if !o.opts.Required && o.opts.Default != nil {
+			message += fmt.Sprintf(". Default: %v", o.opts.Default)
+		}
+	}
+	return message
+}
+
 func (o *arg) setDefault() error {
 	// Only set default if it was not parsed, and default value was defined
 	if !o.parsed && o.opts != nil && o.opts.Default != nil {
