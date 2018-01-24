@@ -282,14 +282,14 @@ func (o *Command) Usage(err interface{}) string {
 		// Get biggest padding
 		var cmdPadding int
 		for _, com := range commands {
-			if len("   "+com.name+"   ") > cmdPadding {
-				cmdPadding = len("   " + com.name + "   ")
+			if len("  "+com.name+"  ") > cmdPadding {
+				cmdPadding = len("  " + com.name + "  ")
 			}
 		}
 		// Now add commands with known padding
 		for _, com := range commands {
-			cmd := "   " + com.name
-			cmd = cmd + strings.Repeat(" ", cmdPadding-len(cmd))
+			cmd := "  " + com.name
+			cmd = cmd + strings.Repeat(" ", cmdPadding-len(cmd)-1)
 			cmd = addToLastLine(cmd, com.description, maxWidth, cmdPadding, true)
 			cmdContent = cmdContent + cmd + "\n"
 		}
@@ -303,17 +303,17 @@ func (o *Command) Usage(err interface{}) string {
 		var argPadding int
 		// Find biggest padding
 		for _, argument := range arguments {
-			if len(argument.lname)+13 > argPadding {
-				argPadding = len(argument.lname) + 13
+			if len(argument.lname)+9 > argPadding {
+				argPadding = len(argument.lname) + 9
 			}
 		}
 		// Now add args with padding
 		for _, argument := range arguments {
-			arg := "   "
+			arg := "  "
 			if argument.sname != "" {
-				arg = arg + "-" + argument.sname + "   "
+				arg = arg + "-" + argument.sname + "  "
 			} else {
-				arg = arg + "     "
+				arg = arg + "    "
 			}
 			arg = arg + "--" + argument.lname
 			arg = arg + strings.Repeat(" ", argPadding-len(arg))
