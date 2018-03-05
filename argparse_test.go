@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -237,6 +238,100 @@ func TestStringSimple2(t *testing.T) {
 	}
 }
 
+func TestIntSimple1(t *testing.T) {
+	val := 5150
+	testArgs := []string{"progname", "--flag-arg1", strconv.Itoa(val)}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+	i2 := p.Int("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if i2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != val {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), val, *i1)
+		return
+	}
+
+	if *i2 != 0 {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), 0, *i1)
+		return
+	}
+}
+
+func TestIntSimple2(t *testing.T) {
+	val := 5150
+	testArgs := []string{"progname", "--flag-arg1", strconv.Itoa(val)}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+	i2 := p.Int("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if i2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != val {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), val, *i1)
+		return
+	}
+
+	if *i2 != 0 {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), 0, *i1)
+		return
+	}
+}
+
+func TestIntFailSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "string"}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "[-f|--flag-arg1] invalid integer value [string]"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *i1)
+		return
+	}
+}
+
 func TestFileSimple1(t *testing.T) {
 	// Test file location
 	fpath := "./test.tmp"
@@ -362,8 +457,9 @@ func TestSelectorFailSimple1(t *testing.T) {
 }
 
 func TestCommandSimple1(t *testing.T) {
+	val := 5150
 	testArgsList := [][]string{
-		{"progname", "cmd1", "--flag1", "--string-flag1", "test"},
+		{"progname", "cmd1", "--flag1", "--string-flag1", "test", "--int-flag1", strconv.Itoa(val)},
 		{"progname", "cmd2"},
 	}
 
@@ -373,6 +469,7 @@ func TestCommandSimple1(t *testing.T) {
 		cmd1 := p.NewCommand("cmd1", "cmd1 description")
 		flag1 := cmd1.Flag("f", "flag1", nil)
 		string1 := cmd1.String("s", "string-flag1", nil)
+		int1 := cmd1.Int("i", "int-flag1", nil)
 
 		cmd2 := p.NewCommand("cmd2", "cmd2 description")
 
@@ -387,6 +484,10 @@ func TestCommandSimple1(t *testing.T) {
 				t.Errorf("Test %s failed with %s: string1: wanted [test], got [%s]", t.Name(), testArgs[1], *string1)
 				return
 			}
+			if *int1 != val {
+				t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], val, *int1)
+				return
+			}
 		}
 		if cmd2.Happened() {
 			if *flag1 != false {
@@ -395,6 +496,10 @@ func TestCommandSimple1(t *testing.T) {
 			}
 			if *string1 != "" {
 				t.Errorf("Test %s failed with %s: string1: wanted [], got [%s]", t.Name(), testArgs[1], *string1)
+				return
+			}
+			if *int1 != 0 {
+				t.Errorf("Test %s failed with %s: int1: wanted [0], got [%d]", t.Name(), testArgs[1], *int1)
 				return
 			}
 		}
@@ -406,9 +511,11 @@ func TestCommandSimple1(t *testing.T) {
 }
 
 func TestCommandMixedArgs1(t *testing.T) {
+	val := 5150
+	pval := 316
 	testArgsList := [][]string{
-		{"progname", "cmd1", "--flag1", "--string-flag1", "test", "--global-flag", "--global-string", "global test string"},
-		{"progname", "cmd2", "--global-string", "global test string", "--global-flag"},
+		{"progname", "cmd1", "--flag1", "--string-flag1", "test", "--int-flag1", strconv.Itoa(val), "--global-flag", "--global-string", "global test string", "--global-int", strconv.Itoa(pval)},
+		{"progname", "cmd2", "--global-string", "global test string", "--global-flag", "--global-int", strconv.Itoa(pval)},
 	}
 
 	for _, testArgs := range testArgsList {
@@ -417,11 +524,13 @@ func TestCommandMixedArgs1(t *testing.T) {
 		cmd1 := p.NewCommand("cmd1", "cmd1 description")
 		cmd1flag1 := cmd1.Flag("f", "flag1", nil)
 		cmd1string1 := cmd1.String("s", "string-flag1", nil)
+		cmd1int1 := cmd1.Int("i", "int-flag1", nil)
 
 		cmd2 := p.NewCommand("cmd2", "cmd2 description")
 
 		pflag1 := p.Flag("", "global-flag", nil)
 		pstring1 := p.String("", "global-string", nil)
+		pint1 := p.Int("", "global-int", nil)
 
 		p.Parse(testArgs)
 
@@ -432,6 +541,10 @@ func TestCommandMixedArgs1(t *testing.T) {
 		}
 		if *pstring1 != "global test string" {
 			t.Errorf("Test %s failed with %s: pstring1: wanted [global test string], got [%s]", t.Name(), testArgs[1], *pstring1)
+			return
+		}
+		if *pint1 != pval {
+			t.Errorf("Test %s failed with %s: pint1: wanted [%d], got [%d]", t.Name(), testArgs[1], pval, *pint1)
 			return
 		}
 
@@ -445,6 +558,10 @@ func TestCommandMixedArgs1(t *testing.T) {
 				t.Errorf("Test %s failed with %s: string1: wanted [test], got [%s]", t.Name(), testArgs[1], *cmd1string1)
 				return
 			}
+			if *cmd1int1 != val {
+				t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], val, *cmd1int1)
+				return
+			}
 		}
 		if cmd2.Happened() {
 			if *cmd1flag1 != false {
@@ -453,6 +570,10 @@ func TestCommandMixedArgs1(t *testing.T) {
 			}
 			if *cmd1string1 != "" {
 				t.Errorf("Test %s failed with %s: string1: wanted [], got [%s]", t.Name(), testArgs[1], *cmd1string1)
+				return
+			}
+			if *cmd1int1 != 0 {
+				t.Errorf("Test %s failed with %s: int1: wanted [0], got [%d]", t.Name(), testArgs[1], *cmd1int1)
 				return
 			}
 		}
@@ -477,7 +598,21 @@ func TestOptsRequired1(t *testing.T) {
 	}
 }
 
-var opts = &Options{Validate: func(args []string) error {
+func TestOptsRequired2(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1"}
+
+	p := NewParser("", "description")
+	_ = p.Flag("", "flag-arg1", nil)
+	_ = p.Int("", "int-arg1", &Options{Required: true})
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed to detect required argument", t.Name())
+		return
+	}
+}
+
+var stropts = &Options{Validate: func(args []string) error {
 	if len(args) > 0 {
 		if args[0] != "pass" {
 			return errors.New("failure")
@@ -496,7 +631,7 @@ func TestOptsValidatePass1(t *testing.T) {
 	for _, testArgs := range testArgsList {
 		p := NewParser("progname", "")
 
-		string1 := p.String("", "string-flag1", opts)
+		string1 := p.String("", "string-flag1", stropts)
 
 		err := p.Parse(testArgs)
 
@@ -519,8 +654,56 @@ func TestOptsValidatePass1(t *testing.T) {
 	}
 }
 
+func TestOptsValidatePass2(t *testing.T) {
+	val1 := 5150
+	val2 := 316
+
+	var intopts = &Options{Validate: func(args []string) error {
+		if len(args) > 0 {
+			myval, err := strconv.Atoi(args[0])
+			if err != nil {
+				return errors.New("conversion failure")
+			} else if myval != val1 {
+				return errors.New("failure")
+			}
+		}
+		return nil
+	},
+	}
+
+	testArgsList := [][]string{
+		{"progname", "--int-flag1", strconv.Itoa(val1)},
+		{"progname", "--int-flag1", strconv.Itoa(val2)},
+	}
+
+	for _, testArgs := range testArgsList {
+		p := NewParser("progname", "")
+
+		int1 := p.Int("", "int-flag1", intopts)
+
+		err := p.Parse(testArgs)
+
+		if testArgs[2] == strconv.Itoa(val1) {
+			if err != nil {
+				t.Errorf("Test %s failed on %s with err: %s", t.Name(), testArgs[2], err.Error())
+				return
+			}
+
+			if *int1 != val1 {
+				t.Errorf("Test %s failed on %s; int1 expected [%d], got [%d]", t.Name(), testArgs[2], val1, *int1)
+				return
+			}
+		} else {
+			if err == nil {
+				t.Errorf("Test %s failed to validate argument (should return error)", t.Name())
+				return
+			}
+		}
+	}
+}
+
 var pUsage = `usage: verylongprogname <Command> [-h|--help] [-s|--verylongstring-flag1
-                        "<value>"]
+                        "<value>"] [-i|--integer-flag1 <integer>]
 
                         prog description
 
@@ -533,12 +716,14 @@ Arguments:
 
   -h  --help                  Print help information
   -s  --verylongstring-flag1  string1 description
+  -i  --integer-flag1         integer1 description
 
 `
 
 var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-f|--verylongflag1]
                         -a|--verylongflagA [-h|--help]
                         [-s|--verylongstring-flag1 "<value>"]
+                        [-i|--integer-flag1 <integer>]
 
                         cmd1 description
 
@@ -548,10 +733,12 @@ Arguments:
   -a  --verylongflagA         flag1 description
   -h  --help                  Print help information
   -s  --verylongstring-flag1  string1 description
+  -i  --integer-flag1         integer1 description
 
 `
 
 var cmd2Usage = `usage: verylongprogname cmd2 [-h|--help] [-s|--verylongstring-flag1 "<value>"]
+                        [-i|--integer-flag1 <integer>]
 
                         cmd2 description
 
@@ -559,6 +746,7 @@ Arguments:
 
   -h  --help                  Print help information
   -s  --verylongstring-flag1  string1 description
+  -i  --integer-flag1         integer1 description
 
 `
 
@@ -569,6 +757,7 @@ func TestUsageSimple1(t *testing.T) {
 	_ = cmd1.Flag("f", "verylongflag1", &Options{Help: "flag1 description"})
 	_ = cmd1.Flag("a", "verylongflagA", &Options{Required: true, Help: "flag1 description"})
 	_ = p.String("s", "verylongstring-flag1", &Options{Help: "string1 description"})
+	_ = p.Int("i", "integer-flag1", &Options{Help: "integer1 description"})
 
 	cmd2 := p.NewCommand("cmd2", "cmd2 description")
 
@@ -598,6 +787,24 @@ func TestStringMissingArgFail(t *testing.T) {
 		// Test should pass on failure
 		if err.Error() != "not enough arguments for -s|--string" {
 			t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "not enough arguments for -s|--string", err.Error())
+		}
+	}
+}
+
+func TestIntMissingArgFail(t *testing.T) {
+	testArgs := []string{"progname", "-i"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.Int("i", "integer", &Options{Required: true, Help: "A test integer"})
+
+	err := p.Parse(testArgs)
+
+	if err != nil {
+		// Test should pass on failure
+		errStr := "not enough arguments for -i|--integer"
+		if err.Error() != errStr {
+			t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), errStr, err.Error())
 		}
 	}
 }
@@ -670,6 +877,42 @@ func TestStringDefaultValueFail(t *testing.T) {
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
 		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
+	}
+}
+
+func TestIntDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testVal := 5150
+
+	p := NewParser("progname", "Prog description")
+
+	i := p.Int("i", "integer", &Options{Default: testVal})
+
+	err := p.Parse(testArgs)
+
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not true
+	if *i != testVal {
+		t.Errorf("expected [%d], got [%d]", testVal, *i)
+	}
+}
+
+func TestIntDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.Int("i", "integer", &Options{Default: "fail"})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	if err == nil || err.Error() != "cannot use default type [string] as type [int]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
 	}
 }
 

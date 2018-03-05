@@ -137,6 +137,26 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 	return &result
 }
 
+// Int creates new int argument, which will return whatever follows the argument on CLI.
+// Takes as arguments short name (must be single character or an empty string)
+// long name and (optional) options
+func (o *Command) Int(short string, long string, opts *Options) *int {
+	var result int
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: true,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
 // File creates new file argument, which is when provided will check if file exists or attempt to create it
 // depending on provided flags (same as for os.OpenFile).
 // It takes same as all other arguments short and long names, additionally it takes flags that specify
