@@ -633,7 +633,7 @@ func TestFlagDefaultValueFail(t *testing.T) {
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [string] as type [bool]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [string] as type [bool]", err.Error())
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as type [bool]", err)
 	}
 }
 
@@ -669,7 +669,7 @@ func TestStringDefaultValueFail(t *testing.T) {
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
 	}
 }
 
@@ -719,7 +719,7 @@ func TestFileDefaultValueFail(t *testing.T) {
 
 	err = p.Parse(testArgs)
 	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
 	}
 	defer file1.Close()
 }
@@ -756,7 +756,7 @@ func TestListDefaultValueFail(t *testing.T) {
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as type [[]string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [[]string]", err.Error())
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [[]string]", err)
 	}
 }
 
@@ -792,6 +792,6 @@ func TestSelectorDefaultValueFail(t *testing.T) {
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%s]", t.Name(), "cannot use default type [bool] as type [string]", err.Error())
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
 	}
 }
