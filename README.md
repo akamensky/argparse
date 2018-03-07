@@ -45,8 +45,7 @@ func main() {
 	if err != nil {
 		// In case of error print error and print usage
 		// This can also be done by passing -h or --help flags
-		fmt.Println(err.Error())
-		fmt.Print(parser.Usage())
+		fmt.Print(parser.Usage(err))
 	}
 	// Finally print the collected string
 	fmt.Println(*s)
