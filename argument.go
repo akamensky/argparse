@@ -3,6 +3,7 @@ package argparse
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -121,6 +122,19 @@ func (o *arg) parse(args []string) error {
 	case *bool:
 		*o.result.(*bool) = true
 		o.parsed = true
+	case *int:
+		if len(args) < 1 {
+			return fmt.Errorf("[%s] must be followed by an integer", o.name())
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		val, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("[%s] invalid integer value [%s]", o.name(), args[0])
+		}
+		*o.result.(*int) = val
+		o.parsed = true
 	case *string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
@@ -188,6 +202,8 @@ func (o *arg) usage() string {
 	switch o.result.(type) {
 	case *bool:
 		break
+	case *int:
+		result = result + " <integer>"
 	case *string:
 		if o.selector != nil {
 			result = result + " (" + strings.Join(*o.selector, "|") + ")"
@@ -227,6 +243,11 @@ func (o *arg) setDefault() error {
 				return fmt.Errorf("cannot use default type [%T] as type [bool]", o.opts.Default)
 			}
 			*o.result.(*bool) = o.opts.Default.(bool)
+		case *int:
+			if _, ok := o.opts.Default.(int); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [int]", o.opts.Default)
+			}
+			*o.result.(*int) = o.opts.Default.(int)
 		case *string:
 			if _, ok := o.opts.Default.(string); !ok {
 				return fmt.Errorf("cannot use default type [%T] as type [string]", o.opts.Default)
