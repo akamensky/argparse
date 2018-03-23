@@ -315,7 +315,7 @@ func TestIntFailSimple1(t *testing.T) {
 	i1 := p.Int("f", "flag-arg1", nil)
 
 	err := p.Parse(testArgs)
-	errStr := "[-f|--flag-arg1] invalid integer value [string]"
+	errStr := "[-f|--flag-arg1] bad interger value [string]"
 	if err == nil || err.Error() != errStr {
 		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
 		return

@@ -137,9 +137,10 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 	return &result
 }
 
-// Int creates new int argument, which will return whatever follows the argument on CLI.
+// Int creates new int argument, which will attempt to parse following argument as int.
 // Takes as arguments short name (must be single character or an empty string)
-// long name and (optional) options
+// long name and (optional) options.
+// If parsing fails parser.Parse() will return an error.
 func (o *Command) Int(short string, long string, opts *Options) *int {
 	var result int
 
