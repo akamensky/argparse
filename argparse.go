@@ -158,7 +158,7 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 	return &result
 }
 
-// Int creates new float argument, which will attempt to parse following argument as float64.
+// Float creates new float argument, which will attempt to parse following argument as float64.
 // Takes as arguments short name (must be single character or an empty string)
 // long name and (optional) options.
 // If parsing fails parser.Parse() will return an error.
