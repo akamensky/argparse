@@ -135,6 +135,19 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*int) = val
 		o.parsed = true
+	case *float64:
+		if len(args) < 1 {
+			return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
+		}
+		if len(args) > 1 {
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		val, err := strconv.ParseFloat(args[0], 64)
+		if err != nil {
+			return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
+		}
+		*o.result.(*float64) = val
+		o.parsed = true
 	case *string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
@@ -204,6 +217,8 @@ func (o *arg) usage() string {
 		break
 	case *int:
 		result = result + " <integer>"
+	case *float64:
+		result = result + " <float>"
 	case *string:
 		if o.selector != nil {
 			result = result + " (" + strings.Join(*o.selector, "|") + ")"
@@ -246,6 +261,11 @@ func (o *arg) setDefault() error {
 		case *int:
 			if _, ok := o.opts.Default.(int); !ok {
 				return fmt.Errorf("cannot use default type [%T] as type [int]", o.opts.Default)
+			}
+			*o.result.(*int) = o.opts.Default.(int)
+		case *float64:
+			if _, ok := o.opts.Default.(float64); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [float64]", o.opts.Default)
 			}
 			*o.result.(*int) = o.opts.Default.(int)
 		case *string:

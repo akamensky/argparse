@@ -158,6 +158,27 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 	return &result
 }
 
+// Int creates new float argument, which will attempt to parse following argument as float64.
+// Takes as arguments short name (must be single character or an empty string)
+// long name and (optional) options.
+// If parsing fails parser.Parse() will return an error.
+func (o *Command) Float(short string, long string, opts *Options) *float64 {
+	var result float64
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: true,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
 // File creates new file argument, which is when provided will check if file exists or attempt to create it
 // depending on provided flags (same as for os.OpenFile).
 // It takes same as all other arguments short and long names, additionally it takes flags that specify

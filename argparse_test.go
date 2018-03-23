@@ -1038,3 +1038,64 @@ func TestSelectorDefaultValueFail(t *testing.T) {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
 	}
 }
+
+func TestFloatSimple1(t *testing.T) {
+	pi := "3.1415"
+	piVal := 3.1415
+	testArgs := []string{"progname", "--float1", pi}
+
+	p := NewParser("", "description")
+	f1 := p.Float("f", "float1", nil)
+	f2 := p.Float("", "float2", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if f1 == nil {
+		t.Errorf("Test %s failed with float1 being nil pointer", t.Name())
+		return
+	}
+
+	if f2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if *f1 != piVal {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), piVal, *f1)
+		return
+	}
+
+	if *f2 != 0 {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), 0, *f2)
+		return
+	}
+}
+
+func TestFloatFail1(t *testing.T) {
+	badArg := "stringNotANumber"
+	testArgs := []string{"progname", "--float1", badArg}
+
+	p := NewParser("", "description")
+	f1 := p.Float("f", "float1", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "[-f|--float1] bad floating point value [stringNotANumber]"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+
+	if f1 == nil {
+		t.Errorf("Test %s failed with float1 being nil pointer", t.Name())
+		return
+	}
+
+	if *f1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *f1)
+		return
+	}
+}
