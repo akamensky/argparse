@@ -1065,12 +1065,12 @@ func TestFloatSimple1(t *testing.T) {
 	}
 
 	if *f1 != piVal {
-		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), piVal, *f1)
+		t.Errorf("Test %s failed. Want: [%f], got: [%f]", t.Name(), piVal, *f1)
 		return
 	}
 
 	if *f2 != 0 {
-		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), 0, *f2)
+		t.Errorf("Test %s failed. Want: [%f], got: [%f]", t.Name(), 0.0, *f2)
 		return
 	}
 }
@@ -1095,7 +1095,7 @@ func TestFloatFail1(t *testing.T) {
 	}
 
 	if *f1 != 0 {
-		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *f1)
+		t.Errorf("Test %s failed. Want: [0], got: [%f]", t.Name(), *f1)
 		return
 	}
 }
