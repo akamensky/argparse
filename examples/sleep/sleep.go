@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Print (*count) iterations with (*delay) second delays
-	delay_duration := time.Duration(*delay) * time.Second
+	delay_duration := time.Duration((*delay)*1000) * time.Millisecond
 	for i := 0; i < *count; i++ {
 		time.Sleep(delay_duration)
 		fmt.Println("Iteration:", i+1)
