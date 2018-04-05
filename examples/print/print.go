@@ -17,6 +17,7 @@ func main() {
 		// In case of error print error and print usage
 		// This can also be done by passing -h or --help flags
 		fmt.Print(parser.Usage(err))
+		os.Exit(1)
 	}
 	// Finally print the collected string
 	fmt.Println(*s)
