@@ -267,7 +267,7 @@ func (o *arg) setDefault() error {
 			if _, ok := o.opts.Default.(float64); !ok {
 				return fmt.Errorf("cannot use default type [%T] as type [float64]", o.opts.Default)
 			}
-			*o.result.(*int) = o.opts.Default.(int)
+			*o.result.(*float64) = o.opts.Default.(float64)
 		case *string:
 			if _, ok := o.opts.Default.(string); !ok {
 				return fmt.Errorf("cannot use default type [%T] as type [string]", o.opts.Default)
