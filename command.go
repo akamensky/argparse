@@ -2,7 +2,6 @@ package argparse
 
 import (
 	"fmt"
-	//	"os"
 )
 
 func (o *Command) help() {
@@ -32,20 +31,13 @@ func (o *Command) addArg(a *arg) {
 				if snameconflict || lnameconflict {
 					return
 				}
-				/* TODO
-				if current.args != nil {
-					for _, v := range current.args {
-						if (a.sname != "" && a.sname == v.sname) || a.lname == v.lname {
-							return
-						}
-					}
-				}
-				*/
 				current = current.parent
 			}
 			a.parent = o
 			o.args = append(o.args, a)
-			o.mapargs[sswitch] = a
+			if len(a.sname) != 0 {
+				o.mapargs[sswitch] = a
+			}
 			o.mapargs[lswitch] = a
 		}
 	}
@@ -77,6 +69,8 @@ func (o *Command) parse(args *[]string) error {
 	// Reduce arguments by removing Command name
 	*args = (*args)[1:]
 
+	logger.Println("Input args for", o.name, *args)
+
 	// Parse subcommands if any
 	if o.commands != nil && len(o.commands) > 0 {
 		// If we have subcommands and 0 args left
@@ -92,65 +86,73 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
-	//fmt.Println("input map", o.mapargs)
+	logger.Println("Input map", o.mapargs)
 	// Iterate over the input args
 	for j := 0; j < len(*args); {
+		var oarg *arg
+		var match bool
+
 		arg := (*args)[j]
 		if arg == "" {
+			j++
 			continue
 		}
-		//fmt.Println("Matching for", arg)
+		logger.Println("Matching for", arg)
 
-		if oarg, match := o.mapargs[arg]; match {
-			if len(*args) < j+oarg.size {
-				return fmt.Errorf("not enough arguments for %s", oarg.name())
+		oarg, match = o.mapargs[arg]
+		if !match { // couldn't match argument directly
+			// match short names without following space
+			// long names should always appear as separate argument
+			if arg[0] == '-' && arg[1] != '-' {
+				if oarg, match = o.mapargs[arg[:2]]; match {
+					// is a Flag and there are following characters
+					if oarg.size == 1 && len(arg) > 2 {
+						// leave '-' behind for next iteration
+						(*args)[j] = "-" + arg[2:]
+					} else {
+						// rest of the characters will be parameters to this arg
+						(*args)[j] = arg[2:]
+					}
+					// dont increment j
+					arg = arg[:2]
+				}
 			}
-			//fmt.Println("Match for", arg, (*args)[j+1:j+oarg.size])
-			// TODO: verify none of these are arguments. (arg[0] != '-')?
-			// parse that many arguments and skipover j
-			err := oarg.parse((*args)[j+1 : j+oarg.size])
-			if err != nil {
-				return err
-			}
-			removeTill := j + oarg.size
-			//fmt.Println(j, "removing", removeTill)
-			for ; j < removeTill; j++ {
-				//fmt.Println("Deleting", j, (*args)[j])
-				(*args)[j] = ""
-			}
-		} else {
-			j += 1
+		} else { // matched argument directly
+			// consume the arg name
+			(*args)[j] = ""
+			j++
+		}
+
+		if !match {
+			logger.Println("No match for", arg)
+			j++
+			continue
+		}
+
+		if len(*args) < j+oarg.size-1 {
+			return fmt.Errorf("not enough arguments for %s", oarg.name())
+		}
+		logger.Println("Parsing for", arg, (*args)[j:j+oarg.size-1])
+		// parse that many arguments and skipover j
+		err := oarg.parse((*args)[j : j+oarg.size-1])
+		if err != nil {
+			return err
+		}
+
+		// consume whatever is parsed
+		removeTill := j + oarg.size - 1
+		for ; j < removeTill; j++ {
+			logger.Println("Consuming for", arg, (*args)[j])
+			(*args)[j] = ""
 		}
 	}
 
-	/*
-		// Iterate over the args
-		for i := 0; i < len(o.args); i++ {
-			oarg := o.args[i]
-			fmt.Println("Checking: ", oarg.lname, oarg.sname)
-			for j := 0; j < len(*args); j++ {
-				arg := (*args)[j]
-				fmt.Println("Running: ", arg)
-				if arg == "" {
-					continue
-				}
-				if oarg.check(arg) {
-					if len(*args) < j+oarg.size {
-						return fmt.Errorf("not enough arguments for %s", oarg.name())
-					}
-					err := oarg.parse((*args)[j+1 : j+oarg.size])
-					if err != nil {
-						return err
-					}
-					oarg.reduce(j, args)
-					continue
-				}
-			}
-	*/
-
-	// Iterate over the args
+	// Iterate over known args to check required and assign defaults
 	for i := 0; i < len(o.args); i++ {
 		oarg := o.args[i]
+		logger.Println("Arg:", oarg.lname,
+			"Required:", (oarg.opts != nil && oarg.opts.Required),
+			"Parsed:", oarg.parsed)
 		// Check if arg is required and not provided
 		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
 			return fmt.Errorf("[%s] is required", oarg.name())
@@ -164,6 +166,7 @@ func (o *Command) parse(args *[]string) error {
 			}
 		}
 	}
+	logger.Println("Parsed command ", o.name)
 
 	// Set parsed status to true and return quietly
 	o.parsed = true
