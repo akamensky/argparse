@@ -4,8 +4,15 @@ package argparse
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"strings"
+)
+
+var (
+	//logger = log.New(os.Stderr, "logger: ", log.Ltime|log.Lshortfile)
+	logger = log.New(ioutil.Discard, "logger: ", log.Ltime|log.Lshortfile)
 )
 
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
@@ -86,9 +93,9 @@ func (o *Command) NewCommand(name string, description string) *Command {
 
 	c.help()
 
-	if o.commands == nil {
-		o.commands = make([]*Command, 0)
-	}
+	c.args = make([]*arg, 0)
+	c.mapargs = make(map[string]*arg, 0)
+	c.commands = make([]*Command, 0)
 
 	o.commands = append(o.commands, c)
 
@@ -390,7 +397,7 @@ func (o *Parser) Parse(args []string) error {
 			unparsed = append(unparsed, v)
 		}
 	}
-	// fmt.Println("Unparsed: ", unparsed)
+	logger.Println("Unparsed: ", unparsed)
 	if result == nil && len(unparsed) > 0 {
 		return errors.New("too many arguments")
 	}
