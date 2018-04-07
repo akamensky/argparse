@@ -15,6 +15,7 @@ type Command struct {
 	name        string
 	description string
 	args        []*arg
+	mapargs     map[string]*arg
 	commands    []*Command
 	parsed      bool
 	parent      *Command
@@ -61,6 +62,7 @@ func NewParser(name string, description string) *Parser {
 	p.description = description
 
 	p.args = make([]*arg, 0)
+	p.mapargs = make(map[string]*arg, 0)
 	p.commands = make([]*Command, 0)
 
 	p.help()
@@ -388,6 +390,7 @@ func (o *Parser) Parse(args []string) error {
 			unparsed = append(unparsed, v)
 		}
 	}
+	// fmt.Println("Unparsed: ", unparsed)
 	if result == nil && len(unparsed) > 0 {
 		return errors.New("too many arguments")
 	}
