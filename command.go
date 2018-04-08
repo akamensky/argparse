@@ -69,8 +69,6 @@ func (o *Command) parse(args *[]string) error {
 	// Reduce arguments by removing Command name
 	*args = (*args)[1:]
 
-	logger.Println("Input args for", o.name, *args)
-
 	// Parse subcommands if any
 	if o.commands != nil && len(o.commands) > 0 {
 		// If we have subcommands and 0 args left
@@ -86,7 +84,6 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
-	logger.Println("Input map", o.mapargs)
 	// Iterate over the input args
 	for j := 0; j < len(*args); {
 		var oarg *arg
@@ -97,7 +94,6 @@ func (o *Command) parse(args *[]string) error {
 			j++
 			continue
 		}
-		logger.Println("Matching for", arg)
 
 		oarg, match = o.mapargs[arg]
 		if !match { // couldn't match argument directly
@@ -124,7 +120,6 @@ func (o *Command) parse(args *[]string) error {
 		}
 
 		if !match {
-			logger.Println("No match for", arg)
 			j++
 			continue
 		}
@@ -132,7 +127,6 @@ func (o *Command) parse(args *[]string) error {
 		if len(*args) < j+oarg.size-1 {
 			return fmt.Errorf("not enough arguments for %s", oarg.name())
 		}
-		logger.Println("Parsing for", arg, (*args)[j:j+oarg.size-1])
 		// parse that many arguments and skipover j
 		err := oarg.parse((*args)[j : j+oarg.size-1])
 		if err != nil {
@@ -142,7 +136,6 @@ func (o *Command) parse(args *[]string) error {
 		// consume whatever is parsed
 		removeTill := j + oarg.size - 1
 		for ; j < removeTill; j++ {
-			logger.Println("Consuming for", arg, (*args)[j])
 			(*args)[j] = ""
 		}
 	}
@@ -150,9 +143,6 @@ func (o *Command) parse(args *[]string) error {
 	// Iterate over known args to check required and assign defaults
 	for i := 0; i < len(o.args); i++ {
 		oarg := o.args[i]
-		logger.Println("Arg:", oarg.lname,
-			"Required:", (oarg.opts != nil && oarg.opts.Required),
-			"Parsed:", oarg.parsed)
 		// Check if arg is required and not provided
 		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
 			return fmt.Errorf("[%s] is required", oarg.name())
@@ -166,7 +156,6 @@ func (o *Command) parse(args *[]string) error {
 			}
 		}
 	}
-	logger.Println("Parsed command ", o.name)
 
 	// Set parsed status to true and return quietly
 	o.parsed = true
