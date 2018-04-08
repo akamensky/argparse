@@ -129,6 +129,99 @@ func TestFlagMultiShorthand1(t *testing.T) {
 	}
 }
 
+func TestIntFlagMultiShorthand1(t *testing.T) {
+	val := 44
+	testArgs := []string{"progname", "-acdi" + strconv.Itoa(val)}
+	p := NewParser("", "description")
+	flag1 := p.Flag("a", "aa", nil)
+	flag2 := p.Flag("b", "bb", nil)
+	flag3 := p.Flag("c", "cc", nil)
+	flag4 := p.Flag("d", "dd", nil)
+	i1 := p.Int("i", "ii", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if *flag1 != true {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+	}
+
+	if *flag2 != false {
+		t.Errorf("Test %s failed with flag2 being true", t.Name())
+	}
+
+	if *flag3 != true {
+		t.Errorf("Test %s failed with flag3 being false", t.Name())
+	}
+
+	if *flag4 != true {
+		t.Errorf("Test %s failed with flag4 being false", t.Name())
+	}
+
+	if *i1 != val {
+		t.Errorf("Test %s failed. Want: [%d], got: [%d]", t.Name(), val, *i1)
+		return
+	}
+}
+
+func TestStringFlagMultiShorthand1(t *testing.T) {
+	val := "hello"
+	testArgs := []string{"progname", "-abds" + val}
+	p := NewParser("", "description")
+	flag1 := p.Flag("a", "aa", nil)
+	flag2 := p.Flag("b", "bb", nil)
+	flag3 := p.Flag("c", "cc", nil)
+	flag4 := p.Flag("d", "dd", nil)
+	s1 := p.String("s", "ss", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if *flag1 != true {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+	}
+
+	if *flag2 != true {
+		t.Errorf("Test %s failed with flag2 being false", t.Name())
+	}
+
+	if *flag3 != false {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+	}
+
+	if *flag4 != true {
+		t.Errorf("Test %s failed with flag4 being false", t.Name())
+	}
+
+	if *s1 != val {
+		t.Errorf("Test %s failed. Want: [%s], got: [%s]", t.Name(), val, *s1)
+		return
+	}
+}
+
+func TestStringFlagMultiShorthand2(t *testing.T) {
+	testArgs := []string{"progname", "-abds"}
+	p := NewParser("", "description")
+	_ = p.Flag("a", "aa", nil)
+	_ = p.Flag("b", "bb", nil)
+	_ = p.Flag("c", "cc", nil)
+	_ = p.Flag("d", "dd", nil)
+	_ = p.String("s", "ss", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "not enough arguments for -s|--ss"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+}
+
 func TestFailDuplicate(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "-f"}
 
@@ -1095,6 +1188,29 @@ func TestFloatFail1(t *testing.T) {
 	}
 
 	if *f1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%f]", t.Name(), *f1)
+		return
+	}
+}
+
+func TestFloatDefault1(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "description")
+	f1 := p.Float("f", "float1", &Options{Default: 3.5})
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if f1 == nil {
+		t.Errorf("Test %s failed with float1 being nil pointer", t.Name())
+		return
+	}
+
+	if *f1 != 3.5 {
 		t.Errorf("Test %s failed. Want: [0], got: [%f]", t.Name(), *f1)
 		return
 	}
