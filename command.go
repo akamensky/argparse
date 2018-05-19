@@ -8,7 +8,7 @@ func (o *Command) help() {
 	result := &help{}
 
 	a := &arg{
-		result: &result,
+		result: result,
 		sname:  "h",
 		lname:  "help",
 		size:   1,
@@ -23,19 +23,22 @@ func (o *Command) addArg(a *arg) {
 	if a.lname != "" {
 		if a.sname == "" || len(a.sname) == 1 {
 			// Search parents for overlapping commands and fail silently if any
+			sswitch, lswitch := "-"+a.sname, "--"+a.lname
 			current := o
 			for current != nil {
-				if current.args != nil {
-					for _, v := range current.args {
-						if (a.sname != "" && a.sname == v.sname) || a.lname == v.lname {
-							return
-						}
-					}
+				_, snameconflict := current.mapargs[sswitch]
+				_, lnameconflict := current.mapargs[lswitch]
+				if snameconflict || lnameconflict {
+					return
 				}
 				current = current.parent
 			}
 			a.parent = o
 			o.args = append(o.args, a)
+			if len(a.sname) != 0 {
+				o.mapargs[sswitch] = a
+			}
+			o.mapargs[lswitch] = a
 		}
 	}
 }
@@ -81,27 +84,65 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
-	// Iterate over the args
-	for i := 0; i < len(o.args); i++ {
-		oarg := o.args[i]
-		for j := 0; j < len(*args); j++ {
-			arg := (*args)[j]
-			if arg == "" {
-				continue
-			}
-			if oarg.check(arg) {
-				if len(*args) < j+oarg.size {
-					return fmt.Errorf("not enough arguments for %s", oarg.name())
-				}
-				err := oarg.parse((*args)[j+1 : j+oarg.size])
-				if err != nil {
-					return err
-				}
-				oarg.reduce(j, args)
-				continue
-			}
+	// Iterate over the input args
+	for j := 0; j < len(*args); {
+		var oarg *arg
+		var match bool
+
+		arg := (*args)[j]
+		if arg == "" {
+			j++
+			continue
 		}
 
+		oarg, match = o.mapargs[arg]
+		if !match { // couldn't match argument directly
+			// match short names without following space
+			// long names should always appear as separate argument
+			if arg[0] == '-' && arg[1] != '-' {
+				if oarg, match = o.mapargs[arg[:2]]; match {
+					// is a Flag and there are following characters
+					if oarg.size == 1 && len(arg) > 2 {
+						// leave '-' behind for next iteration
+						(*args)[j] = "-" + arg[2:]
+					} else {
+						// rest of the characters will be parameters to this arg
+						(*args)[j] = arg[2:]
+					}
+					// dont increment j
+					arg = arg[:2]
+				}
+			}
+		} else { // matched argument directly
+			// consume the arg name
+			(*args)[j] = ""
+			j++
+		}
+
+		if !match {
+			j++
+			continue
+		}
+
+		if len(*args) < j+oarg.size-1 {
+			return fmt.Errorf("not enough arguments for %s", oarg.name())
+		}
+		// parse that many arguments and skipover j
+		err := oarg.parse((*args)[j : j+oarg.size-1])
+		if err != nil {
+			return err
+		}
+
+		// consume whatever is parsed
+		removeTill := j + oarg.size - 1
+		for ; j < removeTill; j++ {
+			(*args)[j] = ""
+		}
+	}
+
+	// Iterate over known args to check required and assign defaults
+	for i := 0; i < len(o.args); i++ {
+		oarg := o.args[i]
 		// Check if arg is required and not provided
 		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
 			return fmt.Errorf("[%s] is required", oarg.name())
