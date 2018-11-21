@@ -1099,3 +1099,56 @@ func TestFloatFail1(t *testing.T) {
 		return
 	}
 }
+
+var pUsageString = `test string
+usage: prog [-h|--help]
+
+            program description
+
+Arguments:
+
+  -h  --help  Print help information
+
+`
+
+func TestUsageString(t *testing.T) {
+	p := NewParser("prog", "program description")
+
+	p.Parse(os.Args)
+
+	usage := p.Usage("test string")
+
+	if usage != pUsageString {
+		t.Errorf("%s", usage)
+	}
+}
+
+type s string
+func (s s) String() string {
+	return string(s)
+}
+
+var pUsageStringer = `stringer message
+usage: prog [-h|--help]
+
+            program description
+
+Arguments:
+
+  -h  --help  Print help information
+
+`
+
+func TestUsageStringer(t *testing.T) {
+	p := NewParser("prog", "program description")
+
+	p.Parse(os.Args)
+
+	var msg s = "stringer message"
+
+	usage := p.Usage(msg)
+
+	if usage != pUsageStringer {
+		t.Errorf("%s", usage)
+	}
+}
