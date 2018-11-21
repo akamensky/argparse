@@ -260,7 +260,11 @@ func (o *Command) Happened() bool {
 // Since Parser is a Command as well, they work in exactly same way. Meaning that usage string
 // can be retrieved for any level of commands. It will only include information about this Command,
 // its sub-commands, current Command arguments and arguments of all preceding commands (if any)
-func (o *Command) Usage(err interface{}) string {
+//
+// Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
+// All other interface types will be ignored
+func (o *Command) Usage(msg interface{}) string {
+	var result string
 	// Stay classy
 	maxWidth := 80
 	// List of arguments from all preceding commands
@@ -268,15 +272,20 @@ func (o *Command) Usage(err interface{}) string {
 	// First get line of commands until root
 	var chain []string
 	current := o
-	if err != nil {
-		switch err.(type) {
+	if msg != nil {
+		switch msg.(type) {
 		case subCommandError:
-			fmt.Println(err.(error).Error())
-			if err.(subCommandError).cmd != nil {
-				return err.(subCommandError).cmd.Usage(nil)
+			result = fmt.Sprintf("%s\n", msg.(error).Error())
+			if msg.(subCommandError).cmd != nil {
+				result += msg.(subCommandError).cmd.Usage(nil)
 			}
+			return result
 		case error:
-			fmt.Println(err.(error).Error())
+			result = fmt.Sprintf("%s\n", msg.(error).Error())
+		case string:
+			result = fmt.Sprintf("%s\n", msg.(string))
+		case fmt.Stringer:
+			result = fmt.Sprintf("%s\n", msg.(fmt.Stringer).String())
 		}
 	}
 	for current != nil {
@@ -301,8 +310,8 @@ func (o *Command) Usage(err interface{}) string {
 		}
 	}
 
-	// Build result description
-	var result = "usage:"
+	// Build usage description
+	result += "usage:"
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
 	for _, v := range chain {
