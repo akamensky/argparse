@@ -774,6 +774,32 @@ func TestUsageSimple1(t *testing.T) {
 	}
 }
 
+func TestUsageHidden1(t *testing.T) {
+	p := NewParser("verylongprogname", "prog description")
+
+	cmd1 := p.NewCommand("veryverylongcmd1", "cmd1 description")
+	_ = cmd1.Flag("f", "verylongflag1", &Options{Help: "flag1 description"})
+	_ = cmd1.Flag("a", "verylongflagA", &Options{Required: true, Help: "flag1 description"})
+	_ = p.String("s", "verylongstring-flag1", &Options{Help: "string1 description"})
+	_ = p.Int("i", "integer-flag1", &Options{Help: "integer1 description"})
+	_ = p.Int("i2", "integer-flag2", &Options{Help: DisableDescription})
+
+	_ = p.NewCommand("cmd2", "cmd2 description")
+
+	cmd3 := p.NewCommand("cmd3", DisableDescription)
+	_ = cmd3.Flag("f", "verylongflag1", &Options{Help: "flag1 description"})
+	_ = cmd3.Flag("a", "verylongflagA", &Options{Required: true, Help: "flag1 description"})
+
+	p.Parse(os.Args)
+
+	if pUsage != p.Usage(nil) {
+		t.Errorf("%s", p.Usage(nil))
+	}
+	if cmd1Usage != cmd1.Usage(nil) {
+		t.Errorf("%s", cmd1.Usage(nil))
+	}
+}
+
 func TestStringMissingArgFail(t *testing.T) {
 	testArgs := []string{"progname", "-s"}
 
@@ -1124,6 +1150,7 @@ func TestUsageString(t *testing.T) {
 }
 
 type s string
+
 func (s s) String() string {
 	return string(s)
 }
