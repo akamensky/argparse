@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const DisableDescription = "DISABLEDDESCRIPTIONWILLNOTSHOWUP"
+
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
 // Command MUST NOT ever be created manually. Instead one should call NewCommand method of Parser or Command,
 // which will setup appropriate fields and call methods that have to be called when creating new command.
@@ -333,12 +335,18 @@ func (o *Command) Usage(msg interface{}) string {
 		// Get biggest padding
 		var cmdPadding int
 		for _, com := range commands {
+			if com.description == DisableDescription {
+				continue
+			}
 			if len("  "+com.name+"  ") > cmdPadding {
 				cmdPadding = len("  " + com.name + "  ")
 			}
 		}
 		// Now add commands with known padding
 		for _, com := range commands {
+			if com.description == DisableDescription {
+				continue
+			}
 			cmd := "  " + com.name
 			cmd = cmd + strings.Repeat(" ", cmdPadding-len(cmd)-1)
 			cmd = addToLastLine(cmd, com.description, maxWidth, cmdPadding, true)
@@ -354,12 +362,18 @@ func (o *Command) Usage(msg interface{}) string {
 		var argPadding int
 		// Find biggest padding
 		for _, argument := range arguments {
+			if argument.opts.Help == DisableDescription {
+				continue
+			}
 			if len(argument.lname)+9 > argPadding {
 				argPadding = len(argument.lname) + 9
 			}
 		}
 		// Now add args with padding
 		for _, argument := range arguments {
+			if argument.opts.Help == DisableDescription {
+				continue
+			}
 			arg := "  "
 			if argument.sname != "" {
 				arg = arg + "-" + argument.sname + "  "
