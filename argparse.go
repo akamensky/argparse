@@ -308,6 +308,10 @@ func (o *Command) Usage(msg interface{}) string {
 	if o.commands != nil && len(o.commands) > 0 {
 		chain = append(chain, "<Command>")
 		for _, v := range o.commands {
+			// Skip hidden commands
+			if v.description == DisableDescription {
+				continue
+			}
 			commands = append(commands, *v)
 		}
 	}
@@ -321,6 +325,10 @@ func (o *Command) Usage(msg interface{}) string {
 	}
 	// Add arguments from this and all preceding commands
 	for _, v := range arguments {
+		// Skip arguments that are hidden
+		if v.opts.Help == DisableDescription {
+			continue
+		}
 		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 	}
 
