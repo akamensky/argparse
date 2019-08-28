@@ -420,7 +420,7 @@ func (o *Parser) Parse(args []string) error {
 		}
 	}
 	if result == nil && len(unparsed) > 0 {
-		return errors.New("Unknown arguments " + strings.Join(unparsed, " "))
+		return errors.New("unknown arguments " + strings.Join(unparsed, " "))
 	}
 
 	return result
