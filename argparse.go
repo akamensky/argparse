@@ -267,6 +267,11 @@ func (o *Command) Happened() bool {
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
 func (o *Command) Usage(msg interface{}) string {
+	for _, cmd := range o.commands {
+		if cmd.Happened() {
+			return cmd.Usage(msg)
+		}
+	}
 	var result string
 	// Stay classy
 	maxWidth := 80
