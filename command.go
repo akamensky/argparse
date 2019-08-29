@@ -63,6 +63,8 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
+	// Set parsed status to true when start to parse args
+	o.parsed = true
 	// Reduce arguments by removing Command name
 	*args = (*args)[1:]
 
@@ -116,7 +118,5 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
-	// Set parsed status to true and return quietly
-	o.parsed = true
 	return nil
 }
