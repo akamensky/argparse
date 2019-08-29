@@ -19,6 +19,7 @@ type Command struct {
 	args        []*arg
 	commands    []*Command
 	parsed      bool
+	happened    bool
 	parent      *Command
 }
 
@@ -255,7 +256,7 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 // Happened shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
 // all its descendant commands and arguments are not parsed. Returns a boolean value.
 func (o *Command) Happened() bool {
-	return o.parsed
+	return o.happened
 }
 
 // Usage returns a multiline string that is the same as a help message for this Parser or Command.
@@ -266,6 +267,11 @@ func (o *Command) Happened() bool {
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
 func (o *Command) Usage(msg interface{}) string {
+	for _, cmd := range o.commands {
+		if cmd.Happened() {
+			return cmd.Usage(msg)
+		}
+	}
 	var result string
 	// Stay classy
 	maxWidth := 80

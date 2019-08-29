@@ -63,6 +63,9 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
+	// Set happened status to true when command happend
+	o.happened = true
+
 	// Reduce arguments by removing Command name
 	*args = (*args)[1:]
 
