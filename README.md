@@ -100,7 +100,7 @@ There are a few caveats (or more like design choices) to know about:
 * Shorthand arguments MUST be a single character. Shorthand arguments are prepended with single dash `"-"`
 * If not convenient shorthand argument can be completely skipped by passing empty string `""` as first argument
 * Shorthand arguments ONLY for `parser.Flag()` can be combined into single argument same as `ps -aux` or `rm -rf`
-* Long arguments are required and cannot be empty. They are prepended with double dash `"--"`
+* Long arguments must be specified and cannot be empty. They are prepended with double dash `"--"`
 * You cannot define two same arguments. Only first one will be used. For example doing `parser.Flag("t", "test", nil)` followed by `parser.String("t", "test2", nil)` will not work as second `String` argument will be ignored (note that both have `"t"` as shorthand argument). However since it is case-sensitive library, you can work arounf it by capitalizing one of the arguments
 * There is a pre-defined argument for `-h|--help`, so from above attempting to define any argument using `h` as shorthand will fail
 * `parser.Parse()` returns error in case of something going wrong, but it is not expected to cover ALL cases
