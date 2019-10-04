@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/akamensky/argparse"
 	"os"
+
+	"github.com/akamensky/argparse"
 )
 
 // Run this as `go run commands.go [start|stop]`

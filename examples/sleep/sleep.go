@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/akamensky/argparse"
 	"os"
 	"time"
+
+	"github.com/akamensky/argparse"
 )
 
 func main() {
