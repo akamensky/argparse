@@ -119,6 +119,11 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
+	// assign any unparsed args to positional oarg
+	for _, oarg := range o.args {
+		oarg.assignPositional(args)
+	}
+
 	// Set parsed status to true and return quietly
 	o.parsed = true
 	return nil

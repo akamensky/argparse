@@ -8,20 +8,44 @@ import (
 )
 
 type arg struct {
-	result   interface{} // Pointer to the resulting value
-	opts     *Options    // Options
-	sname    string      // Short name (in Parser will start with "-"
-	lname    string      // Long name (in Parser will start with "--"
-	size     int         // Size defines how many args after match will need to be consumed
-	unique   bool        // Specifies whether flag should be present only ones
-	parsed   bool        // Specifies whether flag has been parsed already
-	fileFlag int         // File mode to open file with
-	filePerm os.FileMode // File permissions to set a file
-	selector *[]string   // Used in Selector type to allow to choose only one from list of options
-	parent   *Command    // Used to get access to specific Command
+	result     interface{} // Pointer to the resulting value
+	opts       *Options    // Options
+	sname      string      // Short name (in Parser will start with "-"
+	lname      string      // Long name (in Parser will start with "--"
+	size       int         // Size defines how many args after match will need to be consumed
+	unique     bool        // Specifies whether flag should be present only ones
+	positional bool        // Positional is set if arg is to contain unparsed CLI strings
+	parsed     bool        // Specifies whether flag has been parsed already
+	fileFlag   int         // File mode to open file with
+	filePerm   os.FileMode // File permissions to set a file
+	selector   *[]string   // Used in Selector type to allow to choose only one from list of options
+	parent     *Command    // Used to get access to specific Command
 }
 
 type help struct{}
+
+type PositionalResult []string
+
+func (o *arg) assignPositional(args *[]string) {
+	// We could use oarg.size to break the unparsed list up into more
+	// than one positional; for now, we just silently ignore all but
+	// the first positional oarg we find.
+	//
+	// Also see the nargs branch in github.com/jokelyo/argparse -- it
+	// doesn't appear to handle positionals yet, but could be modified
+	// to do so.
+	if !o.positional {
+		return
+	}
+	var result PositionalResult
+	for i, v := range *args {
+		if v != "" && v[0] != '-' {
+			result = append(result, v)
+			(*args)[i] = ""
+		}
+	}
+	*o.result.(*PositionalResult) = result
+}
 
 func (o *arg) check(argument string) bool {
 	// Shortcut to showing help
@@ -199,7 +223,9 @@ func (o *arg) parse(args []string) error {
 
 func (o *arg) name() string {
 	var name string
-	if o.lname == "" {
+	if o.positional {
+		name = o.lname
+	} else if o.lname == "" {
 		name = "-" + o.sname
 	} else if o.sname == "" {
 		name = "--" + o.lname
@@ -229,6 +255,8 @@ func (o *arg) usage() string {
 		result = result + " <file>"
 	case *[]string:
 		result = result + " \"<value>\"" + " [" + result + " \"<value>\" ...]"
+	case *PositionalResult:
+		result = result + " ..."
 	default:
 		break
 	}
