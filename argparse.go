@@ -229,17 +229,27 @@ func (o *Command) List(short string, long string, opts *Options) *[]string {
 	return &result
 }
 
-// Positional creates an argument which is a catch-all for any remaining strings left over after parsing.
+// PosString creates an argument which collects any strings remaining
+// after parsing all other flags.  The strings will be stored in the
+// results array.  We use a custom type for PosStringResult in order
+// to enable correct rendering of the help text in the usage() switch
+// statement.  The 'name' parameter value is provided in the
+// user-visible help text; see examples/positionals/positionals.go.
+//
+// Any unparsed strings which start with '-' are indistinguishable from
+// an erroneous flag, so will trigger an error message and halt
+// parsing.
+//
 // Returns a pointer to the list of strings.
-func (o *Command) Positional(long string, opts *Options) *PositionalResult {
-	var result PositionalResult
+func (o *Command) PosString(name string, opts *Options) *PosStringResult {
+	var result PosStringResult
 
 	a := &arg{
-		result:     &result,
-		lname:      long,
-		opts:       opts,
-		unique:     true,
-		positional: true,
+		result:    &result,
+		lname:     name,
+		opts:      opts,
+		unique:    true,
+		posstring: true,
 	}
 
 	o.addArg(a)
@@ -412,7 +422,7 @@ func (o *Command) Usage(msg interface{}) string {
 			} else {
 				arg = arg + "    "
 			}
-			if argument.positional {
+			if argument.posstring {
 				arg += argument.lname
 			} else {
 				arg = arg + "--" + argument.lname

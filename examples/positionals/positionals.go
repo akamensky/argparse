@@ -12,7 +12,7 @@ func main() {
 	parser := argparse.NewParser("positionals", "Prints provided positional strings to stdout")
 	// Create string flag
 	s := parser.String("s", "string", &argparse.Options{Required: true, Help: "String to print"})
-	p := parser.Positional("positional", &argparse.Options{Help: "More strings to print"})
+	p := parser.PosString("somename", &argparse.Options{Help: "Positional strings to print"})
 	// Parse input
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -21,7 +21,8 @@ func main() {
 		fmt.Print(parser.Usage(err))
 		os.Exit(1)
 	}
-	// Finally print the collected string
+	// Print the -s string
 	fmt.Println(*s)
+	// Print any remaining strings as the positional arg
 	fmt.Println(*p)
 }
