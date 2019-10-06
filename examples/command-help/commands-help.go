@@ -10,7 +10,7 @@ func main() {
 	// Create new parser object
 	parser := argparse.NewParser("help", "Demonstrates overriding the default help output")
 	// Replace parser.Usage as the help message
-	parser.HelpFunc = func(c argparse.Command, msg interface{}) string {
+	parser.HelpFunc = func(c *argparse.Command, msg interface{}) string {
 		var help string
 		help += fmt.Sprintf("Name: %s, Description: %s\n", c.GetName(), c.GetDescription())
 		for _, arg := range c.GetArgs() {
