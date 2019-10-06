@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// DisableDescription can be assigned as a command or arguments description to hide it from the Usage output
 const DisableDescription = "DISABLEDDESCRIPTIONWILLNOTSHOWUP"
 
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
@@ -21,6 +22,48 @@ type Command struct {
 	parsed      bool
 	happened    bool
 	parent      *Command
+	HelpFunc    func(c *Command, msg interface{}) string
+}
+
+// GetName exposes Command's name field
+func (o Command) GetName() string {
+	return o.name
+}
+
+// GetDescription exposes Command's description field
+func (o Command) GetDescription() string {
+	return o.description
+}
+
+// GetArgs exposes Command's args field
+func (o Command) GetArgs() (args []Arg) {
+	for _, arg := range o.args {
+		args = append(args, arg)
+	}
+	return
+}
+
+// GetCommands exposes Command's commands field
+func (o Command) GetCommands() []*Command {
+	return o.commands
+}
+
+// GetParent exposes Command's parent field
+func (o Command) GetParent() *Command {
+	return o.parent
+}
+
+// Help calls the overriddable Command.HelpFunc on itself,
+// called when the help argument strings are passed via CLI
+func (o *Command) Help(msg interface{}) string {
+	tempC := o
+	for tempC.HelpFunc == nil {
+		if tempC.parent == nil {
+			return ""
+		}
+		tempC = tempC.parent
+	}
+	return tempC.HelpFunc(o, msg)
 }
 
 // Parser is a top level object of argparse. It MUST NOT ever be created manually. Instead one should use
@@ -67,6 +110,7 @@ func NewParser(name string, description string) *Parser {
 	p.commands = make([]*Command, 0)
 
 	p.help()
+	p.HelpFunc = (*Command).Usage
 
 	return p
 }

@@ -21,12 +21,31 @@ type arg struct {
 	parent   *Command    // Used to get access to specific Command
 }
 
+// Arg interface provides exporting of arg structure, while exposing it
+type Arg interface {
+	GetOpts() *Options
+	GetSname() string
+	GetLname() string
+}
+
+func (o arg) GetOpts() *Options {
+	return o.opts
+}
+
+func (o arg) GetSname() string {
+	return o.sname
+}
+
+func (o arg) GetLname() string {
+	return o.lname
+}
+
 type help struct{}
 
 func (o *arg) check(argument string) bool {
 	// Shortcut to showing help
 	if argument == "-h" || argument == "--help" {
-		helpText := o.parent.Usage(nil)
+		helpText := o.parent.Help(nil)
 		fmt.Print(helpText)
 		os.Exit(0)
 	}
@@ -116,7 +135,7 @@ func (o *arg) parse(args []string) error {
 
 	switch o.result.(type) {
 	case *help:
-		helpText := o.parent.Usage(nil)
+		helpText := o.parent.Help(nil)
 		fmt.Print(helpText)
 		os.Exit(0)
 	case *bool:
