@@ -22,7 +22,7 @@ type Command struct {
 	parsed      bool
 	happened    bool
 	parent      *Command
-	HelpFunc    func(c Command, msg interface{}) string
+	HelpFunc    func(c *Command, msg interface{}) string
 }
 
 // GetName exposes Command's name field
@@ -55,13 +55,13 @@ func (o Command) GetParent() *Command {
 
 // Help calls the overriddable Command.HelpFunc on itself,
 // called when the help argument strings are passed via CLI
-func (o Command) Help(msg interface{}) string {
+func (o *Command) Help(msg interface{}) string {
 	tempC := o
 	for tempC.HelpFunc == nil {
 		if tempC.parent == nil {
 			return ""
 		}
-		tempC = *tempC.parent
+		tempC = tempC.parent
 	}
 	return tempC.HelpFunc(o, msg)
 }
@@ -110,7 +110,7 @@ func NewParser(name string, description string) *Parser {
 	p.commands = make([]*Command, 0)
 
 	p.help()
-	p.HelpFunc = Command.Usage
+	p.HelpFunc = (*Command).Usage
 
 	return p
 }
@@ -310,7 +310,7 @@ func (o *Command) Happened() bool {
 //
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
-func (o Command) Usage(msg interface{}) string {
+func (o *Command) Usage(msg interface{}) string {
 	for _, cmd := range o.commands {
 		if cmd.Happened() {
 			return cmd.Usage(msg)
@@ -323,7 +323,7 @@ func (o Command) Usage(msg interface{}) string {
 	arguments := make([]*arg, 0)
 	// First get line of commands until root
 	var chain []string
-	current := &o
+	current := o
 	if msg != nil {
 		switch msg.(type) {
 		case subCommandError:
