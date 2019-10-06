@@ -1179,3 +1179,10 @@ func TestUsageStringer(t *testing.T) {
 		t.Errorf("%s", usage)
 	}
 }
+
+func TestNewParserHelpFuncDefault(t *testing.T) {
+	parser := NewParser("parser", "")
+	if parser.HelpFunc == nil || parser.Help(nil) != parser.Usage(nil) {
+		t.Errorf("HelpFunc should default to Usage function")
+	}
+}
