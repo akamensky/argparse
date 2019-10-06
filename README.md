@@ -1,6 +1,6 @@
 # Golang argparse
 
-[![GoDoc](https://godoc.org/github.com/akamensky/argparse?status.svg)](https://godoc.org/github.com/akamensky/argparse) [![Go Report Card](https://goreportcard.com/badge/github.com/akamensky/argparse)](https://goreportcard.com/report/github.com/akamensky/argparse) [![cover.run](https://cover.run/go/github.com/akamensky/argparse.svg?style=flat&tag=golang-1.10)](https://cover.run/go?tag=golang-1.10&repo=github.com%2Fakamensky%2Fargparse) [![Build Status](https://travis-ci.org/akamensky/argparse.svg?branch=master)](https://travis-ci.org/akamensky/argparse)
+[![GoDoc](https://godoc.org/github.com/akamensky/argparse?status.svg)](https://godoc.org/github.com/akamensky/argparse) [![Go Report Card](https://goreportcard.com/badge/github.com/akamensky/argparse)](https://goreportcard.com/report/github.com/akamensky/argparse) [![Coverage Status](https://coveralls.io/repos/github/akamensky/argparse/badge.svg?branch=update-travis-yml)](https://coveralls.io/github/akamensky/argparse?branch=update-travis-yml) [![Build Status](https://travis-ci.org/akamensky/argparse.svg?branch=master)](https://travis-ci.org/akamensky/argparse)
 
 Let's be honest -- Go's standard command line arguments parser `flag` terribly sucks. 
 It cannot come anywhere close to the Python's `argparse` module. This is why this project exists.
