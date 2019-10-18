@@ -1186,3 +1186,31 @@ func TestNewParserHelpFuncDefault(t *testing.T) {
 		t.Errorf("HelpFunc should default to Usage function")
 	}
 }
+
+func TestNewParserWithSettingsHelpDisabled(t *testing.T) {
+	parser := NewParserWithSettings("parser", "", Settings{HelpDisabled: true})
+	if len(parser.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
+	}
+}
+
+func TestNewParserWithSettingsHelpNames(t *testing.T) {
+	sname, lname := "x", "xyz"
+	parser := NewParserWithSettings("parser", "", Settings{HelpSname: sname, HelpLname: lname})
+	if len(parser.args) != 1 {
+		t.Errorf("Parser should not have any arguments:\n%s", parser.Help(nil))
+	}
+	arg := parser.args[0]
+	if _, ok := arg.result.(*help); !ok {
+		t.Errorf("Argument should be %T, is %T", help{}, arg.result)
+	}
+	if arg.sname != sname {
+		t.Errorf("Argument short name should be %s, is %s", sname, arg.sname)
+	}
+	if arg.lname != lname {
+		t.Errorf("Argument long name should be %s, is %s", lname, arg.lname)
+	}
+}

@@ -42,14 +42,17 @@ func (o arg) GetLname() string {
 
 type help struct{}
 
-func (o *arg) check(argument string) bool {
-	// Shortcut to showing help
-	if argument == "-h" || argument == "--help" {
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
-		os.Exit(0)
-	}
+// HelpCalled error returned when parsing a help argument
+// instead of exiting to prevent further parsing
+type HelpCalled struct {
+	arg arg
+}
 
+func (hc *HelpCalled) Error() string {
+	return fmt.Sprintf("Command %s help argument parsed", hc.arg.parent.name)
+}
+
+func (o *arg) check(argument string) bool {
 	// Check for long name only if not empty
 	if o.lname != "" {
 		// If argument begins with "--" and next is not "-" then it is a long name
@@ -137,7 +140,10 @@ func (o *arg) parse(args []string) error {
 	case *help:
 		helpText := o.parent.Help(nil)
 		fmt.Print(helpText)
-		os.Exit(0)
+		if o.parent.exitOnHelp {
+			os.Exit(0)
+		}
+		return &HelpCalled{*o}
 	case *bool:
 		*o.result.(*bool) = true
 		o.parsed = true

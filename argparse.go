@@ -23,6 +23,7 @@ type Command struct {
 	happened    bool
 	parent      *Command
 	HelpFunc    func(c *Command, msg interface{}) string
+	exitOnHelp  bool
 }
 
 // GetName exposes Command's name field
@@ -97,6 +98,25 @@ type Options struct {
 	Default  interface{}
 }
 
+// Settings are specific settings for a parser or command. They can be provided if necessary.
+// Possible fields are:
+//
+// Settings.HelpDisabled - if true, does not creates a help argument for the Parser/Command.
+// useful when a help argument should not be created.
+//
+// Settings.HelpSname - A string which will be used as the help argument short name. Can be left empty
+//
+// Settings.HelpLname - A string which will be used as the help argument long name. If left empty,
+// -h and --help are used as the short and long names repectively
+//
+//Settings.NoExitOnHelp - if true, does call os.Exit when help arguments are parsed
+type Settings struct {
+	HelpDisabled bool
+	HelpSname    string
+	HelpLname    string
+	NoExitOnHelp bool
+}
+
 // NewParser creates new Parser object that will allow to add arguments for parsing
 // It takes program name and description which will be used as part of Usage output
 // Returns pointer to Parser object
@@ -109,7 +129,29 @@ func NewParser(name string, description string) *Parser {
 	p.args = make([]*arg, 0)
 	p.commands = make([]*Command, 0)
 
-	p.help()
+	p.help("h", "help")
+	p.exitOnHelp = true
+	p.HelpFunc = (*Command).Usage
+
+	return p
+}
+
+// NewParserWithSettings creates new Parser object that will allow to add arguments for parsing
+// It takes program name and description which will be used as part of Usage output
+// Returns pointer to Parser object
+func NewParserWithSettings(name string, description string, settings Settings) *Parser {
+	p := &Parser{}
+
+	p.name = name
+	p.description = description
+
+	p.args = make([]*arg, 0)
+	p.commands = make([]*Command, 0)
+
+	if !settings.HelpDisabled {
+		p.help(settings.HelpSname, settings.HelpLname)
+	}
+	p.exitOnHelp = !settings.NoExitOnHelp
 	p.HelpFunc = (*Command).Usage
 
 	return p
@@ -129,7 +171,36 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	c.parsed = false
 	c.parent = o
 
-	c.help()
+	c.help("h", "help")
+	c.exitOnHelp = true
+
+	if o.commands == nil {
+		o.commands = make([]*Command, 0)
+	}
+
+	o.commands = append(o.commands, c)
+
+	return c
+}
+
+// NewCommandWithSettings will create a sub-command and propagate all necessary fields.
+// All commands are always at the beginning of the arguments.
+// Parser can have commands and those commands can have sub-commands,
+// which allows for very flexible workflow.
+// All commands are considered as required and all commands can have their own argument set.
+// Commands are processed Parser -> Command -> sub-Command.
+// Arguments will be processed in order of sub-Command -> Command -> Parser.
+func (o *Command) NewCommandWithSettings(name string, description string, settings Settings) *Command {
+	c := new(Command)
+	c.name = name
+	c.description = description
+	c.parsed = false
+	c.parent = o
+
+	if !settings.HelpDisabled {
+		c.help(settings.HelpSname, settings.HelpLname)
+	}
+	c.exitOnHelp = !settings.NoExitOnHelp
 
 	if o.commands == nil {
 		o.commands = make([]*Command, 0)

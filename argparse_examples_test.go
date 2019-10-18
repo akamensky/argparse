@@ -1,6 +1,8 @@
 package argparse
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func ExampleCommand_Help() {
 	parser := NewParser("parser", "")
