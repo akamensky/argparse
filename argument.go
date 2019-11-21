@@ -42,7 +42,11 @@ func (o arg) GetLname() string {
 
 type help struct{}
 
-func (o *arg) check(argument string) bool {
+//Check if argumet present.
+//For args with size 1 (Flag,Counter) we allow multiple shorthand in one,
+//so check - returns the number of occurrences.
+//For other args check - returns 1 if occured or 0 in no
+func (o *arg) check(argument string) int {
 	// Shortcut to showing help
 	if argument == "-h" || argument == "--help" {
 		helpText := o.parent.Help(nil)
@@ -55,7 +59,7 @@ func (o *arg) check(argument string) bool {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				return true
+				return 1
 			}
 		}
 	}
@@ -63,22 +67,21 @@ func (o *arg) check(argument string) bool {
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			switch o.result.(type) {
-			case *bool:
-				// For flags we allow multiple shorthand in one
+			// For args with size 1 (Flag,Counter) we allow multiple shorthand in one
+			if o.size == 1 {
 				if strings.Contains(argument[1:], o.sname) {
-					return true
+					return len(strings.Split(argument[1:], o.sname)) - 1
 				}
-			default:
 				// For all other types it must be separate argument
+			} else {
 				if argument[1:] == o.sname {
-					return true
+					return 1
 				}
 			}
 		}
 	}
 
-	return false
+	return 0
 }
 
 func (o *arg) reduce(position int, args *[]string) {
@@ -98,17 +101,16 @@ func (o *arg) reduce(position int, args *[]string) {
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			switch o.result.(type) {
-			case *bool:
-				// For flags we allow multiple shorthand in one
+			// For args with size 1 (Flag,Counter) we allow multiple shorthand in one
+			if o.size == 1 {
 				if strings.Contains(argument[1:], o.sname) {
 					(*args)[position] = strings.Replace(argument, o.sname, "", -1)
 					if (*args)[position] == "-" {
 						(*args)[position] = ""
 					}
 				}
-			default:
 				// For all other types it must be separate argument
+			} else {
 				if argument[1:] == o.sname {
 					for i := position; i < position+o.size; i++ {
 						(*args)[i] = ""
@@ -119,7 +121,7 @@ func (o *arg) reduce(position int, args *[]string) {
 	}
 }
 
-func (o *arg) parse(args []string) error {
+func (o *arg) parse(args []string, argCount int) error {
 	// If unique do not allow more than one time
 	if o.unique && o.parsed {
 		return fmt.Errorf("[%s] can only be present once", o.name())
@@ -142,17 +144,22 @@ func (o *arg) parse(args []string) error {
 		*o.result.(*bool) = true
 		o.parsed = true
 	case *int:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by an integer", o.name())
-		}
-		if len(args) > 1 {
+		switch {
+		case len(args) < 1:
+			if o.size != 1 {
+				return fmt.Errorf("[%s] must be followed by an integer", o.name())
+			}
+			//case of Counter argument
+			*o.result.(*int) += argCount
+		case len(args) > 1:
 			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		default:
+			val, err := strconv.Atoi(args[0])
+			if err != nil {
+				return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+			}
+			*o.result.(*int) = val
 		}
-		val, err := strconv.Atoi(args[0])
-		if err != nil {
-			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
-		}
-		*o.result.(*int) = val
 		o.parsed = true
 	case *float64:
 		if len(args) < 1 {
