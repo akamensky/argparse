@@ -273,6 +273,30 @@ func TestFailDuplicate(t *testing.T) {
 		t.Errorf("Test %s failed with. Duplicate flag use not detected", t.Name())
 		return
 	}
+
+	testArgs = []string{"progname", "--flag-arg2", "-ff"}
+
+	p = NewParser("", "description")
+	_ = p.Flag("f", "flag-arg1", nil)
+	_ = p.Flag("", "flag-arg2", nil)
+
+	err = p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed with. Duplicate flag use not detected", t.Name())
+		return
+	}
+
+	testArgs = []string{"progname", "--flag-arg2", "-f"}
+
+	p = NewParser("", "description")
+	_ = p.Flag("f", "flag-arg1", nil)
+	_ = p.Flag("", "flag-arg2", nil)
+
+	err = p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with. Fake duplicate flag detected", t.Name())
+		return
+	}
 }
 
 func TestFailCaseSensitive(t *testing.T) {

@@ -123,7 +123,7 @@ func (o *arg) reduce(position int, args *[]string) {
 
 func (o *arg) parse(args []string, argCount int) error {
 	// If unique do not allow more than one time
-	if o.unique && o.parsed {
+	if o.unique && (o.parsed || argCount > 1) {
 		return fmt.Errorf("[%s] can only be present once", o.name())
 	}
 
