@@ -1,18 +1,9 @@
 language: go
 sudo: false
-addons:
-  sonarcloud:
-    organization: "akamensky"
-    token:
-      secure: "UHOX/1aKjS292jywXbx4sWBaka1Bw7xJYAKRFo5wcadJMOBWVYmchNc5brAFkxsVpswnxmjnwtcGerjOV2t6Da5xUX3ST/p7REjKSSz5RmZ/Wa88z6g2PYlmoybqLAlgPmaBX+m5ZxGtaPo3joR+pUmjmUS2VF385UQLezuFbweSYZ90acBSr6kOw0xFQtc3UdW2NjUYM2ihmTCxFh0LwirZJnJCu0Zd1NQiaJOnvHp3nD83bU9PLaZbW308Kjl/cfIdEGf6CuzbeEILUoUqN9AAbAYFfr5HM28IPdzWRrp1krpb0P/OAmRMq18tLWx+AYmI2Y+Ud1AmqHZCNH5OqQYFU6XT7mkKT+Lh3ecNdcTKXRwQAiONj5EGHkbqi0q/kxWe/DEZOVJ51NjwHpjkKV1ByuAdWKXgXAwgftkQtw9+xkHrNSMgKonmcRXqcKy24jM9xOmwcbjMgh1dUoieerDv8midOJWVB538Cw6MH7f4j4ku8WC12YcDQElLoQFTuVjcAtYYGlXgVsfeXKi/I2fXwApKX0+O8ublWLgiNF7MljBHpbIffJCMD4APksIk7PwxYZzjdYJr4UgkLOTAyOH83BTVqVCANBQMLNP03UJIrtMzncB6J/b22ydw139GLx6a8tVdH6AtC2Y87CEWcvM/kA3OC9RK39MXP95tJKo="
 go:
-  - "1.11"
-  - "1.12"
-  - "1.13"
-  - "tip"
+  - "1.x"
 before_install:
   - go get github.com/mattn/goveralls
 script:
   - go test -v .
   - $GOPATH/bin/goveralls -service=travis-ci
-  - sonar-scanner
