@@ -129,13 +129,13 @@ func TestFlagMultiShorthand1(t *testing.T) {
 	}
 }
 
-func TestCounterSimple1(t *testing.T) {
+func TestFlagCounterSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "--flag-arg3", "--flag-arg3"}
 
 	p := NewParser("", "description")
-	flag1 := p.Counter("", "flag-arg1", nil)
-	flag2 := p.Counter("", "flag-arg2", nil)
-	flag3 := p.Counter("", "flag-arg3", nil)
+	flag1 := p.FlagCounter("", "flag-arg1", nil)
+	flag2 := p.FlagCounter("", "flag-arg2", nil)
+	flag3 := p.FlagCounter("", "flag-arg3", nil)
 
 	err := p.Parse(testArgs)
 	if err != nil {
@@ -174,13 +174,13 @@ func TestCounterSimple1(t *testing.T) {
 	}
 }
 
-func TestCounterSimple2(t *testing.T) {
+func TestFlagCounterSimple2(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "-f", "--flag-arg3", "-f"}
 
 	p := NewParser("", "description")
-	flag1 := p.Counter("", "flag-arg1", nil)
-	flag2 := p.Counter("", "flag-arg2", nil)
-	flag3 := p.Counter("f", "flag-arg3", nil)
+	flag1 := p.FlagCounter("", "flag-arg1", nil)
+	flag2 := p.FlagCounter("", "flag-arg2", nil)
+	flag3 := p.FlagCounter("f", "flag-arg3", nil)
 
 	err := p.Parse(testArgs)
 	if err != nil {
@@ -219,16 +219,16 @@ func TestCounterSimple2(t *testing.T) {
 	}
 }
 
-func TestCounterMultiShorthand1(t *testing.T) {
+func TestFlagCounterMultiShorthand1(t *testing.T) {
 	testArgs := []string{"progname", "-abbcbcadaa", "-e"}
 
 	p := NewParser("", "description")
-	flag1 := p.Counter("a", "aa", nil)
-	flag2 := p.Counter("b", "bb", nil)
-	flag3 := p.Counter("c", "cc", nil)
-	flag4 := p.Counter("d", "dd", nil)
-	flag5 := p.Counter("e", "ee", nil)
-	flag6 := p.Counter("f", "ff", nil)
+	flag1 := p.FlagCounter("a", "aa", nil)
+	flag2 := p.FlagCounter("b", "bb", nil)
+	flag3 := p.FlagCounter("c", "cc", nil)
+	flag4 := p.FlagCounter("d", "dd", nil)
+	flag5 := p.FlagCounter("e", "ee", nil)
+	flag6 := p.FlagCounter("f", "ff", nil)
 
 	err := p.Parse(testArgs)
 	if err != nil {

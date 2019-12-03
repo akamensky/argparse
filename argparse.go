@@ -146,7 +146,7 @@ func (o *Command) NewCommand(name string, description string) *Command {
 // Long name is required.
 // Returns pointer to boolean with starting value `false`. If Parser finds the flag
 // provided on Command line arguments, then the value is changed to true.
-// Set of Counter and Flag shorthand arguments can be combined together such as `tar -cvvf afiles.tar apple angst aspic`
+// Set of Flag and FlagCounter shorthand arguments can be combined together such as `tar -cvaf foo.tar foo`
 func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	var result bool
 
@@ -164,14 +164,14 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	return &result
 }
 
-// Counter Creates new counter type of argument, which is integer value showing the number of times the argument has been provided.
+// FlagCounter Creates new flagCounter type of argument, which is integer value showing the number of times the argument has been provided.
 // Takes short name, long name and pointer to options (optional).
 // Short name must be single character, but can be omitted by giving empty string.
 // Long name is required.
 // Returns pointer to integer with starting value `0`. Each time Parser finds the flag
 // provided on Command line arguments, the value is incremented by 1.
-// Set of Counter and Flag shorthand arguments can be combined together such as `tar -cvvf afiles.tar apple angst aspic`
-func (o *Command) Counter(short string, long string, opts *Options) *int {
+// Set of FlagCounter and Flag shorthand arguments can be combined together such as `tar -cvaf foo.tar foo`
+func (o *Command) FlagCounter(short string, long string, opts *Options) *int {
 	var result int
 
 	a := &arg{
