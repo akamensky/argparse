@@ -129,6 +129,138 @@ func TestFlagMultiShorthand1(t *testing.T) {
 	}
 }
 
+func TestFlagCounterSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "--flag-arg3", "--flag-arg3"}
+
+	p := NewParser("", "description")
+	flag1 := p.FlagCounter("", "flag-arg1", nil)
+	flag2 := p.FlagCounter("", "flag-arg2", nil)
+	flag3 := p.FlagCounter("", "flag-arg3", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if flag1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if flag2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if flag3 == nil {
+		t.Errorf("Test %s failed with flag3 being nil pointer", t.Name())
+		return
+	}
+
+	if *flag1 != 1 {
+		t.Errorf("Test %s failed with flag1 being %d", t.Name(), *flag1)
+		return
+	}
+
+	if *flag2 != 0 {
+		t.Errorf("Test %s failed with flag2 being %d", t.Name(), *flag2)
+		return
+	}
+
+	if *flag3 != 2 {
+		t.Errorf("Test %s failed with flag3 being %d", t.Name(), *flag3)
+		return
+	}
+}
+
+func TestFlagCounterSimple2(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "-f", "--flag-arg3", "-f"}
+
+	p := NewParser("", "description")
+	flag1 := p.FlagCounter("", "flag-arg1", nil)
+	flag2 := p.FlagCounter("", "flag-arg2", nil)
+	flag3 := p.FlagCounter("f", "flag-arg3", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if flag1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if flag2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if flag3 == nil {
+		t.Errorf("Test %s failed with flag3 being nil pointer", t.Name())
+		return
+	}
+
+	if *flag1 != 1 {
+		t.Errorf("Test %s failed with flag1 being %d", t.Name(), *flag1)
+		return
+	}
+
+	if *flag2 != 0 {
+		t.Errorf("Test %s failed with flag2 being %d", t.Name(), *flag2)
+		return
+	}
+
+	if *flag3 != 3 {
+		t.Errorf("Test %s failed with flag3 being %d", t.Name(), *flag3)
+		return
+	}
+}
+
+func TestFlagCounterMultiShorthand1(t *testing.T) {
+	testArgs := []string{"progname", "-abbcbcadaa", "-e"}
+
+	p := NewParser("", "description")
+	flag1 := p.FlagCounter("a", "aa", nil)
+	flag2 := p.FlagCounter("b", "bb", nil)
+	flag3 := p.FlagCounter("c", "cc", nil)
+	flag4 := p.FlagCounter("d", "dd", nil)
+	flag5 := p.FlagCounter("e", "ee", nil)
+	flag6 := p.FlagCounter("f", "ff", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if *flag1 != 4 {
+		t.Errorf("Test %s failed with flag1 being %d", t.Name(), *flag1)
+	}
+
+	if *flag2 != 3 {
+		t.Errorf("Test %s failed with flag2 being %d", t.Name(), *flag2)
+	}
+
+	if *flag3 != 2 {
+		t.Errorf("Test %s failed with flag3 being %d", t.Name(), *flag3)
+	}
+
+	if *flag4 != 1 {
+		t.Errorf("Test %s failed with flag4 being %d", t.Name(), *flag4)
+	}
+
+	if *flag5 != 1 {
+		t.Errorf("Test %s failed with flag5 being %d", t.Name(), *flag5)
+	}
+
+	if *flag6 != 0 {
+		t.Errorf("Test %s failed with flag6 being %d", t.Name(), *flag6)
+	}
+}
+
 func TestFailDuplicate(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "-f"}
 
@@ -139,6 +271,30 @@ func TestFailDuplicate(t *testing.T) {
 	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed with. Duplicate flag use not detected", t.Name())
+		return
+	}
+
+	testArgs = []string{"progname", "--flag-arg2", "-ff"}
+
+	p = NewParser("", "description")
+	_ = p.Flag("f", "flag-arg1", nil)
+	_ = p.Flag("", "flag-arg2", nil)
+
+	err = p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed with. Duplicate flag use not detected", t.Name())
+		return
+	}
+
+	testArgs = []string{"progname", "--flag-arg2", "-f"}
+
+	p = NewParser("", "description")
+	_ = p.Flag("f", "flag-arg1", nil)
+	_ = p.Flag("", "flag-arg2", nil)
+
+	err = p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with. Fake duplicate flag detected", t.Name())
 		return
 	}
 }

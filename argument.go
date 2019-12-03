@@ -42,7 +42,11 @@ func (o arg) GetLname() string {
 
 type help struct{}
 
-func (o *arg) check(argument string) bool {
+//Check if argumet present.
+//For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed,
+//so check - returns the number of occurrences.
+//For other args check - returns 1 if occured or 0 in no
+func (o *arg) check(argument string) int {
 	// Shortcut to showing help
 	if argument == "-h" || argument == "--help" {
 		helpText := o.parent.Help(nil)
@@ -55,7 +59,7 @@ func (o *arg) check(argument string) bool {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				return true
+				return 1
 			}
 		}
 	}
@@ -63,22 +67,19 @@ func (o *arg) check(argument string) bool {
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			switch o.result.(type) {
-			case *bool:
-				// For flags we allow multiple shorthand in one
-				if strings.Contains(argument[1:], o.sname) {
-					return true
-				}
-			default:
+			// For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed
+			if o.size == 1 {
+				return strings.Count(argument[1:], o.sname)
 				// For all other types it must be separate argument
+			} else {
 				if argument[1:] == o.sname {
-					return true
+					return 1
 				}
 			}
 		}
 	}
 
-	return false
+	return 0
 }
 
 func (o *arg) reduce(position int, args *[]string) {
@@ -98,17 +99,16 @@ func (o *arg) reduce(position int, args *[]string) {
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			switch o.result.(type) {
-			case *bool:
-				// For flags we allow multiple shorthand in one
+			// For args with size 1 (Flag,FlagCounter) we allow multiple shorthand in one
+			if o.size == 1 {
 				if strings.Contains(argument[1:], o.sname) {
 					(*args)[position] = strings.Replace(argument, o.sname, "", -1)
 					if (*args)[position] == "-" {
 						(*args)[position] = ""
 					}
 				}
-			default:
 				// For all other types it must be separate argument
+			} else {
 				if argument[1:] == o.sname {
 					for i := position; i < position+o.size; i++ {
 						(*args)[i] = ""
@@ -119,9 +119,9 @@ func (o *arg) reduce(position int, args *[]string) {
 	}
 }
 
-func (o *arg) parse(args []string) error {
+func (o *arg) parse(args []string, argCount int) error {
 	// If unique do not allow more than one time
-	if o.unique && o.parsed {
+	if o.unique && (o.parsed || argCount > 1) {
 		return fmt.Errorf("[%s] can only be present once", o.name())
 	}
 
@@ -138,22 +138,31 @@ func (o *arg) parse(args []string) error {
 		helpText := o.parent.Help(nil)
 		fmt.Print(helpText)
 		os.Exit(0)
+		//data of bool type is for Flag argument
 	case *bool:
 		*o.result.(*bool) = true
 		o.parsed = true
+		//data of integer type is for
 	case *int:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by an integer", o.name())
-		}
-		if len(args) > 1 {
+		switch {
+		//FlagCounter argument
+		case len(args) < 1:
+			if o.size > 1 {
+				return fmt.Errorf("[%s] must be followed by an integer", o.name())
+			}
+			*o.result.(*int) += argCount
+		case len(args) > 1:
 			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+			//or Int argument with one integer parameter
+		default:
+			val, err := strconv.Atoi(args[0])
+			if err != nil {
+				return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+			}
+			*o.result.(*int) = val
 		}
-		val, err := strconv.Atoi(args[0])
-		if err != nil {
-			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
-		}
-		*o.result.(*int) = val
 		o.parsed = true
+		//data of float64 type is for Float argument with one float parameter
 	case *float64:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
@@ -167,6 +176,7 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*float64) = val
 		o.parsed = true
+		//data of string type is for String argument with one string parameter
 	case *string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
@@ -188,6 +198,7 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*string) = args[0]
 		o.parsed = true
+		//data of os.File type is for File argument with one file name parameter
 	case *os.File:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
@@ -201,6 +212,7 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*os.File) = *f
 		o.parsed = true
+	//data of []string type is for List argument with set of string parameters
 	case *[]string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
