@@ -326,6 +326,27 @@ func (o *Command) IntList(short string, long string, opts *Options) *[]int {
 	return &result
 }
 
+// FloatList creates new float list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of float64 values. If no argument
+// provided, then the list is empty. Takes same parameters as Float
+// Returns a pointer the list of float64 values.
+func (o *Command) FloatList(short string, long string, opts *Options) *[]float64 {
+	result := make([]float64, 0)
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: false,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
 // Selector creates a selector argument. Selector argument works in the same way as String argument, with
 // the difference that the string value must be from the list of options provided by the program.
 // Takes short and long names, argument options and a slice of strings which are allowed values

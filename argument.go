@@ -236,6 +236,20 @@ func (o *arg) parse(args []string, argCount int) error {
 		}
 		*o.result.(*[]int) = append(*o.result.(*[]int), val)
 		o.parsed = true
+	//data of []float64 type is for FloatList argument with set of int parameters
+	case *[]float64:
+		switch {
+		case len(args) < 1:
+			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		case len(args) > 1:
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		val, err := strconv.ParseFloat(args[0], 64)
+		if err != nil {
+			return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
+		}
+		*o.result.(*[]float64) = append(*o.result.(*[]float64), val)
+		o.parsed = true
 	default:
 		return fmt.Errorf("unsupported type [%t]", o.result)
 	}
@@ -339,6 +353,11 @@ func (o *arg) setDefault() error {
 				return fmt.Errorf("cannot use default type [%T] as type [[]int]", o.opts.Default)
 			}
 			*o.result.(*[]int) = o.opts.Default.([]int)
+		case *[]float64:
+			if _, ok := o.opts.Default.([]float64); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [[]float64]", o.opts.Default)
+			}
+			*o.result.(*[]float64) = o.opts.Default.([]float64)
 		}
 	}
 

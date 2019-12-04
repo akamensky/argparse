@@ -537,6 +537,43 @@ func TestFileSimple1(t *testing.T) {
 	}
 }
 
+func TestFloatListSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "-10.1", "--flag-arg1", "+10"}
+	list1Expect := []float64{12, -10.1, 10}
+	list2Expect := make([]float64, 0)
+
+	p := NewParser("", "description")
+	l1 := p.FloatList("f", "flag-arg1", nil)
+	l2 := p.FloatList("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case l1 == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	case l2 == nil:
+		t.Errorf("Test %s failed with l2 being nil pointer", t.Name())
+	case !reflect.DeepEqual(*l1, list1Expect):
+		t.Errorf("Test %s failed. Want: %f, got: %f", t.Name(), list1Expect, *l1)
+	case !reflect.DeepEqual(*l2, list2Expect):
+		t.Errorf("Test %s failed. Want: %f, got: %f", t.Name(), list2Expect, *l2)
+	}
+}
+
+func TestFloatListTypeFail(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "10,1"}
+
+	p := NewParser("", "description")
+	p.FloatList("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	failureText := "[-f|--flag-arg1] bad floating point value [10,1]"
+	if err == nil || err.Error() != failureText {
+		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
+	}
+}
+
 func TestIntListSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "-10", "--flag-arg1", "+10"}
 	list1Expect := []int{12, -10, 10}
@@ -568,7 +605,7 @@ func TestIntListTypeFail(t *testing.T) {
 	p.IntList("f", "flag-arg1", nil)
 
 	err := p.Parse(testArgs)
-    failureText:="[-f|--flag-arg1] bad interger value [=10]"
+	failureText := "[-f|--flag-arg1] bad interger value [=10]"
 	if err == nil || err.Error() != failureText {
 		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
 	}
@@ -1210,6 +1247,26 @@ func TestFileDefaultValueFail(t *testing.T) {
 	defer file1.Close()
 }
 
+func TestFloatListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testList := []float64{12.0, -10}
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.FloatList("f", "float", &Options{Default: testList})
+
+	err := p.Parse(testArgs)
+
+	switch {
+	// Should fail on failure
+	case err != nil:
+		t.Error(err.Error())
+	// Should fail if not true
+	case !reflect.DeepEqual(*s, testList):
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
 func TestIntListDefaultValuePass(t *testing.T) {
 	testArgs := []string{"progname"}
 	testList := []int{12, -10}
@@ -1271,6 +1328,22 @@ func TestListDefaultValuePass(t *testing.T) {
 	}
 }
 
+func TestFloatListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.FloatList("f", "float", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	failureMessage := "cannot use default type [bool] as type [[]float64]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
+	}
+}
+
 func TestIntListDefaultValueFail(t *testing.T) {
 	testArgs := []string{"progname"}
 
@@ -1281,7 +1354,7 @@ func TestIntListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-    failureMessage:="cannot use default type [bool] as type [[]int]"
+	failureMessage := "cannot use default type [bool] as type [[]int]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1297,7 +1370,7 @@ func TestStringListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-    failureMessage:="cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as type [[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
