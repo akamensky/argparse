@@ -537,6 +537,43 @@ func TestFileSimple1(t *testing.T) {
 	}
 }
 
+func TestIntListSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "-10", "--flag-arg1", "+10"}
+	list1Expect := []int{12, -10, 10}
+	list2Expect := make([]int, 0)
+
+	p := NewParser("", "description")
+	l1 := p.IntList("f", "flag-arg1", nil)
+	l2 := p.IntList("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case l1 == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	case l2 == nil:
+		t.Errorf("Test %s failed with l2 being nil pointer", t.Name())
+	case !reflect.DeepEqual(*l1, list1Expect):
+		t.Errorf("Test %s failed. Want: %d, got: %d", t.Name(), list1Expect, *l1)
+	case !reflect.DeepEqual(*l2, list2Expect):
+		t.Errorf("Test %s failed. Want: %d, got: %d", t.Name(), list2Expect, *l2)
+	}
+}
+
+func TestIntListTypeFail(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "=10"}
+
+	p := NewParser("", "description")
+	p.IntList("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+    failureText:="[-f|--flag-arg1] bad interger value [=10]"
+	if err == nil || err.Error() != failureText {
+		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
+	}
+}
+
 func TestStringListSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "test1", "--flag-arg1", "test2"}
 	list1Expect := []string{"test1", "test2"}
@@ -550,19 +587,14 @@ func TestStringListSimple1(t *testing.T) {
 	switch {
 	case err != nil:
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
-		return
 	case l1 == nil:
 		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
-		return
 	case l2 == nil:
 		t.Errorf("Test %s failed with l2 being nil pointer", t.Name())
-		return
 	case !reflect.DeepEqual(*l1, list1Expect):
 		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list1Expect, *l1)
-		return
 	case !reflect.DeepEqual(*l2, list2Expect):
 		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list2Expect, *l2)
-		return
 	}
 }
 
@@ -1178,6 +1210,26 @@ func TestFileDefaultValueFail(t *testing.T) {
 	defer file1.Close()
 }
 
+func TestIntListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testList := []int{12, -10}
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.IntList("i", "int", &Options{Default: testList})
+
+	err := p.Parse(testArgs)
+
+	switch {
+	// Should fail on failure
+	case err != nil:
+		t.Error(err.Error())
+	// Should fail if not true
+	case !reflect.DeepEqual(*s, testList):
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
 func TestStringListDefaultValuePass(t *testing.T) {
 	testArgs := []string{"progname"}
 	testList := []string{"test", "list"}
@@ -1188,14 +1240,14 @@ func TestStringListDefaultValuePass(t *testing.T) {
 
 	err := p.Parse(testArgs)
 
-    switch{
-    // Should fail on failure
-    case err != nil:
-        t.Error(err.Error())
-    // Should fail if not true
-    case !reflect.DeepEqual(*s, testList):
-        t.Errorf("expected [%v], got [%v]", testList, *s)    
-    }
+	switch {
+	// Should fail on failure
+	case err != nil:
+		t.Error(err.Error())
+	// Should fail if not true
+	case !reflect.DeepEqual(*s, testList):
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
 }
 
 func TestListDefaultValuePass(t *testing.T) {
@@ -1219,6 +1271,22 @@ func TestListDefaultValuePass(t *testing.T) {
 	}
 }
 
+func TestIntListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.IntList("i", "int", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+    failureMessage:="cannot use default type [bool] as type [[]int]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
+	}
+}
+
 func TestStringListDefaultValueFail(t *testing.T) {
 	testArgs := []string{"progname"}
 
@@ -1229,8 +1297,9 @@ func TestStringListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [[]string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [[]string]", err)
+    failureMessage:="cannot use default type [bool] as type [[]string]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
 }
 

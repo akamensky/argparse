@@ -212,7 +212,7 @@ func (o *arg) parse(args []string, argCount int) error {
 		}
 		*o.result.(*os.File) = *f
 		o.parsed = true
-	//data of []string type is for List argument with set of string parameters
+	//data of []string type is for List and StringList argument with set of string parameters
 	case *[]string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
@@ -221,6 +221,20 @@ func (o *arg) parse(args []string, argCount int) error {
 			return fmt.Errorf("[%s] followed by too many arguments", o.name())
 		}
 		*o.result.(*[]string) = append(*o.result.(*[]string), args[0])
+		o.parsed = true
+	//data of []int type is for IntList argument with set of int parameters
+	case *[]int:
+		switch {
+		case len(args) < 1:
+			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		case len(args) > 1:
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		val, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+		}
+		*o.result.(*[]int) = append(*o.result.(*[]int), val)
 		o.parsed = true
 	default:
 		return fmt.Errorf("unsupported type [%t]", o.result)
@@ -320,6 +334,11 @@ func (o *arg) setDefault() error {
 				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
 			}
 			*o.result.(*[]string) = o.opts.Default.([]string)
+		case *[]int:
+			if _, ok := o.opts.Default.([]int); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [[]int]", o.opts.Default)
+			}
+			*o.result.(*[]int) = o.opts.Default.([]int)
 		}
 	}
 
