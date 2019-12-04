@@ -347,6 +347,29 @@ func (o *Command) FloatList(short string, long string, opts *Options) *[]float64
 	return &result
 }
 
+// FileList creates new file list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of os.File values. If no argument
+// provided, then the list is empty. Takes same parameters as File
+// Returns a pointer the list of os.File values.
+func (o *Command) FileList(short string, long string, flag int, perm os.FileMode, opts *Options) *[]os.File {
+	result := make([]os.File, 0)
+
+	a := &arg{
+		result:   &result,
+		sname:    short,
+		lname:    long,
+		size:     2,
+		opts:     opts,
+		unique:   false,
+		fileFlag: flag,
+		filePerm: perm,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
 // Selector creates a selector argument. Selector argument works in the same way as String argument, with
 // the difference that the string value must be from the list of options provided by the program.
 // Takes short and long names, argument options and a slice of strings which are allowed values

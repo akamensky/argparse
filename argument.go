@@ -250,6 +250,20 @@ func (o *arg) parse(args []string, argCount int) error {
 		}
 		*o.result.(*[]float64) = append(*o.result.(*[]float64), val)
 		o.parsed = true
+	//data of []os.File type is for FileList argument with set of int parameters
+	case *[]os.File:
+		switch {
+		case len(args) < 1:
+			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		case len(args) > 1:
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
+		if err != nil {
+			return err
+		}
+		*o.result.(*[]os.File) = append(*o.result.(*[]os.File), *f)
+		o.parsed = true
 	default:
 		return fmt.Errorf("unsupported type [%t]", o.result)
 	}
@@ -358,6 +372,22 @@ func (o *arg) setDefault() error {
 				return fmt.Errorf("cannot use default type [%T] as type [[]float64]", o.opts.Default)
 			}
 			*o.result.(*[]float64) = o.opts.Default.([]float64)
+		case *[]os.File:
+			// In case of FileList we should get []string as default value
+			var files []os.File
+			if fileNames, ok := o.opts.Default.([]string); ok {
+				files = make([]os.File, 0, len(fileNames))
+				for _, v := range fileNames {
+					f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+					if err != nil {
+						return err
+					}
+					files = append(files, *f)
+				}
+			} else {
+				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
+			}
+			*o.result.(*[]os.File) = files
 		}
 	}
 

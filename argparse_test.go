@@ -511,12 +511,12 @@ func TestFileSimple1(t *testing.T) {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
 	}
-	defer file1.Close()
-
 	if file1 == nil {
 		t.Errorf("Test %s failed with file1 being nil pointer", t.Name())
 		return
 	}
+
+	defer file1.Close()
 
 	testString := "Test"
 	recSlice := make([]byte, 4)
@@ -534,6 +534,55 @@ func TestFileSimple1(t *testing.T) {
 	if n != 4 || string(recSlice) != testString {
 		t.Errorf("Test %s failed on read operation", t.Name())
 		return
+	}
+}
+
+func TestFileListSimple1(t *testing.T) {
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./test2.tmp"}
+	// Create test files
+	for _, fpath := range fpaths {
+		f, err := os.Create(fpath)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		f.Close()
+		defer os.Remove(fpath)
+	}
+
+	testArgs := []string{"progname", "-f", fpaths[0], "--file", fpaths[1]}
+
+	p := NewParser("", "")
+
+	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: []string{"./non-existent-file1.tmp", "./non-existent-file2.tmp"}})
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case files == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	}
+	for i, file := range *files {
+		defer file.Close()
+		testString := "Test"
+		recSlice := make([]byte, 4)
+		_, err = file.WriteString(testString)
+		if err != nil {
+			t.Errorf("Test %s write operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		file.Seek(0, 0)
+		n, err := file.Read(recSlice)
+		if err != nil {
+			t.Errorf("Test %s read operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		if n != 4 || string(recSlice) != testString {
+			t.Errorf("Test %s failed with file: %s on read operation", t.Name(), fpaths[i])
+			return
+		}
 	}
 }
 
@@ -1247,6 +1296,53 @@ func TestFileDefaultValueFail(t *testing.T) {
 	defer file1.Close()
 }
 
+func TestFileListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./test2.tmp"}
+	// Create test files
+	for _, fpath := range fpaths {
+		f, err := os.Create(fpath)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		f.Close()
+		defer os.Remove(fpath)
+	}
+
+	p := NewParser("progname", "Prog description")
+
+	files := p.FileList("f", "float", os.O_RDWR, 0666, &Options{Default: fpaths})
+
+	err := p.Parse(testArgs)
+
+	if err != nil {
+		t.Error(err.Error())
+	}
+	for i, file := range *files {
+		defer file.Close()
+		testString := "Test"
+		recSlice := make([]byte, 4)
+		_, err = file.WriteString(testString)
+		if err != nil {
+			t.Errorf("Test %s write operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		file.Seek(0, 0)
+		n, err := file.Read(recSlice)
+		if err != nil {
+			t.Errorf("Test %s read operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		if n != 4 || string(recSlice) != testString {
+			t.Errorf("Test %s failed with file: %s on read operation", t.Name(), fpaths[i])
+			return
+		}
+	}
+
+}
+
 func TestFloatListDefaultValuePass(t *testing.T) {
 	testArgs := []string{"progname"}
 	testList := []float64{12.0, -10}
@@ -1325,6 +1421,22 @@ func TestListDefaultValuePass(t *testing.T) {
 	// Should fail if not true
 	if !reflect.DeepEqual(*s, testList) {
 		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
+func TestFileListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.FileList("f", "float", os.O_RDWR, 0666, &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	failureMessage := "cannot use default type [bool] as type [[]string]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
 }
 
