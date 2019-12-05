@@ -260,6 +260,18 @@ func (o *arg) parse(args []string, argCount int) error {
 		}
 		f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
 		if err != nil {
+			//if one of FileList's file opening have been failed, close all other in this list
+			errs := make([]string, 0, len(*o.result.(*[]os.File)))
+			for _, f := range *o.result.(*[]os.File) {
+				if err := f.Close(); err != nil {
+					//almost unreal, but what if another process closed this file
+					errs = append(errs, err.Error())
+				}
+			}
+			if len(errs) > 0 {
+				err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+			}
+			*o.result.(*[]os.File) = []os.File{}
 			return err
 		}
 		*o.result.(*[]os.File) = append(*o.result.(*[]os.File), *f)
@@ -380,6 +392,18 @@ func (o *arg) setDefault() error {
 				for _, v := range fileNames {
 					f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
 					if err != nil {
+						//if one of FileList's file opening have been failed, close all other in this list
+						errs := make([]string, 0, len(*o.result.(*[]os.File)))
+						for _, f := range *o.result.(*[]os.File) {
+							if err := f.Close(); err != nil {
+								//almost unreal, but what if another process closed this file
+								errs = append(errs, err.Error())
+							}
+						}
+						if len(errs) > 0 {
+							err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+						}
+						*o.result.(*[]os.File) = []os.File{}
 						return err
 					}
 					files = append(files, *f)
