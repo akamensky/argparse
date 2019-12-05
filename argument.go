@@ -254,7 +254,7 @@ func (o *arg) parse(args []string, argCount int) error {
 	case *[]os.File:
 		switch {
 		case len(args) < 1:
-			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
 		case len(args) > 1:
 			return fmt.Errorf("[%s] followed by too many arguments", o.name())
 		}
