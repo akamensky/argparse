@@ -537,6 +537,135 @@ func TestFileSimple1(t *testing.T) {
 	}
 }
 
+func TestFileSimpleFail1(t *testing.T) {
+	// Not existing test file location
+	fpath := "./non-existent-file.tmp"
+	// To be shure there is no fake file
+	if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+        //we could remove it, but what if it's important
+        t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+		return
+    }
+
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "")
+
+	_ = p.File("f", "file", os.O_RDWR, 0666, &Options{Default: fpath})
+
+	err := p.Parse(testArgs)
+    if err==nil{
+        t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+    }
+    err, ok := err.(*os.PathError)
+    
+    if ok==false {
+        t.Errorf("Test %s failed with error: %s, that is not of *os.PathError type", t.Name(), err.Error())
+    }
+}
+
+func TestFileSimpleFail2(t *testing.T) {
+	// Not existing test file location
+	fpath := "./non-existent-file.tmp"
+	// To be shure there is no fake file
+	if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+        //we could remove it, but what if it's important
+        t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+		return
+    }
+
+	testArgs := []string{"progname","-f",fpath}
+
+	p := NewParser("", "")
+
+	_ = p.File("f", "file", os.O_RDWR, 0666, nil)
+
+	err := p.Parse(testArgs)
+    if err==nil{
+        t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+        return
+    }
+    err, ok := err.(*os.PathError)
+    
+    if ok==false {
+        t.Errorf("Test %s failed with error: %s, that is not of *os.PathError type", t.Name(), err.Error())
+    }
+}
+
+func TestFileListSimpleFail1(t *testing.T) {
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./non-existent-file2.tmp", "./test2.tmp"}
+	// Create test files
+	for i, fpath := range fpaths {
+        if i==1 {
+            if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+                //we could remove it, but what if it's important
+                t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+                return
+            }
+        } else {
+            f, err := os.Create(fpath)
+            if err != nil {
+                t.Error(err)
+                return
+            }
+            f.Close()
+            defer os.Remove(fpath)
+        }
+	}
+
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "")
+
+	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: fpaths})
+    
+    err := p.Parse(testArgs)
+    if err==nil{
+        t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+    }
+    if len(*files) > 0{
+        t.Errorf("Test %s failed. File list should be empty.", t.Name())
+    }
+}
+
+func TestFileListSimpleFail2(t *testing.T) {
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./non-existent-file2.tmp", "./test2.tmp"}
+	// Create test files
+	for i, fpath := range fpaths {
+        if i==1 {
+            if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+                //we could remove it, but what if it's important
+                t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+                return
+            }
+        } else {
+            f, err := os.Create(fpath)
+            if err != nil {
+                t.Error(err)
+                return
+            }
+            f.Close()
+            defer os.Remove(fpath)
+        }
+	}
+
+	testArgs := []string{"progname","-f",fpaths[0],"--file",fpaths[1],"-f",fpaths[2]}
+
+	p := NewParser("", "")
+
+	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: nil})
+    
+    err := p.Parse(testArgs)
+    if err==nil{
+        t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+    }
+    if len(*files) > 0{
+        t.Errorf("Test %s failed. File list should be empty.", t.Name())
+    }
+}
+
 func TestFileListSimple1(t *testing.T) {
 	// Test files location
 	fpaths := []string{"./test1.tmp", "./test2.tmp"}
