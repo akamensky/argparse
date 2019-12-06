@@ -8,6 +8,100 @@ import (
 	"testing"
 )
 
+func TestInternalFunction1(t *testing.T) {
+	var resultS string
+	//test string
+	a := &arg{
+		result: &resultS,
+		sname:  "-f",
+		lname:  "--flag",
+		size:   2,
+		opts:   nil,
+		unique: true,
+	}
+	args0 := []string{}
+	args2 := []string{"0", "1"}
+	failureMessageCommon := "[--f|----flag] followed by too many arguments"
+	failureMessage := "[--f|----flag] must be followed by a string"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test int
+	var resultI int
+	a.result = &resultI
+	failureMessage = "[--f|----flag] must be followed by an integer"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test float
+	var resultF float64
+	a.result = &resultF
+	failureMessage = "[--f|----flag] must be followed by a floating point number"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test os.File
+	var resultFile os.File
+	a.result = &resultFile
+	failureMessage = "[--f|----flag] must be followed by a path to file"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test []string
+	var resultSL []string
+	a.result = &resultSL
+	failureMessage = "[--f|----flag] must be followed by a string"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test []int
+	var resultIL []int
+	a.result = &resultIL
+	failureMessage = "[--f|----flag] must be followed by a string representation of integer"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test []float
+	var resultFL []float64
+	a.result = &resultFL
+	failureMessage = "[--f|----flag] must be followed by a string representation of integer"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+	//test []os.File
+	var resultFileL []os.File
+	a.result = &resultFileL
+	failureMessage = "[--f|----flag] must be followed by a path to file"
+	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	}
+	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	}
+
+}
+
 func TestFlagSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1"}
 
@@ -511,12 +605,12 @@ func TestFileSimple1(t *testing.T) {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
 	}
-	defer file1.Close()
-
 	if file1 == nil {
 		t.Errorf("Test %s failed with file1 being nil pointer", t.Name())
 		return
 	}
+
+	defer file1.Close()
 
 	testString := "Test"
 	recSlice := make([]byte, 4)
@@ -534,6 +628,282 @@ func TestFileSimple1(t *testing.T) {
 	if n != 4 || string(recSlice) != testString {
 		t.Errorf("Test %s failed on read operation", t.Name())
 		return
+	}
+}
+
+func TestFileSimpleFail1(t *testing.T) {
+	// Not existing test file location
+	fpath := "./non-existent-file.tmp"
+	// To be shure there is no fake file
+	if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+		//we could remove it, but what if it's important
+		t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+		return
+	}
+
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "")
+
+	_ = p.File("f", "file", os.O_RDWR, 0666, &Options{Default: fpath})
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+	}
+	err, ok := err.(*os.PathError)
+
+	if ok == false {
+		t.Errorf("Test %s failed with error: %s, that is not of *os.PathError type", t.Name(), err.Error())
+	}
+}
+
+func TestFileSimpleFail2(t *testing.T) {
+	// Not existing test file location
+	fpath := "./non-existent-file.tmp"
+	// To be shure there is no fake file
+	if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+		//we could remove it, but what if it's important
+		t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+		return
+	}
+
+	testArgs := []string{"progname", "-f", fpath}
+
+	p := NewParser("", "")
+
+	_ = p.File("f", "file", os.O_RDWR, 0666, nil)
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+		return
+	}
+	err, ok := err.(*os.PathError)
+
+	if ok == false {
+		t.Errorf("Test %s failed with error: %s, that is not of *os.PathError type", t.Name(), err.Error())
+	}
+}
+
+func TestFileListSimpleFail1(t *testing.T) {
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./non-existent-file2.tmp", "./test2.tmp"}
+	// Create test files
+	for i, fpath := range fpaths {
+		if i == 1 {
+			if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+				//we could remove it, but what if it's important
+				t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+				return
+			}
+		} else {
+			f, err := os.Create(fpath)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			f.Close()
+			defer os.Remove(fpath)
+		}
+	}
+
+	testArgs := []string{"progname"}
+
+	p := NewParser("", "")
+
+	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: fpaths})
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+	}
+	if len(*files) > 0 {
+		t.Errorf("Test %s failed. File list should be empty.", t.Name())
+	}
+}
+
+func TestFileListSimpleFail2(t *testing.T) {
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./non-existent-file2.tmp", "./test2.tmp"}
+	// Create test files
+	for i, fpath := range fpaths {
+		if i == 1 {
+			if _, err := os.Stat(fpath); os.IsNotExist(err) != true {
+				//we could remove it, but what if it's important
+				t.Errorf("Test %s failed. There is \"%s\" file in module directory, which must not exists for test purposes", t.Name(), fpath)
+				return
+			}
+		} else {
+			f, err := os.Create(fpath)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			f.Close()
+			defer os.Remove(fpath)
+		}
+	}
+
+	testArgs := []string{"progname", "-f", fpaths[0], "--file", fpaths[1], "-f", fpaths[2]}
+
+	p := NewParser("", "")
+
+	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: nil})
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
+	}
+	if len(*files) > 0 {
+		t.Errorf("Test %s failed. File list should be empty.", t.Name())
+	}
+}
+
+func TestFileListSimple1(t *testing.T) {
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./test2.tmp"}
+	// Create test files
+	for _, fpath := range fpaths {
+		f, err := os.Create(fpath)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		f.Close()
+		defer os.Remove(fpath)
+	}
+
+	testArgs := []string{"progname", "-f", fpaths[0], "--file", fpaths[1]}
+
+	p := NewParser("", "")
+
+	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: []string{"./non-existent-file1.tmp", "./non-existent-file2.tmp"}})
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case files == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	}
+	for i, file := range *files {
+		defer file.Close()
+		testString := "Test"
+		recSlice := make([]byte, 4)
+		_, err = file.WriteString(testString)
+		if err != nil {
+			t.Errorf("Test %s write operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		file.Seek(0, 0)
+		n, err := file.Read(recSlice)
+		if err != nil {
+			t.Errorf("Test %s read operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		if n != 4 || string(recSlice) != testString {
+			t.Errorf("Test %s failed with file: %s on read operation", t.Name(), fpaths[i])
+			return
+		}
+	}
+}
+
+func TestFloatListSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "-10.1", "--flag-arg1", "+10"}
+	list1Expect := []float64{12, -10.1, 10}
+	list2Expect := make([]float64, 0)
+
+	p := NewParser("", "description")
+	l1 := p.FloatList("f", "flag-arg1", nil)
+	l2 := p.FloatList("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case l1 == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	case l2 == nil:
+		t.Errorf("Test %s failed with l2 being nil pointer", t.Name())
+	case !reflect.DeepEqual(*l1, list1Expect):
+		t.Errorf("Test %s failed. Want: %f, got: %f", t.Name(), list1Expect, *l1)
+	case !reflect.DeepEqual(*l2, list2Expect):
+		t.Errorf("Test %s failed. Want: %f, got: %f", t.Name(), list2Expect, *l2)
+	}
+}
+
+func TestFloatListTypeFail(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "10,1"}
+
+	p := NewParser("", "description")
+	p.FloatList("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	failureText := "[-f|--flag-arg1] bad floating point value [10,1]"
+	if err == nil || err.Error() != failureText {
+		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
+	}
+}
+
+func TestIntListSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "-10", "--flag-arg1", "+10"}
+	list1Expect := []int{12, -10, 10}
+	list2Expect := make([]int, 0)
+
+	p := NewParser("", "description")
+	l1 := p.IntList("f", "flag-arg1", nil)
+	l2 := p.IntList("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case l1 == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	case l2 == nil:
+		t.Errorf("Test %s failed with l2 being nil pointer", t.Name())
+	case !reflect.DeepEqual(*l1, list1Expect):
+		t.Errorf("Test %s failed. Want: %d, got: %d", t.Name(), list1Expect, *l1)
+	case !reflect.DeepEqual(*l2, list2Expect):
+		t.Errorf("Test %s failed. Want: %d, got: %d", t.Name(), list2Expect, *l2)
+	}
+}
+
+func TestIntListTypeFail(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "=10"}
+
+	p := NewParser("", "description")
+	p.IntList("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	failureText := "[-f|--flag-arg1] bad interger value [=10]"
+	if err == nil || err.Error() != failureText {
+		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
+	}
+}
+
+func TestStringListSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "test1", "--flag-arg1", "test2"}
+	list1Expect := []string{"test1", "test2"}
+	list2Expect := make([]string, 0)
+
+	p := NewParser("", "description")
+	l1 := p.StringList("f", "flag-arg1", nil)
+	l2 := p.StringList("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	switch {
+	case err != nil:
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+	case l1 == nil:
+		t.Errorf("Test %s failed with l1 being nil pointer", t.Name())
+	case l2 == nil:
+		t.Errorf("Test %s failed with l2 being nil pointer", t.Name())
+	case !reflect.DeepEqual(*l1, list1Expect):
+		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list1Expect, *l1)
+	case !reflect.DeepEqual(*l2, list2Expect):
+		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list2Expect, *l2)
 	}
 }
 
@@ -1149,6 +1519,113 @@ func TestFileDefaultValueFail(t *testing.T) {
 	defer file1.Close()
 }
 
+func TestFileListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	// Test files location
+	fpaths := []string{"./test1.tmp", "./test2.tmp"}
+	// Create test files
+	for _, fpath := range fpaths {
+		f, err := os.Create(fpath)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		f.Close()
+		defer os.Remove(fpath)
+	}
+
+	p := NewParser("progname", "Prog description")
+
+	files := p.FileList("f", "float", os.O_RDWR, 0666, &Options{Default: fpaths})
+
+	err := p.Parse(testArgs)
+
+	if err != nil {
+		t.Error(err.Error())
+	}
+	for i, file := range *files {
+		defer file.Close()
+		testString := "Test"
+		recSlice := make([]byte, 4)
+		_, err = file.WriteString(testString)
+		if err != nil {
+			t.Errorf("Test %s write operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		file.Seek(0, 0)
+		n, err := file.Read(recSlice)
+		if err != nil {
+			t.Errorf("Test %s read operation with file: %s failed with error: %s", t.Name(), fpaths[i], err.Error())
+			return
+		}
+		if n != 4 || string(recSlice) != testString {
+			t.Errorf("Test %s failed with file: %s on read operation", t.Name(), fpaths[i])
+			return
+		}
+	}
+
+}
+
+func TestFloatListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testList := []float64{12.0, -10}
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.FloatList("f", "float", &Options{Default: testList})
+
+	err := p.Parse(testArgs)
+
+	switch {
+	// Should fail on failure
+	case err != nil:
+		t.Error(err.Error())
+	// Should fail if not true
+	case !reflect.DeepEqual(*s, testList):
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
+func TestIntListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testList := []int{12, -10}
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.IntList("i", "int", &Options{Default: testList})
+
+	err := p.Parse(testArgs)
+
+	switch {
+	// Should fail on failure
+	case err != nil:
+		t.Error(err.Error())
+	// Should fail if not true
+	case !reflect.DeepEqual(*s, testList):
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
+func TestStringListDefaultValuePass(t *testing.T) {
+	testArgs := []string{"progname"}
+	testList := []string{"test", "list"}
+
+	p := NewParser("progname", "Prog description")
+
+	s := p.StringList("s", "string", &Options{Default: testList})
+
+	err := p.Parse(testArgs)
+
+	switch {
+	// Should fail on failure
+	case err != nil:
+		t.Error(err.Error())
+	// Should fail if not true
+	case !reflect.DeepEqual(*s, testList):
+		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
 func TestListDefaultValuePass(t *testing.T) {
 	testArgs := []string{"progname"}
 	testList := []string{"test", "list"}
@@ -1167,6 +1644,70 @@ func TestListDefaultValuePass(t *testing.T) {
 	// Should fail if not true
 	if !reflect.DeepEqual(*s, testList) {
 		t.Errorf("expected [%v], got [%v]", testList, *s)
+	}
+}
+
+func TestFileListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.FileList("f", "float", os.O_RDWR, 0666, &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	failureMessage := "cannot use default type [bool] as type [[]string]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
+	}
+}
+
+func TestFloatListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.FloatList("f", "float", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	failureMessage := "cannot use default type [bool] as type [[]float64]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
+	}
+}
+
+func TestIntListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.IntList("i", "int", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	failureMessage := "cannot use default type [bool] as type [[]int]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
+	}
+}
+
+func TestStringListDefaultValueFail(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	_ = p.StringList("s", "string", &Options{Default: false})
+
+	err := p.Parse(testArgs)
+
+	// Should pass on failure
+	failureMessage := "cannot use default type [bool] as type [[]string]"
+	if err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
 }
 
