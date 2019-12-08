@@ -217,7 +217,7 @@ func (o *Command) NewCommandWithSettings(name string, description string, settin
 // Long name is required.
 // Returns pointer to boolean with starting value `false`. If Parser finds the flag
 // provided on Command line arguments, then the value is changed to true.
-// Only for Flag shorthand arguments can be combined together such as `rm -rf`
+// Set of Flag and FlagCounter shorthand arguments can be combined together such as `tar -cvaf foo.tar foo`
 func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	var result bool
 
@@ -228,6 +228,30 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 		size:   1,
 		opts:   opts,
 		unique: true,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
+// FlagCounter Creates new flagCounter type of argument, which is integer value showing the number of times the argument has been provided.
+// Takes short name, long name and pointer to options (optional).
+// Short name must be single character, but can be omitted by giving empty string.
+// Long name is required.
+// Returns pointer to integer with starting value `0`. Each time Parser finds the flag
+// provided on Command line arguments, the value is incremented by 1.
+// Set of FlagCounter and Flag shorthand arguments can be combined together such as `tar -cvaf foo.tar foo`
+func (o *Command) FlagCounter(short string, long string, opts *Options) *int {
+	var result int
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   1,
+		opts:   opts,
+		unique: false,
 	}
 
 	o.addArg(a)
@@ -324,10 +348,18 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 }
 
 // List creates new list argument. This is the argument that is allowed to be present multiple times on CLI.
-// All appearances of this argument on CLI will be collected into the list of strings. If no argument
+// All appearances of this argument on CLI will be collected into the list of default type values ​​which is strings. If no argument
 // provided, then the list is empty. Takes same parameters as String
 // Returns a pointer the list of strings.
 func (o *Command) List(short string, long string, opts *Options) *[]string {
+	return o.StringList(short, long, opts)
+}
+
+// StringList creates new string list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of strings. If no argument
+// provided, then the list is empty. Takes same parameters as String
+// Returns a pointer the list of strings.
+func (o *Command) StringList(short string, long string, opts *Options) *[]string {
 	result := make([]string, 0)
 
 	a := &arg{
@@ -337,6 +369,71 @@ func (o *Command) List(short string, long string, opts *Options) *[]string {
 		size:   2,
 		opts:   opts,
 		unique: false,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
+// IntList creates new integer list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of integers. If no argument
+// provided, then the list is empty. Takes same parameters as Int
+// Returns a pointer the list of integers.
+func (o *Command) IntList(short string, long string, opts *Options) *[]int {
+	result := make([]int, 0)
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: false,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
+// FloatList creates new float list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of float64 values. If no argument
+// provided, then the list is empty. Takes same parameters as Float
+// Returns a pointer the list of float64 values.
+func (o *Command) FloatList(short string, long string, opts *Options) *[]float64 {
+	result := make([]float64, 0)
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: false,
+	}
+
+	o.addArg(a)
+
+	return &result
+}
+
+// FileList creates new file list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of os.File values. If no argument
+// provided, then the list is empty. Takes same parameters as File
+// Returns a pointer the list of os.File values.
+func (o *Command) FileList(short string, long string, flag int, perm os.FileMode, opts *Options) *[]os.File {
+	result := make([]os.File, 0)
+
+	a := &arg{
+		result:   &result,
+		sname:    short,
+		lname:    long,
+		size:     2,
+		opts:     opts,
+		unique:   false,
+		fileFlag: flag,
+		filePerm: perm,
 	}
 
 	o.addArg(a)

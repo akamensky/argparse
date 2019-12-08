@@ -58,7 +58,7 @@ func (o *arg) check(argument string) bool {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				return true
+				return 1
 			}
 		}
 	}
@@ -66,22 +66,19 @@ func (o *arg) check(argument string) bool {
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			switch o.result.(type) {
-			case *bool:
-				// For flags we allow multiple shorthand in one
-				if strings.Contains(argument[1:], o.sname) {
-					return true
-				}
-			default:
+			// For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed
+			if o.size == 1 {
+				return strings.Count(argument[1:], o.sname)
 				// For all other types it must be separate argument
+			} else {
 				if argument[1:] == o.sname {
-					return true
+					return 1
 				}
 			}
 		}
 	}
 
-	return false
+	return 0
 }
 
 func (o *arg) reduce(position int, args *[]string) {
@@ -101,17 +98,16 @@ func (o *arg) reduce(position int, args *[]string) {
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			switch o.result.(type) {
-			case *bool:
-				// For flags we allow multiple shorthand in one
+			// For args with size 1 (Flag,FlagCounter) we allow multiple shorthand in one
+			if o.size == 1 {
 				if strings.Contains(argument[1:], o.sname) {
 					(*args)[position] = strings.Replace(argument, o.sname, "", -1)
 					if (*args)[position] == "-" {
 						(*args)[position] = ""
 					}
 				}
-			default:
 				// For all other types it must be separate argument
+			} else {
 				if argument[1:] == o.sname {
 					for i := position; i < position+o.size; i++ {
 						(*args)[i] = ""
@@ -122,9 +118,9 @@ func (o *arg) reduce(position int, args *[]string) {
 	}
 }
 
-func (o *arg) parse(args []string) error {
+func (o *arg) parse(args []string, argCount int) error {
 	// If unique do not allow more than one time
-	if o.unique && o.parsed {
+	if o.unique && (o.parsed || argCount > 1) {
 		return fmt.Errorf("[%s] can only be present once", o.name())
 	}
 
@@ -144,22 +140,31 @@ func (o *arg) parse(args []string) error {
 			os.Exit(0)
 		}
 		return &HelpCalled{*o}
+	//data of bool type is for Flag argument
 	case *bool:
 		*o.result.(*bool) = true
 		o.parsed = true
+		//data of integer type is for
 	case *int:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by an integer", o.name())
-		}
-		if len(args) > 1 {
+		switch {
+		//FlagCounter argument
+		case len(args) < 1:
+			if o.size > 1 {
+				return fmt.Errorf("[%s] must be followed by an integer", o.name())
+			}
+			*o.result.(*int) += argCount
+		case len(args) > 1:
 			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+			//or Int argument with one integer parameter
+		default:
+			val, err := strconv.Atoi(args[0])
+			if err != nil {
+				return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+			}
+			*o.result.(*int) = val
 		}
-		val, err := strconv.Atoi(args[0])
-		if err != nil {
-			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
-		}
-		*o.result.(*int) = val
 		o.parsed = true
+		//data of float64 type is for Float argument with one float parameter
 	case *float64:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
@@ -173,6 +178,7 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*float64) = val
 		o.parsed = true
+		//data of string type is for String argument with one string parameter
 	case *string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
@@ -194,6 +200,7 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*string) = args[0]
 		o.parsed = true
+		//data of os.File type is for File argument with one file name parameter
 	case *os.File:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
@@ -207,6 +214,7 @@ func (o *arg) parse(args []string) error {
 		}
 		*o.result.(*os.File) = *f
 		o.parsed = true
+	//data of []string type is for List and StringList argument with set of string parameters
 	case *[]string:
 		if len(args) < 1 {
 			return fmt.Errorf("[%s] must be followed by a string", o.name())
@@ -215,6 +223,60 @@ func (o *arg) parse(args []string) error {
 			return fmt.Errorf("[%s] followed by too many arguments", o.name())
 		}
 		*o.result.(*[]string) = append(*o.result.(*[]string), args[0])
+		o.parsed = true
+	//data of []int type is for IntList argument with set of int parameters
+	case *[]int:
+		switch {
+		case len(args) < 1:
+			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		case len(args) > 1:
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		val, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+		}
+		*o.result.(*[]int) = append(*o.result.(*[]int), val)
+		o.parsed = true
+	//data of []float64 type is for FloatList argument with set of int parameters
+	case *[]float64:
+		switch {
+		case len(args) < 1:
+			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		case len(args) > 1:
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		val, err := strconv.ParseFloat(args[0], 64)
+		if err != nil {
+			return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
+		}
+		*o.result.(*[]float64) = append(*o.result.(*[]float64), val)
+		o.parsed = true
+	//data of []os.File type is for FileList argument with set of int parameters
+	case *[]os.File:
+		switch {
+		case len(args) < 1:
+			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
+		case len(args) > 1:
+			return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		}
+		f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
+		if err != nil {
+			//if one of FileList's file opening have been failed, close all other in this list
+			errs := make([]string, 0, len(*o.result.(*[]os.File)))
+			for _, f := range *o.result.(*[]os.File) {
+				if err := f.Close(); err != nil {
+					//almost unreal, but what if another process closed this file
+					errs = append(errs, err.Error())
+				}
+			}
+			if len(errs) > 0 {
+				err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+			}
+			*o.result.(*[]os.File) = []os.File{}
+			return err
+		}
+		*o.result.(*[]os.File) = append(*o.result.(*[]os.File), *f)
 		o.parsed = true
 	default:
 		return fmt.Errorf("unsupported type [%t]", o.result)
@@ -314,6 +376,44 @@ func (o *arg) setDefault() error {
 				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
 			}
 			*o.result.(*[]string) = o.opts.Default.([]string)
+		case *[]int:
+			if _, ok := o.opts.Default.([]int); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [[]int]", o.opts.Default)
+			}
+			*o.result.(*[]int) = o.opts.Default.([]int)
+		case *[]float64:
+			if _, ok := o.opts.Default.([]float64); !ok {
+				return fmt.Errorf("cannot use default type [%T] as type [[]float64]", o.opts.Default)
+			}
+			*o.result.(*[]float64) = o.opts.Default.([]float64)
+		case *[]os.File:
+			// In case of FileList we should get []string as default value
+			var files []os.File
+			if fileNames, ok := o.opts.Default.([]string); ok {
+				files = make([]os.File, 0, len(fileNames))
+				for _, v := range fileNames {
+					f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+					if err != nil {
+						//if one of FileList's file opening have been failed, close all other in this list
+						errs := make([]string, 0, len(*o.result.(*[]os.File)))
+						for _, f := range *o.result.(*[]os.File) {
+							if err := f.Close(); err != nil {
+								//almost unreal, but what if another process closed this file
+								errs = append(errs, err.Error())
+							}
+						}
+						if len(errs) > 0 {
+							err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+						}
+						*o.result.(*[]os.File) = []os.File{}
+						return err
+					}
+					files = append(files, *f)
+				}
+			} else {
+				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
+			}
+			*o.result.(*[]os.File) = files
 		}
 	}
 
