@@ -52,7 +52,11 @@ func (hc *HelpCalled) Error() string {
 	return fmt.Sprintf("Command %s help argument parsed", hc.arg.parent.name)
 }
 
-func (o *arg) check(argument string) bool {
+//Check if argumet present.
+//For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed,
+//so check - returns the number of occurrences.
+//For other args check - returns 1 if occured or 0 in no
+func (o *arg) check(argument string) int {
 	// Check for long name only if not empty
 	if o.lname != "" {
 		// If argument begins with "--" and next is not "-" then it is a long name
@@ -70,10 +74,8 @@ func (o *arg) check(argument string) bool {
 			if o.size == 1 {
 				return strings.Count(argument[1:], o.sname)
 				// For all other types it must be separate argument
-			} else {
-				if argument[1:] == o.sname {
-					return 1
-				}
+			} else if argument[1:] == o.sname {
+				return 1
 			}
 		}
 	}
