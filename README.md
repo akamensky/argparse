@@ -66,28 +66,71 @@ String will allow you to get a string from arguments, such as `$ progname --stri
 var myString *string = parser.String("s", "string", ...)
 ```
 
-Flag will tell you if a simple flag was set on command line (true is set, false is not).
-For example `$ progname --force`
-```go
-var myFlag *bool = parser.Flag("f", "force", ...)
-```
-
-List allows to collect multiple values into the slice of strings by repeating same flag multiple times.
-Such as `$ progname --host hostname1 --host hostname2 -H hostname3`
-```go
-var myList *[]string = parser.List("H", "hostname", ...)
-```
-
 Selector works same as a string, except that it will only allow specific values.
 For example like this `$ progname --debug-level WARN`
 ```go
 var mySelector *string = parser.Selector("d", "debug-level", []string{"INFO", "DEBUG", "WARN"}, ...)
 ```
 
+StringList allows to collect multiple string values into the slice of strings by repeating same flag multiple times.
+Such as `$ progname --string hostname1 --string hostname2 -s hostname3`
+```go
+var myStringList *[]string = parser.StringList("s", "string", ...)
+```
+
+List allows to collect multiple values into the slice of strings by repeating same flag multiple times 
+(at fact - it is an Alias of StringList).
+Such as `$ progname --host hostname1 --host hostname2 -H hostname3`
+```go
+var myList *[]string = parser.List("H", "hostname", ...)
+```
+
+Flag will tell you if a simple flag was set on command line (true is set, false is not).
+For example `$ progname --force`
+```go
+var myFlag *bool = parser.Flag("f", "force", ...)
+```
+
+FlagCounter will tell you the number of times that  simple flag  was set on command line 
+(integer greater than or equal to 1 or 0 if not set).
+For example `$ progname -vv --verbose`
+```go
+var myFlagCounter *int = parser.FlagCounter("v", "--verbose", ...)
+```
+
+Int will allow you to get a decimal integer from arguments, such as `$ progname --integer "42"`
+```go
+var myInteger *int = parser.Int("i", "integer", ...)
+```
+
+IntList allows to collect multiple decimal integer values into the slice of integers by repeating same flag multiple times.
+Such as `$ progname --integer 42 --integer +51 -i -1`
+```go
+var myIntegerList *[]int = parser.IntList("i", "integer", ...)
+```
+
+Float will allow you to get a floating point number from arguments, such as `$ progname --float "37.2"`
+```go
+var myFloat *float64 = parser.Float("f", "float", ...)
+```
+
+FloatList allows to collect multiple floating point number values into the slice of floats by repeating same flag multiple times.
+Such as `$ progname --float 42 --float +37.2 -f -1.0`
+```go
+var myFloatList *[]float64 = parser.FloatList("f", "float", ...)
+```
+
 File will validate that file exists and will attempt to open it with provided privileges.
 To be used like this `$ progname --log-file /path/to/file.log`
 ```go
 var myLogFile *os.File = parser.File("l", "log-file", os.O_RDWR, 0600, ...)
+```
+
+FileList allows to collect files into the slice of files by repeating same flag multiple times.
+FileList will validate that files exists and will attempt to open them with provided privileges.
+To be used like this `$ progname --log-file /path/to/file.log --log-file /path/to/file_cpy.log -l /another/path/to/file.log`
+```go
+var myLogFiles *[]os.File = parser.FileList("l", "log-file", os.O_RDWR, 0600, ...)
 ```
 
 You can implement sub-commands in your CLI using `parser.NewCommand()` or go even deeper with `command.NewCommand()`.
@@ -99,7 +142,7 @@ thus allowing to add arguments specific to that command or more global arguments
 There are a few caveats (or more like design choices) to know about:
 * Shorthand arguments MUST be a single character. Shorthand arguments are prepended with single dash `"-"`
 * If not convenient shorthand argument can be completely skipped by passing empty string `""` as first argument
-* Shorthand arguments ONLY for `parser.Flag()` can be combined into single argument same as `ps -aux` or `rm -rf`
+* Shorthand arguments ONLY for `parser.Flag()` and  `parser.FlagCounter()` can be combined into single argument same as `ps -aux`, `rm -rf` or `lspci -vvk` 
 * Long arguments must be specified and cannot be empty. They are prepended with double dash `"--"`
 * You cannot define two same arguments. Only first one will be used. For example doing `parser.Flag("t", "test", nil)` followed by `parser.String("t", "test2", nil)` will not work as second `String` argument will be ignored (note that both have `"t"` as shorthand argument). However since it is case-sensitive library, you can work arounf it by capitalizing one of the arguments
 * There is a pre-defined argument for `-h|--help`, so from above attempting to define any argument using `h` as shorthand will fail
