@@ -46,7 +46,7 @@ type help struct{}
 //For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed,
 //so check - returns the number of occurrences.
 //For other args check - returns 1 if occured or 0 in no
-func (o *arg) check(argument string) int {
+func (o *arg) check(argument string) (count int, err error) {
 	// Shortcut to showing help
 	if argument == "-h" || argument == "--help" {
 		helpText := o.parent.Help(nil)
@@ -59,27 +59,36 @@ func (o *arg) check(argument string) int {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				return 1
-			}
-		}
-	}
-	// Check for short name only if not empty
-	if o.sname != "" {
-		// If argument begins with "-" and next is not "-" then it is a short name
-		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
-			// For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed
-			if o.size == 1 {
-				return strings.Count(argument[1:], o.sname)
-				// For all other types it must be separate argument
-			} else {
-				if argument[1:] == o.sname {
-					return 1
-				}
+				return 1, nil
 			}
 		}
 	}
 
-	return 0
+	// Check for short name only if not empty
+	if o.sname != "" {
+		// If argument begins with "-" and next is not "-" then it is a short name
+		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
+			count := strings.Count(argument[1:], o.sname)
+			switch {
+			// For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed
+			case o.size == 1:
+				return count, nil
+			// For args with o.size > 1, shorthand argument is allowed only to complete the sequence of arguments combined into one
+			case o.size > 1:
+				if count > 1 {
+					return count, fmt.Errorf("[%s] argument: The parameter must follow", o.name())
+				}
+				if strings.HasSuffix(argument[1:], o.sname) {
+					return count, nil
+				}
+			//if o.size < 1 - it is an error
+			default:
+				return 0, fmt.Errorf("Argument's size < 1 is not allowed")
+			}
+		}
+	}
+
+	return 0, nil
 }
 
 func (o *arg) reduce(position int, args *[]string) {
