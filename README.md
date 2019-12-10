@@ -95,7 +95,7 @@ FlagCounter will tell you the number of times that  simple flag  was set on comm
 (integer greater than or equal to 1 or 0 if not set).
 For example `$ progname -vv --verbose`
 ```go
-var myFlagCounter *int = parser.FlagCounter("v", "--verbose", ...)
+var myFlagCounter *int = parser.FlagCounter("v", "verbose", ...)
 ```
 
 Int will allow you to get a decimal integer from arguments, such as `$ progname --integer "42"`
