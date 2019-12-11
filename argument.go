@@ -129,6 +129,211 @@ func (o *arg) reduce(position int, args *[]string) {
 	}
 }
 
+func (o *arg) parseInt(args []string, argCount int) error {
+	//data of integer type is for
+	switch {
+	//FlagCounter argument
+	case len(args) < 1:
+		if o.size > 1 {
+			return fmt.Errorf("[%s] must be followed by an integer", o.name())
+		}
+		*o.result.(*int) += argCount
+	case len(args) > 1:
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+		//or Int argument with one integer parameter
+	default:
+		val, err := strconv.Atoi(args[0])
+		if err != nil {
+			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+		}
+		*o.result.(*int) = val
+	}
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseBool(args []string) error {
+	//data of bool type is for Flag argument
+	*o.result.(*bool) = true
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseFloat(args []string) error {
+	//data of float64 type is for Float argument with one float parameter
+	if len(args) < 1 {
+		return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+
+	val, err := strconv.ParseFloat(args[0], 64)
+	if err != nil {
+		return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
+	}
+
+	*o.result.(*float64) = val
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseString(args []string) error {
+	//data of string type is for String argument with one string parameter
+	if len(args) < 1 {
+		return fmt.Errorf("[%s] must be followed by a string", o.name())
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+
+	// Selector case
+	if o.selector != nil {
+		match := false
+		for _, v := range *o.selector {
+			if args[0] == v {
+				match = true
+			}
+		}
+		if !match {
+			return fmt.Errorf("bad value for [%s]. Allowed values are %v", o.name(), *o.selector)
+		}
+	}
+
+	*o.result.(*string) = args[0]
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseFile(args []string) error {
+	//data of os.File type is for File argument with one file name parameter
+	if len(args) < 1 {
+		return fmt.Errorf("[%s] must be followed by a path to file", o.name())
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+
+	f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
+	if err != nil {
+		return err
+	}
+
+	*o.result.(*os.File) = *f
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseStringList(args []string) error {
+	//data of []string type is for List and StringList argument with set of string parameters
+	if len(args) < 1 {
+		return fmt.Errorf("[%s] must be followed by a string", o.name())
+	}
+	if len(args) > 1 {
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+
+	*o.result.(*[]string) = append(*o.result.(*[]string), args[0])
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseIntList(args []string) error {
+	//data of []int type is for IntList argument with set of int parameters
+	switch {
+	case len(args) < 1:
+		return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+	case len(args) > 1:
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+
+	val, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+	}
+	*o.result.(*[]int) = append(*o.result.(*[]int), val)
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseFloatList(args []string) error {
+	//data of []float64 type is for FloatList argument with set of int parameters
+	switch {
+	case len(args) < 1:
+		return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+	case len(args) > 1:
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+
+	val, err := strconv.ParseFloat(args[0], 64)
+	if err != nil {
+		return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
+	}
+	*o.result.(*[]float64) = append(*o.result.(*[]float64), val)
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseFileList(args []string) error {
+	//data of []os.File type is for FileList argument with set of int parameters
+	switch {
+	case len(args) < 1:
+		return fmt.Errorf("[%s] must be followed by a path to file", o.name())
+	case len(args) > 1:
+		return fmt.Errorf("[%s] followed by too many arguments", o.name())
+	}
+	f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
+	if err != nil {
+		//if one of FileList's file opening have been failed, close all other in this list
+		errs := make([]string, 0, len(*o.result.(*[]os.File)))
+		for _, f := range *o.result.(*[]os.File) {
+			if err := f.Close(); err != nil {
+				//almost unreal, but what if another process closed this file
+				errs = append(errs, err.Error())
+			}
+		}
+		if len(errs) > 0 {
+			err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+		}
+		*o.result.(*[]os.File) = []os.File{}
+		return err
+	}
+	*o.result.(*[]os.File) = append(*o.result.(*[]os.File), *f)
+	o.parsed = true
+	return nil
+}
+
+func (o *arg) parseSomeType (args []string, argCount int) error {
+	var err error
+	switch o.result.(type) {
+	case *help:
+		helpText := o.parent.Help(nil)
+		fmt.Print(helpText)
+		os.Exit(0)
+	case *bool:
+		err = o.parseBool(args)
+	case *int:
+		err = o.parseInt(args, argCount)
+	case *float64:
+		err = o.parseFloat(args)
+	case *string:
+		err = o.parseString(args)
+	case *os.File:
+		err = o.parseFile(args)
+	case *[]string:
+		err = o.parseStringList(args)
+	case *[]int:
+		err = o.parseIntList(args)
+	case *[]float64:
+		err = o.parseFloatList(args)
+	case *[]os.File:
+		err = o.parseFileList(args)
+	default:
+		err = fmt.Errorf("unsupported type [%t]", o.result)
+	}
+	return err
+}
+
 func (o *arg) parse(args []string, argCount int) error {
 	// If unique do not allow more than one time
 	if o.unique && (o.parsed || argCount > 1) {
@@ -142,154 +347,7 @@ func (o *arg) parse(args []string, argCount int) error {
 			return err
 		}
 	}
-
-	switch o.result.(type) {
-	case *help:
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
-		os.Exit(0)
-		//data of bool type is for Flag argument
-	case *bool:
-		*o.result.(*bool) = true
-		o.parsed = true
-		//data of integer type is for
-	case *int:
-		switch {
-		//FlagCounter argument
-		case len(args) < 1:
-			if o.size > 1 {
-				return fmt.Errorf("[%s] must be followed by an integer", o.name())
-			}
-			*o.result.(*int) += argCount
-		case len(args) > 1:
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-			//or Int argument with one integer parameter
-		default:
-			val, err := strconv.Atoi(args[0])
-			if err != nil {
-				return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
-			}
-			*o.result.(*int) = val
-		}
-		o.parsed = true
-		//data of float64 type is for Float argument with one float parameter
-	case *float64:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
-		}
-		if len(args) > 1 {
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		val, err := strconv.ParseFloat(args[0], 64)
-		if err != nil {
-			return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
-		}
-		*o.result.(*float64) = val
-		o.parsed = true
-		//data of string type is for String argument with one string parameter
-	case *string:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by a string", o.name())
-		}
-		if len(args) > 1 {
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		// Selector case
-		if o.selector != nil {
-			match := false
-			for _, v := range *o.selector {
-				if args[0] == v {
-					match = true
-				}
-			}
-			if !match {
-				return fmt.Errorf("bad value for [%s]. Allowed values are %v", o.name(), *o.selector)
-			}
-		}
-		*o.result.(*string) = args[0]
-		o.parsed = true
-		//data of os.File type is for File argument with one file name parameter
-	case *os.File:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
-		}
-		if len(args) > 1 {
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
-		if err != nil {
-			return err
-		}
-		*o.result.(*os.File) = *f
-		o.parsed = true
-	//data of []string type is for List and StringList argument with set of string parameters
-	case *[]string:
-		if len(args) < 1 {
-			return fmt.Errorf("[%s] must be followed by a string", o.name())
-		}
-		if len(args) > 1 {
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		*o.result.(*[]string) = append(*o.result.(*[]string), args[0])
-		o.parsed = true
-	//data of []int type is for IntList argument with set of int parameters
-	case *[]int:
-		switch {
-		case len(args) < 1:
-			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
-		case len(args) > 1:
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		val, err := strconv.Atoi(args[0])
-		if err != nil {
-			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
-		}
-		*o.result.(*[]int) = append(*o.result.(*[]int), val)
-		o.parsed = true
-	//data of []float64 type is for FloatList argument with set of int parameters
-	case *[]float64:
-		switch {
-		case len(args) < 1:
-			return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
-		case len(args) > 1:
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		val, err := strconv.ParseFloat(args[0], 64)
-		if err != nil {
-			return fmt.Errorf("[%s] bad floating point value [%s]", o.name(), args[0])
-		}
-		*o.result.(*[]float64) = append(*o.result.(*[]float64), val)
-		o.parsed = true
-	//data of []os.File type is for FileList argument with set of int parameters
-	case *[]os.File:
-		switch {
-		case len(args) < 1:
-			return fmt.Errorf("[%s] must be followed by a path to file", o.name())
-		case len(args) > 1:
-			return fmt.Errorf("[%s] followed by too many arguments", o.name())
-		}
-		f, err := os.OpenFile(args[0], o.fileFlag, o.filePerm)
-		if err != nil {
-			//if one of FileList's file opening have been failed, close all other in this list
-			errs := make([]string, 0, len(*o.result.(*[]os.File)))
-			for _, f := range *o.result.(*[]os.File) {
-				if err := f.Close(); err != nil {
-					//almost unreal, but what if another process closed this file
-					errs = append(errs, err.Error())
-				}
-			}
-			if len(errs) > 0 {
-				err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
-			}
-			*o.result.(*[]os.File) = []os.File{}
-			return err
-		}
-		*o.result.(*[]os.File) = append(*o.result.(*[]os.File), *f)
-		o.parsed = true
-	default:
-		return fmt.Errorf("unsupported type [%t]", o.result)
-	}
-	return nil
+	return o.parseSomeType(args,argCount)
 }
 
 func (o *arg) name() string {
