@@ -43,10 +43,11 @@ func (o arg) GetLname() string {
 type help struct{}
 
 //Check if argumet present.
-//For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed,
-//so check - returns the number of occurrences.
-//For other args check - returns 1 if occured or 0 in no
-func (o *arg) check(argument string) (count int, err error) {
+//Check - returns the argumet's number of occurrences and error.
+//For long name return value is 0 or 1.
+//For shorthand argument - 0 if there is no occurrences, or count of occurrences.
+//Shorthand argument with parametr, mast be the only or last in the argument string.
+func (o *arg) check(argument string) (int, error) {
 	// Shortcut to showing help
 	if argument == "-h" || argument == "--help" {
 		helpText := o.parent.Help(nil)
