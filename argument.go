@@ -303,7 +303,7 @@ func (o *arg) parseFileList(args []string) error {
 	return nil
 }
 
-func (o *arg) parseSomeType (args []string, argCount int) error {
+func (o *arg) parseSomeType(args []string, argCount int) error {
 	var err error
 	switch o.result.(type) {
 	case *help:
@@ -347,7 +347,7 @@ func (o *arg) parse(args []string, argCount int) error {
 			return err
 		}
 	}
-	return o.parseSomeType(args,argCount)
+	return o.parseSomeType(args, argCount)
 }
 
 func (o *arg) name() string {
