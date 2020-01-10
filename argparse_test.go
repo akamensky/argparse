@@ -1490,8 +1490,8 @@ func TestFlagDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as type [bool]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as type [bool]", err)
+	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*bool]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as value of pointer with type [*bool]", err)
 	}
 }
 
@@ -1526,8 +1526,8 @@ func TestStringDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
@@ -1562,8 +1562,8 @@ func TestIntDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as type [int]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*int]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
@@ -1612,8 +1612,8 @@ func TestFileDefaultValueFail(t *testing.T) {
 	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: true})
 
 	err = p.Parse(testArgs)
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 	defer file1.Close()
 }
@@ -1756,7 +1756,7 @@ func TestFileListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1772,7 +1772,7 @@ func TestFloatListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]float64]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]float64]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1788,7 +1788,7 @@ func TestIntListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]int]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]int]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1804,7 +1804,7 @@ func TestStringListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1820,8 +1820,8 @@ func TestListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [[]string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [[]string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*[]string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*[]string]", err)
 	}
 }
 
@@ -1856,8 +1856,8 @@ func TestSelectorDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
