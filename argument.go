@@ -42,29 +42,28 @@ func (o arg) GetLname() string {
 
 type help struct{}
 
-//Check if argumet present.
-//Check - returns the argumet's number of occurrences and error.
-//For long name return value is 0 or 1.
-//For shorthand argument - 0 if there is no occurrences, or count of occurrences.
-//Shorthand argument with parametr, mast be the only or last in the argument string.
-func (o *arg) check(argument string) (int, error) {
-	// Shortcut to showing help
-	if argument == "-h" || argument == "--help" {
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
-		os.Exit(0)
-	}
-
+// checkLongName if long argumet present.
+// checkLongName - returns the argumet's long name number of occurrences and error.
+// For long name return value is 0 or 1.
+func (o *arg) checkLongName(argument string) int {
 	// Check for long name only if not empty
 	if o.lname != "" {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				return 1, nil
+				return 1
 			}
 		}
 	}
 
+	return 0
+}
+
+// checkShortName if argumet present.
+// checkShortName - returns the argumet's short name number of occurrences and error.
+// For shorthand argument - 0 if there is no occurrences, or count of occurrences.
+// Shorthand argument with parametr, mast be the only or last in the argument string.
+func (o *arg) checkShortName(argument string) (int, error) {
 	// Check for short name only if not empty
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
@@ -90,6 +89,27 @@ func (o *arg) check(argument string) (int, error) {
 	}
 
 	return 0, nil
+}
+
+// check if argumet present.
+// check - returns the argumet's number of occurrences and error.
+// For long name return value is 0 or 1.
+// For shorthand argument - 0 if there is no occurrences, or count of occurrences.
+// Shorthand argument with parametr, mast be the only or last in the argument string.
+func (o *arg) check(argument string) (int, error) {
+	// Shortcut to showing help
+	if argument == "-h" || argument == "--help" {
+		helpText := o.parent.Help(nil)
+		fmt.Print(helpText)
+		os.Exit(0)
+	}
+
+	rez := o.checkLongName(argument)
+	if rez > 0 {
+		return rez, nil
+	}
+
+	return o.checkShortName(argument)
 }
 
 func (o *arg) reduceLongName(position int, args *[]string) {
