@@ -92,7 +92,7 @@ func (o *arg) check(argument string) (int, error) {
 	return 0, nil
 }
 
-func (o *arg) reduce(position int, args *[]string) {
+func (o *arg) reduceLongName(position int, args *[]string) {
 	argument := (*args)[position]
 	// Check for long name only if not empty
 	if o.lname != "" {
@@ -105,6 +105,10 @@ func (o *arg) reduce(position int, args *[]string) {
 			}
 		}
 	}
+}
+
+func (o *arg) reduceShortName(position int, args *[]string) {
+	argument := (*args)[position]
 	// Check for short name only if not empty
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
@@ -127,6 +131,12 @@ func (o *arg) reduce(position int, args *[]string) {
 			}
 		}
 	}
+}
+
+// clear out already used argument from args at position
+func (o *arg) reduce(position int, args *[]string) {
+	o.reduceLongName(position, args)
+	o.reduceShortName(position, args)
 }
 
 func (o *arg) parseInt(args []string, argCount int) error {
