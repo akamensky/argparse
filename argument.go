@@ -433,6 +433,54 @@ func (o *arg) getHelpMessage() string {
 	return message
 }
 
+// setDefaultFile - gets default os.File object based on provided default filename string
+func (o *arg) setDefaultFile() error {
+	// In case of File we should get string as default value
+	if v, ok := o.opts.Default.(string); ok {
+		f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+		if err != nil {
+			return err
+		}
+		*o.result.(*os.File) = *f
+	} else {
+		return fmt.Errorf("cannot use default type [%T] as value of pointer with type [*string]", o.opts.Default)
+	}
+	return nil
+}
+
+// setDefaultFiles - gets list of default os.File objects based on provided list of default filenames strings
+func (o *arg) setDefaultFiles() error {
+	// In case of FileList we should get []string as default value
+	var files []os.File
+	if fileNames, ok := o.opts.Default.([]string); ok {
+		files = make([]os.File, 0, len(fileNames))
+		for _, v := range fileNames {
+			f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+			if err != nil {
+				//if one of FileList's file opening have been failed, close all other in this list
+				errs := make([]string, 0, len(*o.result.(*[]os.File)))
+				for _, f := range *o.result.(*[]os.File) {
+					if err := f.Close(); err != nil {
+						//almost unreal, but what if another process closed this file
+						errs = append(errs, err.Error())
+					}
+				}
+				if len(errs) > 0 {
+					err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+				}
+				*o.result.(*[]os.File) = []os.File{}
+				return err
+			}
+			files = append(files, *f)
+		}
+	} else {
+		return fmt.Errorf("cannot use default type [%T] as value of pointer with type [*[]string]", o.opts.Default)
+	}
+	*o.result.(*[]os.File) = files
+	return nil
+}
+
+// setDefault - if no value getted for specific argument, set default value, if provided
 func (o *arg) setDefault() error {
 	// Only set default if it was not parsed, and default value was defined
 	if !o.parsed && o.opts != nil && o.opts.Default != nil {
@@ -444,44 +492,13 @@ func (o *arg) setDefault() error {
 			reflect.ValueOf(o.result).Elem().Set(reflect.ValueOf(o.opts.Default))
 
 		case *os.File:
-			// In case of File we should get string as default value
-			if v, ok := o.opts.Default.(string); ok {
-				f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
-				if err != nil {
-					return err
-				}
-				*o.result.(*os.File) = *f
-			} else {
-				return fmt.Errorf("cannot use default type [%T] as value of pointer with type [*string]", o.opts.Default)
+			if err := o.setDefaultFile(); err != nil {
+				return err
 			}
 		case *[]os.File:
-			// In case of FileList we should get []string as default value
-			var files []os.File
-			if fileNames, ok := o.opts.Default.([]string); ok {
-				files = make([]os.File, 0, len(fileNames))
-				for _, v := range fileNames {
-					f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
-					if err != nil {
-						//if one of FileList's file opening have been failed, close all other in this list
-						errs := make([]string, 0, len(*o.result.(*[]os.File)))
-						for _, f := range *o.result.(*[]os.File) {
-							if err := f.Close(); err != nil {
-								//almost unreal, but what if another process closed this file
-								errs = append(errs, err.Error())
-							}
-						}
-						if len(errs) > 0 {
-							err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
-						}
-						*o.result.(*[]os.File) = []os.File{}
-						return err
-					}
-					files = append(files, *f)
-				}
-			} else {
-				return fmt.Errorf("cannot use default type [%T] as value of pointer with type [*[]string]", o.opts.Default)
+			if err := o.setDefaultFiles(); err != nil {
+				return err
 			}
-			*o.result.(*[]os.File) = files
 		}
 	}
 
