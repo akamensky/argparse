@@ -40,36 +40,8 @@ func (o *Command) addArg(a *arg) {
 	}
 }
 
-// Will parse provided list of arguments
-// common usage would be to pass directly os.Args
-func (o *Command) parse(args *[]string) error {
-	// If we already been parsed do nothing
-	if o.parsed {
-		return nil
-	}
-
-	// If no arguments left to parse do nothing
-	if len(*args) < 1 {
-		return nil
-	}
-
-	// Parse only matching commands
-	// But we always have to parse top level
-	if o.name == "" {
-		o.name = (*args)[0]
-	} else {
-		if o.name != (*args)[0] && o.parent != nil {
-			return nil
-		}
-	}
-
-	// Set happened status to true when command happend
-	o.happened = true
-
-	// Reduce arguments by removing Command name
-	*args = (*args)[1:]
-
-	// Parse subcommands if any
+//parseSubCommands - Parses subcommands if any
+func (o *Command) parseSubCommands(args *[]string) error {
 	if o.commands != nil && len(o.commands) > 0 {
 		// If we have subcommands and 0 args left
 		// that is an error of SubCommandError type
@@ -83,7 +55,11 @@ func (o *Command) parse(args *[]string) error {
 			}
 		}
 	}
+	return nil
+}
 
+//parseArguments - Parses arguments
+func (o *Command) parseArguments(args *[]string) error {
 	// Iterate over the args
 	for i := 0; i < len(o.args); i++ {
 		oarg := o.args[i]
@@ -119,6 +95,47 @@ func (o *Command) parse(args *[]string) error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+// Will parse provided list of arguments
+// common usage would be to pass directly os.Args
+func (o *Command) parse(args *[]string) error {
+	// If we already been parsed do nothing
+	if o.parsed {
+		return nil
+	}
+
+	// If no arguments left to parse do nothing
+	if len(*args) < 1 {
+		return nil
+	}
+
+	// Parse only matching commands
+	// But we always have to parse top level
+	if o.name == "" {
+		o.name = (*args)[0]
+	} else {
+		if o.name != (*args)[0] && o.parent != nil {
+			return nil
+		}
+	}
+
+	// Set happened status to true when command happend
+	o.happened = true
+
+	// Reduce arguments by removing Command name
+	*args = (*args)[1:]
+
+	// Parse subcommands if any
+	if err := o.parseSubCommands(args); err != nil {
+		return err
+	}
+
+	// Parse arguments if any
+	if err := o.parseArguments(args); err != nil {
+		return err
 	}
 
 	// Set parsed status to true and return quietly
