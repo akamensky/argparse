@@ -9,10 +9,8 @@ import (
 )
 
 func TestInternalFunctionParse(t *testing.T) {
-	var resultS string
-	//test string
+	// common testing data
 	a := &arg{
-		result: &resultS,
 		sname:  "f",
 		lname:  "flag",
 		size:   2,
@@ -22,100 +20,47 @@ func TestInternalFunctionParse(t *testing.T) {
 	args0 := []string{}
 	args2 := []string{"0", "1"}
 	failureMessageCommon := "[-f|--flag] followed by too many arguments"
-	failureMessage := "[-f|--flag] must be followed by a string"
 
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
+	// Fill testing table with testing cases
+	type testCase struct {
+		testName, failureMessage string
+		resultInterface          interface{}
 	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
+	var (
+		resultS     string
+		resultI     int
+		resultF     float64
+		resultFile  os.File
+		resultSL    []string
+		resultIL    []int
+		resultFL    []float64
+		resultFileL []os.File
+	)
+	tt := []testCase{
+		testCase{"String Value", "[-f|--flag] must be followed by a string", &resultS},
+		testCase{"Int Value", "[-f|--flag] must be followed by an integer", &resultI},
+		testCase{"Float Value", "[-f|--flag] must be followed by a floating point number", &resultF},
+		testCase{"File Value", "[-f|--flag] must be followed by a path to file", &resultFile},
+		testCase{"String Values List", "[-f|--flag] must be followed by a string", &resultSL},
+		testCase{"Int Values List", "[-f|--flag] must be followed by an integer", &resultIL},
+		testCase{"Float Values List", "[-f|--flag] must be followed by a floating point number", &resultFL},
+		testCase{"File Values List", "[-f|--flag] must be followed by a path to file", &resultFileL},
 	}
-	a.parsed = false
-	//test int
-	var resultI int
-	a.result = &resultI
-	failureMessage = "[-f|--flag] must be followed by an integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
+
+	//test all cases from table of cases
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			a.result = tc.resultInterface
+			if err := a.parse(args0, 1); err == nil || err.Error() != tc.failureMessage {
+				t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, tc.failureMessage)
+			}
+			a.parsed = false
+			if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+				t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
+			}
+			a.parsed = false
+		})
 	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test float
-	var resultF float64
-	a.result = &resultF
-	failureMessage = "[-f|--flag] must be followed by a floating point number"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test os.File
-	var resultFile os.File
-	a.result = &resultFile
-	failureMessage = "[-f|--flag] must be followed by a path to file"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []string
-	var resultSL []string
-	a.result = &resultSL
-	failureMessage = "[-f|--flag] must be followed by a string"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []int
-	var resultIL []int
-	a.result = &resultIL
-	failureMessage = "[-f|--flag] must be followed by a string representation of integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []float
-	var resultFL []float64
-	a.result = &resultFL
-	failureMessage = "[-f|--flag] must be followed by a string representation of integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []os.File
-	var resultFileL []os.File
-	a.result = &resultFileL
-	failureMessage = "[-f|--flag] must be followed by a path to file"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
 }
 
 func TestInternalFunctionCheck(t *testing.T) {

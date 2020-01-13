@@ -273,7 +273,7 @@ func (o *arg) parseIntList(args []string) error {
 	//data of []int type is for IntList argument with set of int parameters
 	switch {
 	case len(args) < 1:
-		return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		return fmt.Errorf("[%s] must be followed by an integer", o.name())
 	case len(args) > 1:
 		return fmt.Errorf("[%s] followed by too many arguments", o.name())
 	}
@@ -291,7 +291,7 @@ func (o *arg) parseFloatList(args []string) error {
 	//data of []float64 type is for FloatList argument with set of int parameters
 	switch {
 	case len(args) < 1:
-		return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
 	case len(args) > 1:
 		return fmt.Errorf("[%s] followed by too many arguments", o.name())
 	}
