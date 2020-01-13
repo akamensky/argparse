@@ -1119,34 +1119,44 @@ func TestCommandMixedArgs1(t *testing.T) {
 		}
 
 		// Check commands
-		if cmd1.Happened() {
-			if *cmd1flag1 != true {
-				t.Errorf("Test %s failed with %s: flag1: wanted [true], got [false]", t.Name(), testArgs[1])
-				return
-			}
-			if *cmd1string1 != "test" {
-				t.Errorf("Test %s failed with %s: string1: wanted [test], got [%s]", t.Name(), testArgs[1], *cmd1string1)
-				return
-			}
-			if *cmd1int1 != val {
-				t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], val, *cmd1int1)
-				return
+		type commandCase struct {
+			cmd        *Command
+			cmd1flag   bool
+			cmd1string string
+			cmd1int    int
+		}
+		ct := []commandCase{
+			commandCase{
+				cmd:        cmd1,
+				cmd1flag:   true,
+				cmd1string: "test",
+				cmd1int:    val,
+			},
+			commandCase{
+				cmd:        cmd2,
+				cmd1flag:   false,
+				cmd1string: "",
+				cmd1int:    0,
+			},
+		}
+
+		for _, cc := range ct {
+			if cc.cmd.Happened() {
+				if *cmd1flag1 != cc.cmd1flag {
+					t.Errorf("Test %s failed with %s: flag1: wanted [%t], got [%t]", t.Name(), testArgs[1], cc.cmd1flag, *cmd1flag1)
+					return
+				}
+				if *cmd1string1 != cc.cmd1string {
+					t.Errorf("Test %s failed with %s: string1: wanted [%s], got [%s]", t.Name(), testArgs[1], cc.cmd1string, *cmd1string1)
+					return
+				}
+				if *cmd1int1 != cc.cmd1int {
+					t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], cc.cmd1int, *cmd1int1)
+					return
+				}
 			}
 		}
-		if cmd2.Happened() {
-			if *cmd1flag1 != false {
-				t.Errorf("Test %s failed with %s: flag1: wanted [false], got [true]", t.Name(), testArgs[1])
-				return
-			}
-			if *cmd1string1 != "" {
-				t.Errorf("Test %s failed with %s: string1: wanted [], got [%s]", t.Name(), testArgs[1], *cmd1string1)
-				return
-			}
-			if *cmd1int1 != 0 {
-				t.Errorf("Test %s failed with %s: int1: wanted [0], got [%d]", t.Name(), testArgs[1], *cmd1int1)
-				return
-			}
-		}
+		
 		if (cmd1.Happened() && cmd2.Happened()) || (!cmd1.Happened() && !cmd2.Happened()) {
 			t.Errorf("Test %s failed, either cmd1 and cmd2 or neither of them Happened()", t.Name())
 			return
