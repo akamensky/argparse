@@ -1389,13 +1389,13 @@ func TestUsageSimple1(t *testing.T) {
 	p.Parse(os.Args)
 
 	if pUsage != p.Usage(nil) {
-		t.Errorf("%s", p.Usage(nil))
+		t.Errorf("pUsage: get:\n%s\nexpect:\n%s", p.Usage(nil), pUsage)
 	}
 	if cmd1Usage != cmd1.Usage(nil) {
-		t.Errorf("%s", cmd1.Usage(nil))
+		t.Errorf("cmd1Usage: get:\n%s\nexpect:\n%s", cmd1.Usage(nil), cmd1Usage)
 	}
 	if cmd2Usage != cmd2.Usage(nil) {
-		t.Errorf("%s", cmd2.Usage(nil))
+		t.Errorf("cmd2Usage: get:\n%s\nexpect:\n%s", cmd2.Usage(nil), cmd2Usage)
 	}
 }
 
