@@ -3,6 +3,7 @@ package argparse
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -42,29 +43,28 @@ func (o arg) GetLname() string {
 
 type help struct{}
 
-//Check if argumet present.
-//Check - returns the argumet's number of occurrences and error.
-//For long name return value is 0 or 1.
-//For shorthand argument - 0 if there is no occurrences, or count of occurrences.
-//Shorthand argument with parametr, mast be the only or last in the argument string.
-func (o *arg) check(argument string) (int, error) {
-	// Shortcut to showing help
-	if argument == "-h" || argument == "--help" {
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
-		os.Exit(0)
-	}
-
+// checkLongName if long argumet present.
+// checkLongName - returns the argumet's long name number of occurrences and error.
+// For long name return value is 0 or 1.
+func (o *arg) checkLongName(argument string) int {
 	// Check for long name only if not empty
 	if o.lname != "" {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
 			if argument[2:] == o.lname {
-				return 1, nil
+				return 1
 			}
 		}
 	}
 
+	return 0
+}
+
+// checkShortName if argumet present.
+// checkShortName - returns the argumet's short name number of occurrences and error.
+// For shorthand argument - 0 if there is no occurrences, or count of occurrences.
+// Shorthand argument with parametr, mast be the only or last in the argument string.
+func (o *arg) checkShortName(argument string) (int, error) {
 	// Check for short name only if not empty
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
@@ -92,7 +92,28 @@ func (o *arg) check(argument string) (int, error) {
 	return 0, nil
 }
 
-func (o *arg) reduce(position int, args *[]string) {
+// check if argumet present.
+// check - returns the argumet's number of occurrences and error.
+// For long name return value is 0 or 1.
+// For shorthand argument - 0 if there is no occurrences, or count of occurrences.
+// Shorthand argument with parametr, mast be the only or last in the argument string.
+func (o *arg) check(argument string) (int, error) {
+	// Shortcut to showing help
+	if argument == "-h" || argument == "--help" {
+		helpText := o.parent.Help(nil)
+		fmt.Print(helpText)
+		os.Exit(0)
+	}
+
+	rez := o.checkLongName(argument)
+	if rez > 0 {
+		return rez, nil
+	}
+
+	return o.checkShortName(argument)
+}
+
+func (o *arg) reduceLongName(position int, args *[]string) {
 	argument := (*args)[position]
 	// Check for long name only if not empty
 	if o.lname != "" {
@@ -105,6 +126,10 @@ func (o *arg) reduce(position int, args *[]string) {
 			}
 		}
 	}
+}
+
+func (o *arg) reduceShortName(position int, args *[]string) {
+	argument := (*args)[position]
 	// Check for short name only if not empty
 	if o.sname != "" {
 		// If argument begins with "-" and next is not "-" then it is a short name
@@ -127,6 +152,12 @@ func (o *arg) reduce(position int, args *[]string) {
 			}
 		}
 	}
+}
+
+// clear out already used argument from args at position
+func (o *arg) reduce(position int, args *[]string) {
+	o.reduceLongName(position, args)
+	o.reduceShortName(position, args)
 }
 
 func (o *arg) parseInt(args []string, argCount int) error {
@@ -242,7 +273,7 @@ func (o *arg) parseIntList(args []string) error {
 	//data of []int type is for IntList argument with set of int parameters
 	switch {
 	case len(args) < 1:
-		return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		return fmt.Errorf("[%s] must be followed by an integer", o.name())
 	case len(args) > 1:
 		return fmt.Errorf("[%s] followed by too many arguments", o.name())
 	}
@@ -260,7 +291,7 @@ func (o *arg) parseFloatList(args []string) error {
 	//data of []float64 type is for FloatList argument with set of int parameters
 	switch {
 	case len(args) < 1:
-		return fmt.Errorf("[%s] must be followed by a string representation of integer", o.name())
+		return fmt.Errorf("[%s] must be followed by a floating point number", o.name())
 	case len(args) > 1:
 		return fmt.Errorf("[%s] followed by too many arguments", o.name())
 	}
@@ -402,84 +433,72 @@ func (o *arg) getHelpMessage() string {
 	return message
 }
 
+// setDefaultFile - gets default os.File object based on provided default filename string
+func (o *arg) setDefaultFile() error {
+	// In case of File we should get string as default value
+	if v, ok := o.opts.Default.(string); ok {
+		f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+		if err != nil {
+			return err
+		}
+		*o.result.(*os.File) = *f
+	} else {
+		return fmt.Errorf("cannot use default type [%T] as value of pointer with type [*string]", o.opts.Default)
+	}
+	return nil
+}
+
+// setDefaultFiles - gets list of default os.File objects based on provided list of default filenames strings
+func (o *arg) setDefaultFiles() error {
+	// In case of FileList we should get []string as default value
+	var files []os.File
+	if fileNames, ok := o.opts.Default.([]string); ok {
+		files = make([]os.File, 0, len(fileNames))
+		for _, v := range fileNames {
+			f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
+			if err != nil {
+				//if one of FileList's file opening have been failed, close all other in this list
+				errs := make([]string, 0, len(*o.result.(*[]os.File)))
+				for _, f := range *o.result.(*[]os.File) {
+					if err := f.Close(); err != nil {
+						//almost unreal, but what if another process closed this file
+						errs = append(errs, err.Error())
+					}
+				}
+				if len(errs) > 0 {
+					err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
+				}
+				*o.result.(*[]os.File) = []os.File{}
+				return err
+			}
+			files = append(files, *f)
+		}
+	} else {
+		return fmt.Errorf("cannot use default type [%T] as value of pointer with type [*[]string]", o.opts.Default)
+	}
+	*o.result.(*[]os.File) = files
+	return nil
+}
+
+// setDefault - if no value getted for specific argument, set default value, if provided
 func (o *arg) setDefault() error {
 	// Only set default if it was not parsed, and default value was defined
 	if !o.parsed && o.opts != nil && o.opts.Default != nil {
 		switch o.result.(type) {
-		case *bool:
-			if _, ok := o.opts.Default.(bool); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [bool]", o.opts.Default)
+		case *bool, *int, *float64, *string, *[]bool, *[]int, *[]float64, *[]string:
+			if reflect.TypeOf(o.result) != reflect.PtrTo(reflect.TypeOf(o.opts.Default)) {
+				return fmt.Errorf("cannot use default type [%T] as value of pointer with type [%T]", o.opts.Default, o.result)
 			}
-			*o.result.(*bool) = o.opts.Default.(bool)
-		case *int:
-			if _, ok := o.opts.Default.(int); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [int]", o.opts.Default)
-			}
-			*o.result.(*int) = o.opts.Default.(int)
-		case *float64:
-			if _, ok := o.opts.Default.(float64); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [float64]", o.opts.Default)
-			}
-			*o.result.(*float64) = o.opts.Default.(float64)
-		case *string:
-			if _, ok := o.opts.Default.(string); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [string]", o.opts.Default)
-			}
-			*o.result.(*string) = o.opts.Default.(string)
+			reflect.ValueOf(o.result).Elem().Set(reflect.ValueOf(o.opts.Default))
+
 		case *os.File:
-			// In case of File we should get string as default value
-			if v, ok := o.opts.Default.(string); ok {
-				f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
-				if err != nil {
-					return err
-				}
-				*o.result.(*os.File) = *f
-			} else {
-				return fmt.Errorf("cannot use default type [%T] as type [string]", o.opts.Default)
+			if err := o.setDefaultFile(); err != nil {
+				return err
 			}
-		case *[]string:
-			if _, ok := o.opts.Default.([]string); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
-			}
-			*o.result.(*[]string) = o.opts.Default.([]string)
-		case *[]int:
-			if _, ok := o.opts.Default.([]int); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [[]int]", o.opts.Default)
-			}
-			*o.result.(*[]int) = o.opts.Default.([]int)
-		case *[]float64:
-			if _, ok := o.opts.Default.([]float64); !ok {
-				return fmt.Errorf("cannot use default type [%T] as type [[]float64]", o.opts.Default)
-			}
-			*o.result.(*[]float64) = o.opts.Default.([]float64)
 		case *[]os.File:
-			// In case of FileList we should get []string as default value
-			var files []os.File
-			if fileNames, ok := o.opts.Default.([]string); ok {
-				files = make([]os.File, 0, len(fileNames))
-				for _, v := range fileNames {
-					f, err := os.OpenFile(v, o.fileFlag, o.filePerm)
-					if err != nil {
-						//if one of FileList's file opening have been failed, close all other in this list
-						errs := make([]string, 0, len(*o.result.(*[]os.File)))
-						for _, f := range *o.result.(*[]os.File) {
-							if err := f.Close(); err != nil {
-								//almost unreal, but what if another process closed this file
-								errs = append(errs, err.Error())
-							}
-						}
-						if len(errs) > 0 {
-							err = fmt.Errorf("while handling error: %v, other errors occured: %#v", err.Error(), errs)
-						}
-						*o.result.(*[]os.File) = []os.File{}
-						return err
-					}
-					files = append(files, *f)
-				}
-			} else {
-				return fmt.Errorf("cannot use default type [%T] as type [[]string]", o.opts.Default)
+			if err := o.setDefaultFiles(); err != nil {
+				return err
 			}
-			*o.result.(*[]os.File) = files
 		}
 	}
 

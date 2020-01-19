@@ -9,10 +9,8 @@ import (
 )
 
 func TestInternalFunctionParse(t *testing.T) {
-	var resultS string
-	//test string
+	// common testing data
 	a := &arg{
-		result: &resultS,
 		sname:  "f",
 		lname:  "flag",
 		size:   2,
@@ -22,100 +20,47 @@ func TestInternalFunctionParse(t *testing.T) {
 	args0 := []string{}
 	args2 := []string{"0", "1"}
 	failureMessageCommon := "[-f|--flag] followed by too many arguments"
-	failureMessage := "[-f|--flag] must be followed by a string"
 
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
+	// Fill testing table with testing cases
+	type testCase struct {
+		testName, failureMessage string
+		resultInterface          interface{}
 	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
+	var (
+		resultS     string
+		resultI     int
+		resultF     float64
+		resultFile  os.File
+		resultSL    []string
+		resultIL    []int
+		resultFL    []float64
+		resultFileL []os.File
+	)
+	tt := []testCase{
+		testCase{"String Value", "[-f|--flag] must be followed by a string", &resultS},
+		testCase{"Int Value", "[-f|--flag] must be followed by an integer", &resultI},
+		testCase{"Float Value", "[-f|--flag] must be followed by a floating point number", &resultF},
+		testCase{"File Value", "[-f|--flag] must be followed by a path to file", &resultFile},
+		testCase{"String Values List", "[-f|--flag] must be followed by a string", &resultSL},
+		testCase{"Int Values List", "[-f|--flag] must be followed by an integer", &resultIL},
+		testCase{"Float Values List", "[-f|--flag] must be followed by a floating point number", &resultFL},
+		testCase{"File Values List", "[-f|--flag] must be followed by a path to file", &resultFileL},
 	}
-	a.parsed = false
-	//test int
-	var resultI int
-	a.result = &resultI
-	failureMessage = "[-f|--flag] must be followed by an integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
+
+	//test all cases from table of cases
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			a.result = tc.resultInterface
+			if err := a.parse(args0, 1); err == nil || err.Error() != tc.failureMessage {
+				t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, tc.failureMessage)
+			}
+			a.parsed = false
+			if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+				t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
+			}
+			a.parsed = false
+		})
 	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test float
-	var resultF float64
-	a.result = &resultF
-	failureMessage = "[-f|--flag] must be followed by a floating point number"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test os.File
-	var resultFile os.File
-	a.result = &resultFile
-	failureMessage = "[-f|--flag] must be followed by a path to file"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []string
-	var resultSL []string
-	a.result = &resultSL
-	failureMessage = "[-f|--flag] must be followed by a string"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []int
-	var resultIL []int
-	a.result = &resultIL
-	failureMessage = "[-f|--flag] must be followed by a string representation of integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []float
-	var resultFL []float64
-	a.result = &resultFL
-	failureMessage = "[-f|--flag] must be followed by a string representation of integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
-	//test []os.File
-	var resultFileL []os.File
-	a.result = &resultFileL
-	failureMessage = "[-f|--flag] must be followed by a path to file"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
-	}
-	a.parsed = false
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
-	}
-	a.parsed = false
 }
 
 func TestInternalFunctionCheck(t *testing.T) {
@@ -1174,34 +1119,44 @@ func TestCommandMixedArgs1(t *testing.T) {
 		}
 
 		// Check commands
-		if cmd1.Happened() {
-			if *cmd1flag1 != true {
-				t.Errorf("Test %s failed with %s: flag1: wanted [true], got [false]", t.Name(), testArgs[1])
-				return
-			}
-			if *cmd1string1 != "test" {
-				t.Errorf("Test %s failed with %s: string1: wanted [test], got [%s]", t.Name(), testArgs[1], *cmd1string1)
-				return
-			}
-			if *cmd1int1 != val {
-				t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], val, *cmd1int1)
-				return
+		type commandCase struct {
+			cmd        *Command
+			cmd1flag   bool
+			cmd1string string
+			cmd1int    int
+		}
+		ct := []commandCase{
+			commandCase{
+				cmd:        cmd1,
+				cmd1flag:   true,
+				cmd1string: "test",
+				cmd1int:    val,
+			},
+			commandCase{
+				cmd:        cmd2,
+				cmd1flag:   false,
+				cmd1string: "",
+				cmd1int:    0,
+			},
+		}
+
+		for _, cc := range ct {
+			if cc.cmd.Happened() {
+				if *cmd1flag1 != cc.cmd1flag {
+					t.Errorf("Test %s failed with %s: flag1: wanted [%t], got [%t]", t.Name(), testArgs[1], cc.cmd1flag, *cmd1flag1)
+					return
+				}
+				if *cmd1string1 != cc.cmd1string {
+					t.Errorf("Test %s failed with %s: string1: wanted [%s], got [%s]", t.Name(), testArgs[1], cc.cmd1string, *cmd1string1)
+					return
+				}
+				if *cmd1int1 != cc.cmd1int {
+					t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], cc.cmd1int, *cmd1int1)
+					return
+				}
 			}
 		}
-		if cmd2.Happened() {
-			if *cmd1flag1 != false {
-				t.Errorf("Test %s failed with %s: flag1: wanted [false], got [true]", t.Name(), testArgs[1])
-				return
-			}
-			if *cmd1string1 != "" {
-				t.Errorf("Test %s failed with %s: string1: wanted [], got [%s]", t.Name(), testArgs[1], *cmd1string1)
-				return
-			}
-			if *cmd1int1 != 0 {
-				t.Errorf("Test %s failed with %s: int1: wanted [0], got [%d]", t.Name(), testArgs[1], *cmd1int1)
-				return
-			}
-		}
+		
 		if (cmd1.Happened() && cmd2.Happened()) || (!cmd1.Happened() && !cmd2.Happened()) {
 			t.Errorf("Test %s failed, either cmd1 and cmd2 or neither of them Happened()", t.Name())
 			return
@@ -1389,13 +1344,13 @@ func TestUsageSimple1(t *testing.T) {
 	p.Parse(os.Args)
 
 	if pUsage != p.Usage(nil) {
-		t.Errorf("%s", p.Usage(nil))
+		t.Errorf("pUsage: get:\n%s\nexpect:\n%s", p.Usage(nil), pUsage)
 	}
 	if cmd1Usage != cmd1.Usage(nil) {
-		t.Errorf("%s", cmd1.Usage(nil))
+		t.Errorf("cmd1Usage: get:\n%s\nexpect:\n%s", cmd1.Usage(nil), cmd1Usage)
 	}
 	if cmd2Usage != cmd2.Usage(nil) {
-		t.Errorf("%s", cmd2.Usage(nil))
+		t.Errorf("cmd2Usage: get:\n%s\nexpect:\n%s", cmd2.Usage(nil), cmd2Usage)
 	}
 }
 
@@ -1490,8 +1445,8 @@ func TestFlagDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as type [bool]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as type [bool]", err)
+	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*bool]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as value of pointer with type [*bool]", err)
 	}
 }
 
@@ -1526,8 +1481,8 @@ func TestStringDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
@@ -1562,8 +1517,8 @@ func TestIntDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as type [int]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*int]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
@@ -1612,8 +1567,8 @@ func TestFileDefaultValueFail(t *testing.T) {
 	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: true})
 
 	err = p.Parse(testArgs)
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 	defer file1.Close()
 }
@@ -1756,7 +1711,7 @@ func TestFileListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1772,7 +1727,7 @@ func TestFloatListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]float64]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]float64]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1788,7 +1743,7 @@ func TestIntListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]int]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]int]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1804,7 +1759,7 @@ func TestStringListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1820,8 +1775,8 @@ func TestListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [[]string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [[]string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*[]string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*[]string]", err)
 	}
 }
 
@@ -1856,8 +1811,8 @@ func TestSelectorDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
