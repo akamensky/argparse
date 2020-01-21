@@ -19,25 +19,33 @@ func (o *Command) help() {
 	o.addArg(a)
 }
 
-func (o *Command) addArg(a *arg) {
-	if a.lname != "" {
-		if a.sname == "" || len(a.sname) == 1 {
-			// Search parents for overlapping commands and fail silently if any
-			current := o
-			for current != nil {
-				if current.args != nil {
-					for _, v := range current.args {
-						if (a.sname != "" && a.sname == v.sname) || a.lname == v.lname {
-							return
-						}
-					}
-				}
-				current = current.parent
-			}
-			a.parent = o
-			o.args = append(o.args, a)
-		}
+func (o *Command) addArg(a *arg) error {
+	// long name should be provided
+	if a.lname == "" {
+		return fmt.Errorf("long name should be provided")
 	}
+	// short name could be provided and must not exceed 1 character
+	if len(a.sname) > 1 {
+		return fmt.Errorf("short name must not exceed 1 character")
+	}
+	// Search parents for overlapping commands and fail if any
+	current := o
+	for current != nil {
+		if current.args != nil {
+			for _, v := range current.args {
+				if a.sname != "" && a.sname == v.sname {
+					return fmt.Errorf("short name %s occurs more than once", a.sname)
+				}
+				if a.lname == v.lname {
+					return fmt.Errorf("long name %s occurs more than once", a.lname)
+				}
+			}
+		}
+		current = current.parent
+	}
+	a.parent = o
+	o.args = append(o.args, a)
+	return nil
 }
 
 //parseSubCommands - Parses subcommands if any

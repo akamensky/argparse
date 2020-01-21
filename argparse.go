@@ -159,7 +159,9 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Flag: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -183,7 +185,9 @@ func (o *Command) FlagCounter(short string, long string, opts *Options) *int {
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FlagCounter: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -203,7 +207,9 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add String: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -224,7 +230,9 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Int: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -245,7 +253,9 @@ func (o *Command) Float(short string, long string, opts *Options) *float64 {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Float: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -271,7 +281,9 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 		filePerm: perm,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add File: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -300,7 +312,9 @@ func (o *Command) StringList(short string, long string, opts *Options) *[]string
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add StringList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -321,7 +335,9 @@ func (o *Command) IntList(short string, long string, opts *Options) *[]int {
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add IntList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -342,7 +358,9 @@ func (o *Command) FloatList(short string, long string, opts *Options) *[]float64
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FloatList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -365,7 +383,9 @@ func (o *Command) FileList(short string, long string, flag int, perm os.FileMode
 		filePerm: perm,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FileList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -389,7 +409,9 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 		selector: &options,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Selector: %s", err.Error()))
+	}
 
 	return &result
 }
