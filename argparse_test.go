@@ -1877,28 +1877,97 @@ func TestUsageStringer(t *testing.T) {
 	}
 }
 
-func TestNewParserHelpFuncDefault(t *testing.T) {
+func TestParserHelpFuncDefault(t *testing.T) {
 	parser := NewParser("parser", "")
 	if parser.HelpFunc == nil || parser.Help(nil) != parser.Usage(nil) {
 		t.Errorf("HelpFunc should default to Usage function")
 	}
 }
 
-func TestNewParserWithSettingsHelpDisabled(t *testing.T) {
-	parser := NewParserWithSettings("parser", "", Settings{HelpDisabled: true})
+func TestCommandHelpFuncDefault(t *testing.T) {
+	parser := NewParser("parser", "")
+	command := parser.NewCommand("command", "")
+	if command.HelpFunc != nil {
+		t.Errorf("HelpFunc should default to Usage function")
+	}
+}
+
+func TestCommandHelpFuncDefaultToParent(t *testing.T) {
+	parser := NewParser("parser", "")
+	command := parser.NewCommand("command", "")
+
+	parser.HelpFunc = func(c *Command, msg interface{}) string {
+		return "testing"
+	}
+
+	if command.Help(nil) == command.Usage(nil) || command.Help(nil) != parser.Help(nil) {
+		t.Errorf("command HelpFunc should default to parent function")
+	}
+}
+
+func TestParserExitOnHelpTrue(t *testing.T) {
+	exited := false
+	exit = func(n int) {
+		exited = true
+	}
+
+	parser := NewParser("parser", "")
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
+		if !exited {
+			t.Errorf("Parsing help should have invoked os.Exit")
+		}
+	} else {
+		t.Error(err)
+	}
+}
+
+func TestParserExitOnHelpFalse(t *testing.T) {
+	exited := false
+	exit = func(n int) {
+		exited = true
+	}
+
+	parser := NewParser("parser", "")
+	parser.ExitOnHelp(false)
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "-h"}); exited {
+		t.Errorf("Parsing help should not have invoked os.Exit")
+	} else if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestParserDisableHelp(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.DisableHelp()
 	if len(parser.args) > 0 {
 		t.Errorf("Parser should not have any arguments")
 	}
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
 	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
 		t.Errorf("Parsing should fail, help argument shouldn't exist")
 	}
 }
 
-func TestNewParserWithSettingsHelpNames(t *testing.T) {
+func TestParserSetHelp(t *testing.T) {
 	sname, lname := "x", "xyz"
-	parser := NewParserWithSettings("parser", "", Settings{HelpSname: sname, HelpLname: lname})
+	parser := NewParser("parser", "")
+	parser.SetHelp(sname, lname)
 	if len(parser.args) != 1 {
-		t.Errorf("Parser should not have any arguments:\n%s", parser.Help(nil))
+		t.Errorf("Parser should have one argument:\n%s", parser.Help(nil))
 	}
 	arg := parser.args[0]
 	if _, ok := arg.result.(*help); !ok {
@@ -1909,5 +1978,91 @@ func TestNewParserWithSettingsHelpNames(t *testing.T) {
 	}
 	if arg.lname != lname {
 		t.Errorf("Argument long name should be %s, is %s", lname, arg.lname)
+	}
+}
+
+func TestCommandExitOnHelpTrue(t *testing.T) {
+	exited := false
+	exit = func(n int) {
+		exited = true
+	}
+
+	parser := NewParser("parser", "")
+	parser.NewCommand("command", "")
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "command", "-h"}); exited {
+		if err != nil {
+			t.Error(err)
+		}
+	} else {
+		t.Errorf("Parsing help should have invoked os.Exit")
+	}
+}
+
+func TestCommandExitOnHelpFalse(t *testing.T) {
+	exited := false
+	exit = func(n int) {
+		exited = true
+	}
+
+	parser := NewParser("parser", "")
+	parser.NewCommand("command", "")
+	parser.ExitOnHelp(false)
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "command", "-h"}); exited {
+		t.Error("Parsing help should not have exited")
+	} else if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestCommandDisableHelp(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.NewCommand("command", "")
+	parser.DisableHelp()
+	if len(parser.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "command", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
+	}
+}
+
+func TestCommandHelpInheritance(t *testing.T) {
+	parser := NewParser("parser", "")
+	command := parser.NewCommand("command", "")
+	parser.ExitOnHelp(false)
+
+	if command.exitOnHelp != false {
+		t.Errorf("Command should inherit exitOnHelp from parent, even after creation")
+	}
+}
+
+func TestCommandHelpSetSnameOnly(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.SetHelp("q", "")
+
+	arg := parser.args[0]
+
+	_, ok := arg.result.(*help)
+	if !ok {
+		t.Error("Argument should be of help type")
+	}
+
+	if arg.sname != "h" || arg.lname != "help" {
+		t.Error("Help arugment names should have defaulted")
 	}
 }

@@ -7,10 +7,9 @@ import (
 )
 
 func main() {
-	// Create Parser Settings
-	settings := argparse.Settings{HelpSname: "e", HelpLname: "example"}
 	// Create new parser object
-	parser := argparse.NewParserWithSettings("help", "Demonstrates changing the help argument names", settings)
+	parser := argparse.NewParser("help", "Demonstrates changing the help argument names")
+	parser.SetHelp("e", "example")
 	// Create string flag
 	parser.String("s", "string", &argparse.Options{Required: false, Help: "String argument example"})
 	// Create string flag

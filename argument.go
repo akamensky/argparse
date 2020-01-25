@@ -42,17 +42,7 @@ func (o arg) GetLname() string {
 
 type help struct{}
 
-// HelpCalled error returned when parsing a help argument
-// instead of exiting to prevent further parsing
-type HelpCalled struct {
-	arg arg
-}
-
-func (hc *HelpCalled) Error() string {
-	return fmt.Sprintf("Command %s help argument parsed", hc.arg.parent.name)
-}
-
-//Check if argumet present.
+//Check if argument present.
 //For args with size 1 (Flag,FlagCounter) multiple shorthand in one argument are allowed,
 //so check - returns the number of occurrences.
 //For other args check - returns 1 if occured or 0 in no
@@ -120,6 +110,11 @@ func (o *arg) reduce(position int, args *[]string) {
 	}
 }
 
+// To overwrite while testing
+// Possibly extend to allow user overriding
+var exit func(int) = os.Exit
+var print func(...interface{}) (int, error) = fmt.Println
+
 func (o *arg) parse(args []string, argCount int) error {
 	// If unique do not allow more than one time
 	if o.unique && (o.parsed || argCount > 1) {
@@ -136,12 +131,10 @@ func (o *arg) parse(args []string, argCount int) error {
 
 	switch o.result.(type) {
 	case *help:
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
+		print(o.parent.Help(nil))
 		if o.parent.exitOnHelp {
-			os.Exit(0)
+			exit(0)
 		}
-		return &HelpCalled{*o}
 	//data of bool type is for Flag argument
 	case *bool:
 		*o.result.(*bool) = true
