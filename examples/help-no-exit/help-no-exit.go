@@ -9,7 +9,7 @@ import (
 func main() {
 	// Create new parser object
 	parser := argparse.NewParser("help", "Demonstrates changing the help argument names")
-	parser.ExitOnHelp = false
+	parser.ExitOnHelp(false)
 	// Create string flag
 	parser.String("s", "string", &argparse.Options{Required: false, Help: "String argument example"})
 	// Create string flag
