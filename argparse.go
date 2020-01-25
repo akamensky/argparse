@@ -184,7 +184,9 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Flag: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -208,7 +210,9 @@ func (o *Command) FlagCounter(short string, long string, opts *Options) *int {
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FlagCounter: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -228,7 +232,9 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add String: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -249,7 +255,9 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Int: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -270,7 +278,9 @@ func (o *Command) Float(short string, long string, opts *Options) *float64 {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Float: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -296,7 +306,9 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 		filePerm: perm,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add File: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -325,7 +337,9 @@ func (o *Command) StringList(short string, long string, opts *Options) *[]string
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add StringList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -346,7 +360,9 @@ func (o *Command) IntList(short string, long string, opts *Options) *[]int {
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add IntList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -367,7 +383,9 @@ func (o *Command) FloatList(short string, long string, opts *Options) *[]float64
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FloatList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -390,7 +408,9 @@ func (o *Command) FileList(short string, long string, flag int, perm os.FileMode
 		filePerm: perm,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FileList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -414,38 +434,18 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 		selector: &options,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Selector: %s", err.Error()))
+	}
 
 	return &result
 }
 
-// Happened shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
-// all its descendant commands and arguments are not parsed. Returns a boolean value.
-func (o *Command) Happened() bool {
-	return o.happened
-}
-
-// Usage returns a multiline string that is the same as a help message for this Parser or Command.
-// Since Parser is a Command as well, they work in exactly same way. Meaning that usage string
-// can be retrieved for any level of commands. It will only include information about this Command,
-// its sub-commands, current Command arguments and arguments of all preceding commands (if any)
-//
+// message2String - puts msg in result string
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
-func (o *Command) Usage(msg interface{}) string {
-	for _, cmd := range o.commands {
-		if cmd.Happened() {
-			return cmd.Usage(msg)
-		}
-	}
+func message2String(msg interface{}) string {
 	var result string
-	// Stay classy
-	maxWidth := 80
-	// List of arguments from all preceding commands
-	arguments := make([]*arg, 0)
-	// First get line of commands until root
-	var chain []string
-	current := o
 	if msg != nil {
 		switch msg.(type) {
 		case subCommandError:
@@ -462,23 +462,33 @@ func (o *Command) Usage(msg interface{}) string {
 			result = fmt.Sprintf("%s\n", msg.(fmt.Stringer).String())
 		}
 	}
+	return result
+}
+
+// getPrecedingCommands - collects info on command chain from root to current (o *Command) and all arguments in this chain
+func (o *Command) getPrecedingCommands(chain *[]string, arguments *[]*arg) {
+	current := o
+	// Get line of commands until root
 	for current != nil {
-		chain = append(chain, current.name)
+		*chain = append(*chain, current.name)
 		// Also add arguments
 		if current.args != nil {
-			arguments = append(arguments, current.args...)
+			*arguments = append(*arguments, current.args...)
 		}
 		current = current.parent
 	}
 	// Reverse the slice
-	last := len(chain) - 1
-	for i := 0; i < len(chain)/2; i++ {
-		chain[i], chain[last-i] = chain[last-i], chain[i]
+	last := len(*chain) - 1
+	for i := 0; i < len(*chain)/2; i++ {
+		(*chain)[i], (*chain)[last-i] = (*chain)[last-i], (*chain)[i]
 	}
-	// If this Command has sub-commands we need their list
+}
+
+// getSubCommands - collects info on subcommands of current command
+func (o *Command) getSubCommands(chain *[]string) []Command {
 	commands := make([]Command, 0)
 	if o.commands != nil && len(o.commands) > 0 {
-		chain = append(chain, "<Command>")
+		*chain = append(*chain, "<Command>")
 		for _, v := range o.commands {
 			// Skip hidden commands
 			if v.description == DisableDescription {
@@ -487,9 +497,11 @@ func (o *Command) Usage(msg interface{}) string {
 			commands = append(commands, *v)
 		}
 	}
+	return commands
+}
 
-	// Build usage description
-	result += "usage:"
+// precedingCommands2Result - puts info about command chain from root to current (o *Command) into result string buffer
+func (o *Command) precedingCommands2Result(result string, chain []string, arguments []*arg, maxWidth int) string {
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
 	for _, v := range chain {
@@ -503,12 +515,16 @@ func (o *Command) Usage(msg interface{}) string {
 		}
 		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 	}
-
 	// Add program/Command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
 	result = addToLastLine(result, o.description, maxWidth, leftPadding, true)
 	result = result + "\n\n"
 
+	return result
+}
+
+// subCommands2Result - puts info about subcommands of current command into result string buffer
+func subCommands2Result(result string, commands []Command, maxWidth int) string {
 	// Add list of sub-commands to the result
 	if len(commands) > 0 {
 		cmdContent := "Commands:\n\n"
@@ -534,8 +550,11 @@ func (o *Command) Usage(msg interface{}) string {
 		}
 		result = result + cmdContent + "\n"
 	}
+	return result
+}
 
-	// Add list of arguments to the result
+// arguments2Result - puts info about all arguments of current command into result string buffer
+func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 	if len(arguments) > 0 {
 		argContent := "Arguments:\n\n"
 		// Get biggest padding
@@ -569,6 +588,51 @@ func (o *Command) Usage(msg interface{}) string {
 		}
 		result = result + argContent + "\n"
 	}
+	return result
+}
+
+// Happened shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
+// all its descendant commands and arguments are not parsed. Returns a boolean value.
+func (o *Command) Happened() bool {
+	return o.happened
+}
+
+// Usage returns a multiline string that is the same as a help message for this Parser or Command.
+// Since Parser is a Command as well, they work in exactly same way. Meaning that usage string
+// can be retrieved for any level of commands. It will only include information about this Command,
+// its sub-commands, current Command arguments and arguments of all preceding commands (if any)
+//
+// Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
+// All other interface types will be ignored
+func (o *Command) Usage(msg interface{}) string {
+	for _, cmd := range o.commands {
+		if cmd.Happened() {
+			return cmd.Usage(msg)
+		}
+	}
+
+	var result string
+	// Stay classy
+	maxWidth := 80
+	// List of arguments from all preceding commands
+	arguments := make([]*arg, 0)
+	// Line of commands until root
+	var chain []string
+
+	// Put message in resultz
+	result = message2String(msg)
+
+	//collect info about Preceding Commands into chain and arguments
+	o.getPrecedingCommands(&chain, &arguments)
+	// If this Command has sub-commands we need their list
+	commands := o.getSubCommands(&chain)
+
+	// Build usage description from description of preceding commands chain and each of subcommands
+	result += "usage:"
+	result = o.precedingCommands2Result(result, chain, arguments, maxWidth)
+	result = subCommands2Result(result, commands, maxWidth)
+	// Add list of arguments to the result
+	result = arguments2Result(result, arguments, maxWidth)
 
 	return result
 }

@@ -2,104 +2,117 @@ package argparse
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 )
 
-func TestInternalFunction1(t *testing.T) {
-	var resultS string
-	//test string
+func TestInternalFunctionParse(t *testing.T) {
+	// common testing data
 	a := &arg{
-		result: &resultS,
-		sname:  "-f",
-		lname:  "--flag",
+		sname:  "f",
+		lname:  "flag",
 		size:   2,
 		opts:   nil,
 		unique: true,
 	}
 	args0 := []string{}
 	args2 := []string{"0", "1"}
-	failureMessageCommon := "[--f|----flag] followed by too many arguments"
-	failureMessage := "[--f|----flag] must be followed by a string"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
+	failureMessageCommon := "[-f|--flag] followed by too many arguments"
+
+	// Fill testing table with testing cases
+	type testCase struct {
+		testName, failureMessage string
+		resultInterface          interface{}
 	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test int
-	var resultI int
-	a.result = &resultI
-	failureMessage = "[--f|----flag] must be followed by an integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test float
-	var resultF float64
-	a.result = &resultF
-	failureMessage = "[--f|----flag] must be followed by a floating point number"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test os.File
-	var resultFile os.File
-	a.result = &resultFile
-	failureMessage = "[--f|----flag] must be followed by a path to file"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test []string
-	var resultSL []string
-	a.result = &resultSL
-	failureMessage = "[--f|----flag] must be followed by a string"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test []int
-	var resultIL []int
-	a.result = &resultIL
-	failureMessage = "[--f|----flag] must be followed by a string representation of integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test []float
-	var resultFL []float64
-	a.result = &resultFL
-	failureMessage = "[--f|----flag] must be followed by a string representation of integer"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
-	}
-	//test []os.File
-	var resultFileL []os.File
-	a.result = &resultFileL
-	failureMessage = "[--f|----flag] must be followed by a path to file"
-	if err := a.parse(args0, 1); err == nil || err.Error() != failureMessage {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessage)
-	}
-	if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
-		t.Errorf("Test %s failed with error: \"%s\". error: \"%s\" expected", t.Name(), err, failureMessageCommon)
+	var (
+		resultS     string
+		resultI     int
+		resultF     float64
+		resultFile  os.File
+		resultSL    []string
+		resultIL    []int
+		resultFL    []float64
+		resultFileL []os.File
+	)
+	tt := []testCase{
+		testCase{"String Value", "[-f|--flag] must be followed by a string", &resultS},
+		testCase{"Int Value", "[-f|--flag] must be followed by an integer", &resultI},
+		testCase{"Float Value", "[-f|--flag] must be followed by a floating point number", &resultF},
+		testCase{"File Value", "[-f|--flag] must be followed by a path to file", &resultFile},
+		testCase{"String Values List", "[-f|--flag] must be followed by a string", &resultSL},
+		testCase{"Int Values List", "[-f|--flag] must be followed by an integer", &resultIL},
+		testCase{"Float Values List", "[-f|--flag] must be followed by a floating point number", &resultFL},
+		testCase{"File Values List", "[-f|--flag] must be followed by a path to file", &resultFileL},
 	}
 
+	//test all cases from table of cases
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			a.result = tc.resultInterface
+			if err := a.parse(args0, 1); err == nil || err.Error() != tc.failureMessage {
+				t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, tc.failureMessage)
+			}
+			a.parsed = false
+			if err := a.parse(args2, 1); err == nil || err.Error() != failureMessageCommon {
+				t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessageCommon)
+			}
+			a.parsed = false
+		})
+	}
+}
+
+func TestInternalFunctionCheck(t *testing.T) {
+	var resultS string
+	//test string
+	a := &arg{
+		result: &resultS,
+		sname:  "f",
+		lname:  "flag",
+		size:   0,
+		opts:   nil,
+		unique: true,
+	}
+
+	srgString := "-f"
+	failureMessage := "Argument's size < 1 is not allowed"
+
+	if _, err := a.check(srgString); err == nil || err.Error() != failureMessage {
+		t.Errorf("Test %s failed with error: \"%v\". error: %q expected", t.Name(), err, failureMessage)
+	}
+	a.parsed = false
+}
+
+func TestFlagAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add Flag: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add Flag: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add Flag: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add Flag: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.Flag("F", "flag1", nil)
+			_ = p.Flag(tc.shortArg, tc.longArg, nil)
+		})
+	}
 }
 
 func TestFlagSimple1(t *testing.T) {
@@ -181,6 +194,68 @@ func TestFlagSimple2(t *testing.T) {
 	}
 }
 
+func TestFlagMultiShorthandWithParam1(t *testing.T) {
+	testArgs := []string{"progname", "-ab", "10", "-c", "-de", "11", "--ee", "12"}
+
+	testList := []int{11, 12}
+
+	p := NewParser("", "description")
+	flag1 := p.Flag("a", "aa", nil)
+	int2 := p.Int("b", "bb", nil)
+	flag3 := p.Flag("c", "cc", nil)
+	flag4 := p.Flag("d", "dd", nil)
+	intList5 := p.IntList("e", "ee", nil)
+	flag6 := p.Flag("f", "ff", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if *flag1 != true {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+	}
+
+	if *int2 != 10 {
+		t.Errorf("Test %s failed with *int2=%v being false", t.Name(), *int2)
+	}
+
+	if *flag3 != true {
+		t.Errorf("Test %s failed with flag3 being false", t.Name())
+	}
+
+	if *flag4 != true {
+		t.Errorf("Test %s failed with flag4 being false", t.Name())
+	}
+
+	if !reflect.DeepEqual(*intList5, testList) {
+		t.Errorf("Test %s failed: expected [%v], got [%v]", t.Name(), testList, *intList5)
+	}
+
+	if *flag6 != false {
+		t.Errorf("Test %s failed with flag6 being true", t.Name())
+	}
+}
+
+func TestFlagMultiShorthandWithParamFail1(t *testing.T) {
+	testArgs := []string{"progname", "-bab", "10"}
+
+	p := NewParser("", "description")
+	_ = p.Flag("a", "aa", nil)
+	_ = p.Int("b", "bb", nil)
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed with no error", t.Name())
+		return
+	}
+	errExpectation := "[-b|--bb] argument: The parameter must follow"
+	if err.Error() != errExpectation {
+		t.Errorf("Test %s failed. error %q getted. %q expected", t.Name(), err.Error(), errExpectation)
+	}
+}
+
 func TestFlagMultiShorthand1(t *testing.T) {
 	testArgs := []string{"progname", "-abcd", "-e"}
 
@@ -220,6 +295,35 @@ func TestFlagMultiShorthand1(t *testing.T) {
 
 	if *flag6 != false {
 		t.Errorf("Test %s failed with flag6 being true", t.Name())
+	}
+}
+
+func TestFlagCounterAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add FlagCounter: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add FlagCounter: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add FlagCounter: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add FlagCounter: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.FlagCounter("F", "flag1", nil)
+			_ = p.FlagCounter(tc.shortArg, tc.longArg, nil)
+		})
 	}
 }
 
@@ -397,7 +501,7 @@ func TestFailCaseSensitive(t *testing.T) {
 	testArgs := []string{"progname", "-F"}
 
 	p := NewParser("", "description")
-	_ = p.Flag("f", "", &Options{Required: true})
+	_ = p.Flag("f", "flag", &Options{Required: true})
 
 	err := p.Parse(testArgs)
 	if err == nil {
@@ -417,6 +521,35 @@ func TestFailExcessiveArguments(t *testing.T) {
 	if err == nil {
 		t.Errorf("Test %s failed with. Excessive argument not detected", t.Name())
 		return
+	}
+}
+
+func TestStringAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add String: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add String: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add String: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add String: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.String("F", "flag1", nil)
+			_ = p.String(tc.shortArg, tc.longArg, nil)
+		})
 	}
 }
 
@@ -485,6 +618,35 @@ func TestStringSimple2(t *testing.T) {
 	if *s2 != "" {
 		t.Errorf("Test %s failed. Want: [%s], got: [%s]", t.Name(), "\"\"", *s1)
 		return
+	}
+}
+
+func TestIntAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add Int: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add Int: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add Int: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add Int: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.Int("F", "flag1", nil)
+			_ = p.Int(tc.shortArg, tc.longArg, nil)
+		})
 	}
 }
 
@@ -579,6 +741,35 @@ func TestIntFailSimple1(t *testing.T) {
 	if *i1 != 0 {
 		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *i1)
 		return
+	}
+}
+
+func TestFileAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add File: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add File: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add File: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add File: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.File("F", "flag1", os.O_RDWR, 0666, nil)
+			_ = p.File(tc.shortArg, tc.longArg, os.O_RDWR, 0666, nil)
+		})
 	}
 }
 
@@ -760,6 +951,35 @@ func TestFileListSimpleFail2(t *testing.T) {
 	}
 }
 
+func TestFileListAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add FileList: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add FileList: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add FileList: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add FileList: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.FileList("F", "flag1", os.O_RDWR, 0666, nil)
+			_ = p.FileList(tc.shortArg, tc.longArg, os.O_RDWR, 0666, nil)
+		})
+	}
+}
+
 func TestFileListSimple1(t *testing.T) {
 	// Test files location
 	fpaths := []string{"./test1.tmp", "./test2.tmp"}
@@ -809,6 +1029,35 @@ func TestFileListSimple1(t *testing.T) {
 	}
 }
 
+func TestFloatListAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add FloatList: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add FloatList: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add FloatList: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add FloatList: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.FloatList("F", "flag1", nil)
+			_ = p.FloatList(tc.shortArg, tc.longArg, nil)
+		})
+	}
+}
+
 func TestFloatListSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "12", "--flag-arg1", "-10.1", "--flag-arg1", "+10"}
 	list1Expect := []float64{12, -10.1, 10}
@@ -843,6 +1092,35 @@ func TestFloatListTypeFail(t *testing.T) {
 	failureText := "[-f|--flag-arg1] bad floating point value [10,1]"
 	if err == nil || err.Error() != failureText {
 		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
+	}
+}
+
+func TestIntListAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add IntList: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add IntList: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add IntList: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add IntList: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.IntList("F", "flag1", nil)
+			_ = p.IntList(tc.shortArg, tc.longArg, nil)
+		})
 	}
 }
 
@@ -883,6 +1161,35 @@ func TestIntListTypeFail(t *testing.T) {
 	}
 }
 
+func TestStringListAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add StringList: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add StringList: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add StringList: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add StringList: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.StringList("F", "flag1", nil)
+			_ = p.StringList(tc.shortArg, tc.longArg, nil)
+		})
+	}
+}
+
 func TestStringListSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "test1", "--flag-arg1", "test2"}
 	list1Expect := []string{"test1", "test2"}
@@ -904,6 +1211,35 @@ func TestStringListSimple1(t *testing.T) {
 		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list1Expect, *l1)
 	case !reflect.DeepEqual(*l2, list2Expect):
 		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list2Expect, *l2)
+	}
+}
+
+func TestListAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add StringList: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add StringList: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add StringList: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add StringList: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.StringList("F", "flag1", nil)
+			_ = p.StringList(tc.shortArg, tc.longArg, nil)
+		})
 	}
 }
 
@@ -940,6 +1276,36 @@ func TestListSimple1(t *testing.T) {
 	if !reflect.DeepEqual(*l2, list2Expect) {
 		t.Errorf("Test %s failed. Want: %s, got: %s", t.Name(), list2Expect, *l2)
 		return
+	}
+}
+
+func TestSelectorAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add Selector: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add Selector: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add Selector: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add Selector: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			allowedValues := []string{"test1", "test2"}
+			_ = p.Selector("F", "flag1", allowedValues, nil)
+			_ = p.Selector(tc.shortArg, tc.longArg, allowedValues, nil)
+		})
 	}
 }
 
@@ -1075,34 +1441,44 @@ func TestCommandMixedArgs1(t *testing.T) {
 		}
 
 		// Check commands
-		if cmd1.Happened() {
-			if *cmd1flag1 != true {
-				t.Errorf("Test %s failed with %s: flag1: wanted [true], got [false]", t.Name(), testArgs[1])
-				return
-			}
-			if *cmd1string1 != "test" {
-				t.Errorf("Test %s failed with %s: string1: wanted [test], got [%s]", t.Name(), testArgs[1], *cmd1string1)
-				return
-			}
-			if *cmd1int1 != val {
-				t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], val, *cmd1int1)
-				return
+		type commandCase struct {
+			cmd        *Command
+			cmd1flag   bool
+			cmd1string string
+			cmd1int    int
+		}
+		ct := []commandCase{
+			commandCase{
+				cmd:        cmd1,
+				cmd1flag:   true,
+				cmd1string: "test",
+				cmd1int:    val,
+			},
+			commandCase{
+				cmd:        cmd2,
+				cmd1flag:   false,
+				cmd1string: "",
+				cmd1int:    0,
+			},
+		}
+
+		for _, cc := range ct {
+			if cc.cmd.Happened() {
+				if *cmd1flag1 != cc.cmd1flag {
+					t.Errorf("Test %s failed with %s: flag1: wanted [%t], got [%t]", t.Name(), testArgs[1], cc.cmd1flag, *cmd1flag1)
+					return
+				}
+				if *cmd1string1 != cc.cmd1string {
+					t.Errorf("Test %s failed with %s: string1: wanted [%s], got [%s]", t.Name(), testArgs[1], cc.cmd1string, *cmd1string1)
+					return
+				}
+				if *cmd1int1 != cc.cmd1int {
+					t.Errorf("Test %s failed with %s: int1: wanted [%d], got [%d]", t.Name(), testArgs[1], cc.cmd1int, *cmd1int1)
+					return
+				}
 			}
 		}
-		if cmd2.Happened() {
-			if *cmd1flag1 != false {
-				t.Errorf("Test %s failed with %s: flag1: wanted [false], got [true]", t.Name(), testArgs[1])
-				return
-			}
-			if *cmd1string1 != "" {
-				t.Errorf("Test %s failed with %s: string1: wanted [], got [%s]", t.Name(), testArgs[1], *cmd1string1)
-				return
-			}
-			if *cmd1int1 != 0 {
-				t.Errorf("Test %s failed with %s: int1: wanted [0], got [%d]", t.Name(), testArgs[1], *cmd1int1)
-				return
-			}
-		}
+
 		if (cmd1.Happened() && cmd2.Happened()) || (!cmd1.Happened() && !cmd2.Happened()) {
 			t.Errorf("Test %s failed, either cmd1 and cmd2 or neither of them Happened()", t.Name())
 			return
@@ -1290,13 +1666,13 @@ func TestUsageSimple1(t *testing.T) {
 	p.Parse(os.Args)
 
 	if pUsage != p.Usage(nil) {
-		t.Errorf("%s", p.Usage(nil))
+		t.Errorf("pUsage: get:\n%s\nexpect:\n%s", p.Usage(nil), pUsage)
 	}
 	if cmd1Usage != cmd1.Usage(nil) {
-		t.Errorf("%s", cmd1.Usage(nil))
+		t.Errorf("cmd1Usage: get:\n%s\nexpect:\n%s", cmd1.Usage(nil), cmd1Usage)
 	}
 	if cmd2Usage != cmd2.Usage(nil) {
-		t.Errorf("%s", cmd2.Usage(nil))
+		t.Errorf("cmd2Usage: get:\n%s\nexpect:\n%s", cmd2.Usage(nil), cmd2Usage)
 	}
 }
 
@@ -1308,7 +1684,7 @@ func TestUsageHidden1(t *testing.T) {
 	_ = cmd1.Flag("a", "verylongflagA", &Options{Required: true, Help: "flag1 description"})
 	_ = p.String("s", "verylongstring-flag1", &Options{Help: "string1 description"})
 	_ = p.Int("i", "integer-flag1", &Options{Help: "integer1 description"})
-	_ = p.Int("i2", "integer-flag2", &Options{Help: DisableDescription})
+	_ = p.Int("I", "integer-flag2", &Options{Help: DisableDescription})
 
 	_ = p.NewCommand("cmd2", "cmd2 description")
 
@@ -1391,8 +1767,8 @@ func TestFlagDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as type [bool]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as type [bool]", err)
+	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*bool]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as value of pointer with type [*bool]", err)
 	}
 }
 
@@ -1427,8 +1803,8 @@ func TestStringDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
@@ -1463,8 +1839,8 @@ func TestIntDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as type [int]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*int]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
 
@@ -1513,8 +1889,8 @@ func TestFileDefaultValueFail(t *testing.T) {
 	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: true})
 
 	err = p.Parse(testArgs)
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 	defer file1.Close()
 }
@@ -1657,7 +2033,7 @@ func TestFileListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1673,7 +2049,7 @@ func TestFloatListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]float64]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]float64]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1689,7 +2065,7 @@ func TestIntListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]int]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]int]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1705,7 +2081,7 @@ func TestStringListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	failureMessage := "cannot use default type [bool] as type [[]string]"
+	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
 	if err == nil || err.Error() != failureMessage {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), failureMessage, err)
 	}
@@ -1721,8 +2097,8 @@ func TestListDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [[]string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [[]string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*[]string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*[]string]", err)
 	}
 }
 
@@ -1757,8 +2133,37 @@ func TestSelectorDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as type [string]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as type [string]", err)
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
+	}
+}
+
+func TestFloatAddArgumentFail(t *testing.T) {
+	type testCase struct {
+		testName, shortArg, longArg, failureMessage string
+	}
+	tt := []testCase{
+		testCase{testName: "Long short name", shortArg: "ff", longArg: "flag2", failureMessage: "unable to add Float: short name must not exceed 1 character"},
+		testCase{testName: "Long name not provided", shortArg: "f", longArg: "", failureMessage: "unable to add Float: long name should be provided"},
+		testCase{testName: "Long name twice", shortArg: "f", longArg: "flag1", failureMessage: "unable to add Float: long name flag1 occurs more than once"},
+		testCase{testName: "Short name twice", shortArg: "F", longArg: "flag2", failureMessage: "unable to add Float: short name F occurs more than once"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.testName, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					rezString := fmt.Sprintf("%v", r)
+					if strings.Contains(rezString, tc.failureMessage) == false {
+						t.Errorf("Test %s failed with panic result: \"%v\". panic result: %q expected", t.Name(), r, tc.failureMessage)
+					}
+				} else {
+					t.Errorf("Test %s failed with no panic, but panic expected with result: %q", t.Name(), tc.failureMessage)
+				}
+			}()
+			p := NewParser("", "description")
+			_ = p.Float("F", "flag1", nil)
+			_ = p.Float(tc.shortArg, tc.longArg, nil)
+		})
 	}
 }
 
