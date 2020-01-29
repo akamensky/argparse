@@ -23,6 +23,7 @@ type Command struct {
 	happened    bool
 	parent      *Command
 	HelpFunc    func(c *Command, msg interface{}) string
+	exitOnHelp  bool
 }
 
 // GetName exposes Command's name field
@@ -109,7 +110,8 @@ func NewParser(name string, description string) *Parser {
 	p.args = make([]*arg, 0)
 	p.commands = make([]*Command, 0)
 
-	p.help()
+	p.help("h", "help")
+	p.exitOnHelp = true
 	p.HelpFunc = (*Command).Usage
 
 	return p
@@ -128,8 +130,7 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	c.description = description
 	c.parsed = false
 	c.parent = o
-
-	c.help()
+	c.exitOnHelp = o.exitOnHelp
 
 	if o.commands == nil {
 		o.commands = make([]*Command, 0)
@@ -138,6 +139,30 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	o.commands = append(o.commands, c)
 
 	return c
+}
+
+// DisableHelp removes any help arguments from the commands list of arguments
+// This prevents prevents help from being parsed or invoked from the argument list
+func (o *Parser) DisableHelp() {
+	for i, arg := range o.args {
+		if _, ok := arg.result.(*help); ok {
+			o.args = append(o.args[:i], o.args[i+1:]...)
+		}
+	}
+}
+
+// ExitOnHelp sets the exitOnHelp variable of Parser
+func (o *Command) ExitOnHelp(b bool) {
+	o.exitOnHelp = b
+	for _, c := range o.commands {
+		c.ExitOnHelp(b)
+	}
+}
+
+// SetHelp removes the previous help argument, and creates a new one with the desired sname/lname
+func (o *Parser) SetHelp(sname, lname string) {
+	o.DisableHelp()
+	o.help(sname, lname)
 }
 
 // Flag Creates new flag type of argument, which is boolean value showing if argument was provided or not.

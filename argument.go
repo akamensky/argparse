@@ -98,13 +98,6 @@ func (o *arg) checkShortName(argument string) (int, error) {
 // For shorthand argument - 0 if there is no occurrences, or count of occurrences.
 // Shorthand argument with parametr, mast be the only or last in the argument string.
 func (o *arg) check(argument string) (int, error) {
-	// Shortcut to showing help
-	if argument == "-h" || argument == "--help" {
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
-		os.Exit(0)
-	}
-
 	rez := o.checkLongName(argument)
 	if rez > 0 {
 		return rez, nil
@@ -334,13 +327,20 @@ func (o *arg) parseFileList(args []string) error {
 	return nil
 }
 
+// To overwrite while testing
+// Possibly extend to allow user overriding
+var exit func(int) = os.Exit
+var print func(...interface{}) (int, error) = fmt.Println
+
 func (o *arg) parseSomeType(args []string, argCount int) error {
 	var err error
 	switch o.result.(type) {
 	case *help:
-		helpText := o.parent.Help(nil)
-		fmt.Print(helpText)
-		os.Exit(0)
+		print(o.parent.Help(nil))
+		if o.parent.exitOnHelp {
+			exit(0)
+		}
+	//data of bool type is for Flag argument
 	case *bool:
 		err = o.parseBool(args)
 	case *int:

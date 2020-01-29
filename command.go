@@ -4,13 +4,17 @@ import (
 	"fmt"
 )
 
-func (o *Command) help() {
+func (o *Command) help(sname, lname string) {
 	result := &help{}
 
+	if lname == "" {
+		sname, lname = "h", "help"
+	}
+
 	a := &arg{
-		result: &result,
-		sname:  "h",
-		lname:  "help",
+		result: result,
+		sname:  sname,
+		lname:  lname,
 		size:   1,
 		opts:   &Options{Help: "Print help information"},
 		unique: true,
