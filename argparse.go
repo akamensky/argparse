@@ -441,10 +441,11 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 	return &result
 }
 
-// message2String - puts msg in result string
+// message2String puts msg in result string
+// done boolean indicates if result is ready to be returned
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
-func message2String(msg interface{}) string {
+func message2String(msg interface{}) (string, bool) {
 	var result string
 	if msg != nil {
 		switch msg.(type) {
@@ -453,7 +454,7 @@ func message2String(msg interface{}) string {
 			if msg.(subCommandError).cmd != nil {
 				result += msg.(subCommandError).cmd.Usage(nil)
 			}
-			return result
+			return result, true
 		case error:
 			result = fmt.Sprintf("%s\n", msg.(error).Error())
 		case string:
@@ -462,7 +463,7 @@ func message2String(msg interface{}) string {
 			result = fmt.Sprintf("%s\n", msg.(fmt.Stringer).String())
 		}
 	}
-	return result
+	return result, false
 }
 
 // getPrecedingCommands - collects info on command chain from root to current (o *Command) and all arguments in this chain
@@ -611,7 +612,6 @@ func (o *Command) Usage(msg interface{}) string {
 		}
 	}
 
-	var result string
 	// Stay classy
 	maxWidth := 80
 	// List of arguments from all preceding commands
@@ -619,8 +619,11 @@ func (o *Command) Usage(msg interface{}) string {
 	// Line of commands until root
 	var chain []string
 
-	// Put message in resultz
-	result = message2String(msg)
+	// Put message in result
+	result, done := message2String(msg)
+	if done {
+		return result
+	}
 
 	//collect info about Preceding Commands into chain and arguments
 	o.getPrecedingCommands(&chain, &arguments)
