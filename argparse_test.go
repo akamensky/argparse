@@ -1702,6 +1702,36 @@ func TestUsageHidden1(t *testing.T) {
 	}
 }
 
+func TestUsageSubCommand(t *testing.T) {
+	expected := `[sub]Command required
+usage: zooprog <Command> [-h|--help]
+
+               Program that walks us through the zoo
+
+Commands:
+
+  dog  We are going to see dog
+
+Arguments:
+
+  -h  --help  Print help information
+
+`
+
+	parser := NewParser("zooprog", "Program that walks us through the zoo")
+
+	// dog command
+	parser.
+		NewCommand("dog", "We are going to see dog"). // adds command to parser
+		NewCommand("speak", "Make the dog speak")     // adds subcommand to previous command
+
+	err := newSubCommandError(&parser.Command)
+	actual := parser.Usage(err)
+	if expected != actual {
+		t.Errorf("Expectations unmet. expected: %s, actual: %s", expected, actual)
+	}
+}
+
 func TestStringMissingArgFail(t *testing.T) {
 	testArgs := []string{"progname", "-s"}
 
