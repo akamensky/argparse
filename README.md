@@ -137,9 +137,9 @@ You can implement sub-commands in your CLI using `parser.NewCommand()` or go eve
 Since parser inherits from command, every command supports exactly same options as parser itself,
 thus allowing to add arguments specific to that command or more global arguments added on parser itself!
 
-#### Basic Option Struct
+#### Basic Option Structure
 
-The `Option` struct is defended at argparse.go:
+The `Option` structure is declared at `argparse.go`:
 ```go
 type Options struct {
 	Required bool
@@ -149,9 +149,9 @@ type Options struct {
 }
 ```
 
-You can Set `Required` to let it know if it should ask for argments.
-Or you can set Validata as a lambda function to make it know while value is vaild.
-Or you can set `Help` for your beatiful help document.
+You can Set `Required` to let it know if it should ask for arguments.
+Or you can set `Validata` as a lambda function to make it know while value is valid.
+Or you can set `Help` for your beautiful help document.
 Or you can set `Default` will set the default value if user do not give your programme a value.
 
 Example:
