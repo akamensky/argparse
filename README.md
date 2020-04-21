@@ -150,9 +150,9 @@ type Options struct {
 ```
 
 You can Set `Required` to let it know if it should ask for arguments.
-Or you can set `Validata` as a lambda function to make it know while value is valid.
+Or you can set `Validate` as a lambda function to make it know while value is valid.
 Or you can set `Help` for your beautiful help document.
-Or you can set `Default` will set the default value if user do not give your programme a value.
+Or you can set `Default` will set the default value if user does not provide a value.
 
 Example:
 ```
