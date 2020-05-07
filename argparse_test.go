@@ -727,7 +727,7 @@ func TestIntFailSimple1(t *testing.T) {
 	i1 := p.Int("f", "flag-arg1", nil)
 
 	err := p.Parse(testArgs)
-	errStr := "[-f|--flag-arg1] bad interger value [string]"
+	errStr := "[-f|--flag-arg1] bad integer value [string]"
 	if err == nil || err.Error() != errStr {
 		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
 		return
@@ -1155,7 +1155,7 @@ func TestIntListTypeFail(t *testing.T) {
 	p.IntList("f", "flag-arg1", nil)
 
 	err := p.Parse(testArgs)
-	failureText := "[-f|--flag-arg1] bad interger value [=10]"
+	failureText := "[-f|--flag-arg1] bad integer value [=10]"
 	if err == nil || err.Error() != failureText {
 		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
 	}
