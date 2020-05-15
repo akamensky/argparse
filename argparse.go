@@ -502,6 +502,7 @@ func (o *Command) getSubCommands(chain *[]string) []Command {
 }
 
 // precedingCommands2Result - puts info about command chain from root to current (o *Command) into result string buffer
+// the result of this function is not ending with the newline token
 func (o *Command) precedingCommands2Result(result string, chain []string, arguments []*arg, maxWidth int) string {
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
@@ -517,18 +518,18 @@ func (o *Command) precedingCommands2Result(result string, chain []string, argume
 		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 	}
 	// Add program/Command description to the result
-	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
+    result = result + "\ndesciption:\n  "
 	result = addToLastLine(result, o.description, maxWidth, leftPadding, true)
-	result = result + "\n\n"
 
 	return result
 }
 
 // subCommands2Result - puts info about subcommands of current command into result string buffer
+// this function will return a string that ends without newline token
 func subCommands2Result(result string, commands []Command, maxWidth int) string {
 	// Add list of sub-commands to the result
 	if len(commands) > 0 {
-		cmdContent := "Commands:\n\n"
+		cmdContent := "commands:"
 		// Get biggest padding
 		var cmdPadding int
 		for _, com := range commands {
@@ -547,17 +548,18 @@ func subCommands2Result(result string, commands []Command, maxWidth int) string 
 			cmd := "  " + com.name
 			cmd = cmd + strings.Repeat(" ", cmdPadding-len(cmd)-1)
 			cmd = addToLastLine(cmd, com.description, maxWidth, cmdPadding, true)
-			cmdContent = cmdContent + cmd + "\n"
+			cmdContent = cmdContent + "\n" + cmd
 		}
-		result = result + cmdContent + "\n"
+		result = result + cmdContent
 	}
 	return result
 }
 
 // arguments2Result - puts info about all arguments of current command into result string buffer
+// the result string is not ending with newline (this will be more helpful)
 func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 	if len(arguments) > 0 {
-		argContent := "Arguments:\n\n"
+		argContent := "arguments:"
 		// Get biggest padding
 		var argPadding int
 		// Find biggest padding
@@ -576,7 +578,7 @@ func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 			}
 			arg := "  "
 			if argument.sname != "" {
-				arg = arg + "-" + argument.sname + "  "
+				arg = arg + "-" + argument.sname + ", "
 			} else {
 				arg = arg + "    "
 			}
@@ -585,9 +587,9 @@ func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 			if argument.opts != nil && argument.opts.Help != "" {
 				arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
 			}
-			argContent = argContent + arg + "\n"
+            argContent = argContent + "\n" + arg
 		}
-		result = result + argContent + "\n"
+		result = result + argContent
 	}
 	return result
 }
@@ -605,6 +607,7 @@ func (o *Command) Happened() bool {
 //
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
+// at the end there is a newline token - it need to be sure that the output is OK.
 func (o *Command) Usage(msg interface{}) string {
 	for _, cmd := range o.commands {
 		if cmd.Happened() {
@@ -632,10 +635,10 @@ func (o *Command) Usage(msg interface{}) string {
 
 	// Build usage description from description of preceding commands chain and each of subcommands
 	result += "usage:"
-	result = o.precedingCommands2Result(result, chain, arguments, maxWidth)
-	result = subCommands2Result(result, commands, maxWidth)
+	result = o.precedingCommands2Result(result, chain, arguments, maxWidth) + "\n"
+	result = subCommands2Result(result, commands, maxWidth) + "\n"
 	// Add list of arguments to the result
-	result = arguments2Result(result, arguments, maxWidth)
+	result = arguments2Result(result, arguments, maxWidth) + "\n"
 
 	return result
 }
