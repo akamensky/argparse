@@ -168,7 +168,7 @@ func (o *arg) parseInt(args []string, argCount int) error {
 	default:
 		val, err := strconv.Atoi(args[0])
 		if err != nil {
-			return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+			return fmt.Errorf("[%s] bad integer value [%s]", o.name(), args[0])
 		}
 		*o.result.(*int) = val
 	}
@@ -273,7 +273,7 @@ func (o *arg) parseIntList(args []string) error {
 
 	val, err := strconv.Atoi(args[0])
 	if err != nil {
-		return fmt.Errorf("[%s] bad interger value [%s]", o.name(), args[0])
+		return fmt.Errorf("[%s] bad integer value [%s]", o.name(), args[0])
 	}
 	*o.result.(*[]int) = append(*o.result.(*[]int), val)
 	o.parsed = true
