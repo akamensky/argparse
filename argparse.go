@@ -505,6 +505,7 @@ func (o *Command) getSubCommands(chain *[]string) []Command {
 // the result of this function is not ending with the newline token
 func (o *Command) precedingCommands2Result(result string, chain []string, arguments []*arg, maxWidth int) string {
 	leftPadding := len("usage: " + chain[0] + "")
+    result += "usage:"
 	// Add preceding commands
 	for _, v := range chain {
 		result = addToLastLine(result, v, maxWidth, leftPadding, true)
@@ -634,11 +635,15 @@ func (o *Command) Usage(msg interface{}) string {
 	commands := o.getSubCommands(&chain)
 
 	// Build usage description from description of preceding commands chain and each of subcommands
-	result += "usage:"
-	result = o.precedingCommands2Result(result, chain, arguments, maxWidth) + "\n"
-	result = subCommands2Result(result, commands, maxWidth) + "\n"
+    usageHead := o.precedingCommands2Result(result, chain, arguments, maxWidth)
+    if len(usageHead) != len(result) {result = usageHead + "\n"}
+
+    usageCommand := subCommands2Result(result, commands, maxWidth)
+    if len(usageCommand) != len(result) {result = usageCommand + "\n"}
+
 	// Add list of arguments to the result
-	result = arguments2Result(result, arguments, maxWidth) + "\n"
+    usageResult := arguments2Result(result, arguments, maxWidth)
+    if len(usageResult) != len(result) {result = usageResult + "\n"}
 
 	return result
 }
