@@ -1606,50 +1606,39 @@ func TestOptsValidatePass2(t *testing.T) {
 
 var pUsage = `usage: verylongprogname <Command> [-h|--help] [-s|--verylongstring-flag1
                         "<value>"] [-i|--integer-flag1 <integer>]
-
-                        prog description
-
-Commands:
-
+description:
+  prog description
+commands:
   veryverylongcmd1  cmd1 description
   cmd2              cmd2 description
-
-Arguments:
-
-  -h  --help                  Print help information
-  -s  --verylongstring-flag1  string1 description
-  -i  --integer-flag1         integer1 description
-
+arguments:
+  -h, --help                  Print help information
+  -s, --verylongstring-flag1  string1 description
+  -i, --integer-flag1         integer1 description
 `
 
 var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-f|--verylongflag1]
                         -a|--verylongflagA [-h|--help]
                         [-s|--verylongstring-flag1 "<value>"]
                         [-i|--integer-flag1 <integer>]
-
-                        cmd1 description
-
-Arguments:
-
-  -f  --verylongflag1         flag1 description
-  -a  --verylongflagA         flag1 description
-  -h  --help                  Print help information
-  -s  --verylongstring-flag1  string1 description
-  -i  --integer-flag1         integer1 description
-
+description:
+  cmd1 description
+arguments:
+  -f, --verylongflag1         flag1 description
+  -a, --verylongflagA         flag1 description
+  -h, --help                  Print help information
+  -s, --verylongstring-flag1  string1 description
+  -i, --integer-flag1         integer1 description
 `
 
 var cmd2Usage = `usage: verylongprogname cmd2 [-h|--help] [-s|--verylongstring-flag1 "<value>"]
                         [-i|--integer-flag1 <integer>]
-
-                        cmd2 description
-
-Arguments:
-
-  -h  --help                  Print help information
-  -s  --verylongstring-flag1  string1 description
-  -i  --integer-flag1         integer1 description
-
+description:
+  cmd2 description
+arguments:
+  -h, --help                  Print help information
+  -s, --verylongstring-flag1  string1 description
+  -i, --integer-flag1         integer1 description
 `
 
 func TestUsageSimple1(t *testing.T) {
@@ -1705,17 +1694,12 @@ func TestUsageHidden1(t *testing.T) {
 func TestUsageSubCommand(t *testing.T) {
 	expected := `[sub]Command required
 usage: zooprog <Command> [-h|--help]
-
-               Program that walks us through the zoo
-
-Commands:
-
+description:
+  Program that walks us through the zoo
+commands:
   dog  We are going to see dog
-
-Arguments:
-
-  -h  --help  Print help information
-
+arguments:
+  -h, --help  Print help information
 `
 
 	parser := NewParser("zooprog", "Program that walks us through the zoo")
@@ -2260,13 +2244,10 @@ func TestFloatFail1(t *testing.T) {
 
 var pUsageString = `test string
 usage: prog [-h|--help]
-
-            program description
-
-Arguments:
-
-  -h  --help  Print help information
-
+description:
+  program description
+arguments:
+  -h, --help  Print help information
 `
 
 func TestUsageString(t *testing.T) {
@@ -2289,13 +2270,10 @@ func (s s) String() string {
 
 var pUsageStringer = `stringer message
 usage: prog [-h|--help]
-
-            program description
-
-Arguments:
-
-  -h  --help  Print help information
-
+description:
+  program description
+arguments:
+  -h, --help  Print help information
 `
 
 func TestUsageStringer(t *testing.T) {

@@ -519,8 +519,8 @@ func (o *Command) precedingCommands2Result(result string, chain []string, argume
 		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 	}
 	// Add program/Command description to the result
-    result = result + "\ndesciption:\n  "
-	result = addToLastLine(result, o.description, maxWidth, leftPadding, true)
+    result = result + "\ndescription:\n "
+	result = addToLastLine(result, o.description, maxWidth, 2, true)
 
 	return result
 }
