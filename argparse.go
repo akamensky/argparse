@@ -629,7 +629,9 @@ func (o *Command) Usage(msg interface{}) string {
 		return result
 	}
     // add one more empty line to split error msg and usage message.
-    result += "\n"
+    if result != "" {
+        result += "\n"
+    }
 
 	//collect info about Preceding Commands into chain and arguments
 	o.getPrecedingCommands(&chain, &arguments)

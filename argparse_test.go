@@ -2243,6 +2243,7 @@ func TestFloatFail1(t *testing.T) {
 }
 
 var pUsageString = `test string
+
 usage: prog [-h|--help]
 description:
   program description
@@ -2269,6 +2270,7 @@ func (s s) String() string {
 }
 
 var pUsageStringer = `stringer message
+
 usage: prog [-h|--help]
 description:
   program description
