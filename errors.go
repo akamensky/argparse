@@ -6,7 +6,7 @@ type subCommandError struct {
 }
 
 func (e subCommandError) Error() string {
-	return "[sub]Command required"
+	return "[sub]Command required\n"
 }
 
 func newSubCommandError(cmd *Command) error {
