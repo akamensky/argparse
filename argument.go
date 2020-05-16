@@ -20,6 +20,7 @@ type arg struct {
 	filePerm os.FileMode // File permissions to set a file
 	selector *[]string   // Used in Selector type to allow to choose only one from list of options
 	parent   *Command    // Used to get access to specific Command
+	eqChar   bool        // This is used if the command is passed in with an equals char as a seperator
 }
 
 // Arg interface provides exporting of arg structure, while exposing it
@@ -67,6 +68,7 @@ func (o *arg) checkLongName(argument string) int {
 func (o *arg) checkShortName(argument string) (int, error) {
 	// Check for short name only if not empty
 	if o.sname != "" {
+
 		// If argument begins with "-" and next is not "-" then it is a short name
 		if len(argument) > 1 && strings.HasPrefix(argument, "-") && argument[1] != '-' {
 			count := strings.Count(argument[1:], o.sname)
@@ -112,6 +114,11 @@ func (o *arg) reduceLongName(position int, args *[]string) {
 	if o.lname != "" {
 		// If argument begins with "--" and next is not "-" then it is a long name
 		if len(argument) > 2 && strings.HasPrefix(argument, "--") && argument[2] != '-' {
+			if o.eqChar {
+				splitInd := strings.LastIndex(argument, "=")
+				equalArg := []string{argument[:splitInd], argument[splitInd+1:]}
+				argument = equalArg[0]
+			}
 			if argument[2:] == o.lname {
 				for i := position; i < position+o.size; i++ {
 					(*args)[i] = ""
@@ -132,6 +139,9 @@ func (o *arg) reduceShortName(position int, args *[]string) {
 				if strings.Contains(argument[1:], o.sname) {
 					(*args)[position] = strings.Replace(argument, o.sname, "", -1)
 					if (*args)[position] == "-" {
+						(*args)[position] = ""
+					}
+					if o.eqChar {
 						(*args)[position] = ""
 					}
 				}

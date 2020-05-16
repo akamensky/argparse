@@ -194,6 +194,96 @@ func TestFlagSimple2(t *testing.T) {
 	}
 }
 
+func TestLongFlagEqualChar(t *testing.T) {
+	testArgs := []string{"progname", "--flag1=test1", "--flag2=test2", "--flag3", "test3"}
+
+	p := NewParser("", "description")
+	flag1 := p.String("", "flag1", nil)
+	flag2 := p.String("", "flag2", nil)
+	flag3 := p.String("", "flag3", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if flag1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if flag2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if flag3 == nil {
+		t.Errorf("Test %s failed with flag3 being nil pointer", t.Name())
+		return
+	}
+
+	if *flag1 != "test1" {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+		return
+	}
+
+	if *flag2 != "test2" {
+		t.Errorf("Test %s failed with flag2 being true", t.Name())
+		return
+	}
+
+	if *flag3 != "test3" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+}
+
+func TestShortFlagEqualChar(t *testing.T) {
+	testArgs := []string{"progname", "-a=test1", "-b=test2", "-c", "test3"}
+
+	p := NewParser("", "description")
+	flag1 := p.String("a", "flag1", nil)
+	flag2 := p.String("b", "flag2", nil)
+	flag3 := p.String("c", "flag3", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if flag1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if flag2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if flag3 == nil {
+		t.Errorf("Test %s failed with flag3 being nil pointer", t.Name())
+		return
+	}
+
+	if *flag1 != "test1" {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+		return
+	}
+
+	if *flag2 != "test2" {
+		t.Errorf("Test %s failed with flag2 being true", t.Name())
+		return
+	}
+
+	if *flag3 != "test3" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+}
+
 func TestFlagMultiShorthandWithParam1(t *testing.T) {
 	testArgs := []string{"progname", "-ab", "10", "-c", "-de", "11", "--ee", "12"}
 

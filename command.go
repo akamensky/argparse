@@ -2,6 +2,7 @@ package argparse
 
 import (
 	"fmt"
+	"strings"
 )
 
 func (o *Command) help(sname, lname string) {
@@ -79,6 +80,26 @@ func (o *Command) parseArguments(args *[]string) error {
 			arg := (*args)[j]
 			if arg == "" {
 				continue
+			}
+			if strings.Contains(arg, "=") {
+				splitInd := strings.LastIndex(arg, "=")
+				equalArg := []string{arg[:splitInd], arg[splitInd+1:]}
+				if cnt, err := oarg.check(equalArg[0]); err != nil {
+					return err
+				} else if cnt > 0 {
+					if len(equalArg) < 2 {
+						return fmt.Errorf("not enough arguments for %s", oarg.name())
+					}
+					oarg.eqChar = true
+					oarg.size = 1
+					currArg := []string{equalArg[1]}
+					err := oarg.parse(currArg, cnt)
+					if err != nil {
+						return err
+					}
+					oarg.reduce(j, args)
+					continue
+				}
 			}
 			if cnt, err := oarg.check(arg); err != nil {
 				return err
