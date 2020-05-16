@@ -1693,6 +1693,7 @@ func TestUsageHidden1(t *testing.T) {
 
 func TestUsageSubCommand(t *testing.T) {
 	expected := `[sub]Command required
+
 usage: zooprog <Command> [-h|--help]
 description:
   Program that walks us through the zoo
