@@ -195,12 +195,14 @@ func TestFlagSimple2(t *testing.T) {
 }
 
 func TestLongFlagEqualChar(t *testing.T) {
-	testArgs := []string{"progname", "--flag1=test1", "--flag2=test2", "--flag3", "test3"}
+	testArgs := []string{"progname", "--flag1=test1", "--flag2=test2", "--flag3", "test3", "--flag4=a=test4", "--flag5=a", "test5"}
 
 	p := NewParser("", "description")
 	flag1 := p.String("", "flag1", nil)
 	flag2 := p.String("", "flag2", nil)
 	flag3 := p.String("", "flag3", nil)
+	flag4 := p.String("", "flag4=a", nil)
+	flag5 := p.String("", "flag5=a", nil)
 
 	err := p.Parse(testArgs)
 	if err != nil {
@@ -223,6 +225,16 @@ func TestLongFlagEqualChar(t *testing.T) {
 		return
 	}
 
+	if flag4 == nil {
+		t.Errorf("Test %s failed with flag4 being nil pointer", t.Name())
+		return
+	}
+
+	if flag5 == nil {
+		t.Errorf("Test %s failed with flag5 being nil pointer", t.Name())
+		return
+	}
+
 	if *flag1 != "test1" {
 		t.Errorf("Test %s failed with flag1 being false", t.Name())
 		return
@@ -234,6 +246,16 @@ func TestLongFlagEqualChar(t *testing.T) {
 	}
 
 	if *flag3 != "test3" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+
+	if *flag4 != "test4" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+
+	if *flag5 != "test5" {
 		t.Errorf("Test %s failed with flag3 being true", t.Name())
 		return
 	}
