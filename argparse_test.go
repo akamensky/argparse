@@ -856,6 +856,54 @@ func TestIntFailSimple1(t *testing.T) {
 	}
 }
 
+func TestEqualIntFailSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1=string"}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "[-f|--flag-arg1] bad integer value [string]"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *i1)
+		return
+	}
+}
+
+func TestEqualNoValFailSimple(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1="}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "not enough arguments for -f|--flag-arg1"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *i1)
+		return
+	}
+}
+
 func TestFileAddArgumentFail(t *testing.T) {
 	type testCase struct {
 		testName, shortArg, longArg, failureMessage string

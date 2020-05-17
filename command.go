@@ -87,7 +87,7 @@ func (o *Command) parseArguments(args *[]string) error {
 				if cnt, err := oarg.check(equalArg[0]); err != nil {
 					return err
 				} else if cnt > 0 {
-					if len(equalArg) < 2 {
+					if equalArg[1] == "" {
 						return fmt.Errorf("not enough arguments for %s", oarg.name())
 					}
 					oarg.eqChar = true
