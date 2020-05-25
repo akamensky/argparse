@@ -194,6 +194,118 @@ func TestFlagSimple2(t *testing.T) {
 	}
 }
 
+func TestLongFlagEqualChar(t *testing.T) {
+	testArgs := []string{"progname", "--flag1=test1", "--flag2=2", "--flag3", "test3", "--flag4=a=test4", "--flag5=a"}
+
+	p := NewParser("", "description")
+	flag1 := p.String("", "flag1", nil)
+	flag2 := p.Int("", "flag2", nil)
+	flag3 := p.String("", "flag3", nil)
+	flag4 := p.String("", "flag4=a", nil)
+	flag5 := p.Flag("", "flag5=a", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if flag1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if flag2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if flag3 == nil {
+		t.Errorf("Test %s failed with flag3 being nil pointer", t.Name())
+		return
+	}
+
+	if flag4 == nil {
+		t.Errorf("Test %s failed with flag4 being nil pointer", t.Name())
+		return
+	}
+
+	if flag5 == nil {
+		t.Errorf("Test %s failed with flag5 being nil pointer", t.Name())
+		return
+	}
+
+	if *flag1 != "test1" {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+		return
+	}
+
+	if *flag2 != 2 {
+		t.Errorf("Test %s failed with flag2 being true", t.Name())
+		return
+	}
+
+	if *flag3 != "test3" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+
+	if *flag4 != "test4" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+
+	if *flag5 != true {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+}
+
+func TestShortFlagEqualChar(t *testing.T) {
+	testArgs := []string{"progname", "-a=test1", "-b=2", "-c", "test3"}
+
+	p := NewParser("", "description")
+	flag1 := p.String("a", "flag1", nil)
+	flag2 := p.Int("b", "flag2", nil)
+	flag3 := p.String("c", "flag3", nil)
+
+	err := p.Parse(testArgs)
+	if err != nil {
+		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
+		return
+	}
+
+	if flag1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if flag2 == nil {
+		t.Errorf("Test %s failed with flag2 being nil pointer", t.Name())
+		return
+	}
+
+	if flag3 == nil {
+		t.Errorf("Test %s failed with flag3 being nil pointer", t.Name())
+		return
+	}
+
+	if *flag1 != "test1" {
+		t.Errorf("Test %s failed with flag1 being false", t.Name())
+		return
+	}
+
+	if *flag2 != 2 {
+		t.Errorf("Test %s failed with flag2 being true", t.Name())
+		return
+	}
+
+	if *flag3 != "test3" {
+		t.Errorf("Test %s failed with flag3 being true", t.Name())
+		return
+	}
+}
+
 func TestFlagMultiShorthandWithParam1(t *testing.T) {
 	testArgs := []string{"progname", "-ab", "10", "-c", "-de", "11", "--ee", "12"}
 
@@ -728,6 +840,54 @@ func TestIntFailSimple1(t *testing.T) {
 
 	err := p.Parse(testArgs)
 	errStr := "[-f|--flag-arg1] bad integer value [string]"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *i1)
+		return
+	}
+}
+
+func TestEqualIntFailSimple1(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1=string"}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "[-f|--flag-arg1] bad integer value [string]"
+	if err == nil || err.Error() != errStr {
+		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != 0 {
+		t.Errorf("Test %s failed. Want: [0], got: [%d]", t.Name(), *i1)
+		return
+	}
+}
+
+func TestEqualNoValFailSimple(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1="}
+
+	p := NewParser("", "description")
+	i1 := p.Int("f", "flag-arg1", nil)
+
+	err := p.Parse(testArgs)
+	errStr := "not enough arguments for -f|--flag-arg1"
 	if err == nil || err.Error() != errStr {
 		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
 		return
