@@ -1782,18 +1782,17 @@ Arguments:
 
 `
 
-var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-f|--verylongflag1]
-                        -a|--verylongflagA [-h|--help]
-                        [-s|--verylongstring-flag1 "<value>"]
-                        [-i|--integer-flag1 <integer>]
+var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-h|--help] [-f|--verylongflag1]
+                        -a|--verylongflagA [-s|--verylongstring-flag1 
+					    "<value>"] [-i|--integer-flag1 <integer>]
 
                         cmd1 description
 
 Arguments:
 
+  -h  --help                  Print help information
   -f  --verylongflag1         flag1 description
   -a  --verylongflagA         flag1 description
-  -h  --help                  Print help information
   -s  --verylongstring-flag1  string1 description
   -i  --integer-flag1         integer1 description
 

@@ -130,7 +130,9 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	c.description = description
 	c.parsed = false
 	c.parent = o
-	c.exitOnHelp = o.exitOnHelp
+	c.help("h", "help")
+	c.exitOnHelp = true
+	c.HelpFunc = (*Command).Usage
 
 	if o.commands == nil {
 		o.commands = make([]*Command, 0)
@@ -503,6 +505,7 @@ func (o *Command) getSubCommands(chain *[]string) []Command {
 
 // precedingCommands2Result - puts info about command chain from root to current (o *Command) into result string buffer
 func (o *Command) precedingCommands2Result(result string, chain []string, arguments []*arg, maxWidth int) string {
+	usedHelp := false
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
 	for _, v := range chain {
@@ -514,7 +517,15 @@ func (o *Command) precedingCommands2Result(result string, chain []string, argume
 		if v.opts.Help == DisableDescription {
 			continue
 		}
-		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+		if v.lname == "help" && usedHelp {
+			//result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+			fmt.Print("Found help a second time")
+		} else {
+			result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+		}
+		if v.lname == "help" || v.sname == "h" {
+			usedHelp = true
+		}
 	}
 	// Add program/Command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
@@ -556,6 +567,7 @@ func subCommands2Result(result string, commands []Command, maxWidth int) string 
 
 // arguments2Result - puts info about all arguments of current command into result string buffer
 func arguments2Result(result string, arguments []*arg, maxWidth int) string {
+	usedHelp := false
 	if len(arguments) > 0 {
 		argContent := "Arguments:\n\n"
 		// Get biggest padding
@@ -574,18 +586,25 @@ func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 			if argument.opts.Help == DisableDescription {
 				continue
 			}
-			arg := "  "
-			if argument.sname != "" {
-				arg = arg + "-" + argument.sname + "  "
+			if argument.lname == "help" && usedHelp {
+				fmt.Print("Found help again for subcommands")
 			} else {
-				arg = arg + "    "
+				arg := "  "
+				if argument.sname != "" {
+					arg = arg + "-" + argument.sname + "  "
+				} else {
+					arg = arg + "    "
+				}
+				arg = arg + "--" + argument.lname
+				arg = arg + strings.Repeat(" ", argPadding-len(arg))
+				if argument.opts != nil && argument.opts.Help != "" {
+					arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
+				}
+				argContent = argContent + arg + "\n"
 			}
-			arg = arg + "--" + argument.lname
-			arg = arg + strings.Repeat(" ", argPadding-len(arg))
-			if argument.opts != nil && argument.opts.Help != "" {
-				arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
+			if argument.lname == "help" || argument.sname == "h" {
+				usedHelp = true
 			}
-			argContent = argContent + arg + "\n"
 		}
 		result = result + argContent + "\n"
 	}
