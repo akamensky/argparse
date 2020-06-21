@@ -2,6 +2,7 @@
 package argparse
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
