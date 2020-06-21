@@ -646,7 +646,7 @@ func (o *Command) Usage(msg interface{}) string {
 // was active when error happened and print that specific Command usage).
 // In case no error returned all arguments should be safe to use. Safety of using arguments
 // before Parse operation is complete is not guaranteed.
-func (o *Parser) Parse(args []string) ([]string, error) {
+func (o *Parser) parseHelper(args []string) ([]string, error) {
 	subargs := make([]string, len(args))
 	copy(subargs, args)
 
@@ -658,5 +658,19 @@ func (o *Parser) Parse(args []string) ([]string, error) {
 		}
 	}
 
+	return unparsed, result
+}
+
+func (o *Parser) Parse(args []string) error {
+	unparsed, result := o.parseHelper(args)
+
+	if result == nil && len(unparsed) > 0 {
+		return errors.New("unknown arguments " + strings.Join(unparsed, " "))
+	}
+	return result
+}
+
+func (o *Parser) ParseReturnArguments(args []string) ([]string, error) {
+	unparsed, result := o.parseHelper(args)
 	return unparsed, result
 }

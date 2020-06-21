@@ -122,7 +122,7 @@ func TestFlagSimple1(t *testing.T) {
 	flag1 := p.Flag("", "flag-arg1", nil)
 	flag2 := p.Flag("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -157,7 +157,7 @@ func TestFlagSimple2(t *testing.T) {
 	flag2 := p.Flag("", "flag-arg2", nil)
 	flag3 := p.Flag("f", "flag-arg3", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -207,7 +207,7 @@ func TestFlagMultiShorthandWithParam1(t *testing.T) {
 	intList5 := p.IntList("e", "ee", nil)
 	flag6 := p.Flag("f", "ff", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -245,7 +245,7 @@ func TestFlagMultiShorthandWithParamFail1(t *testing.T) {
 	_ = p.Flag("a", "aa", nil)
 	_ = p.Int("b", "bb", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed with no error", t.Name())
 		return
@@ -267,7 +267,7 @@ func TestFlagMultiShorthand1(t *testing.T) {
 	flag5 := p.Flag("e", "ee", nil)
 	flag6 := p.Flag("f", "ff", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -335,7 +335,7 @@ func TestFlagCounterSimple1(t *testing.T) {
 	flag2 := p.FlagCounter("", "flag-arg2", nil)
 	flag3 := p.FlagCounter("", "flag-arg3", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -380,7 +380,7 @@ func TestFlagCounterSimple2(t *testing.T) {
 	flag2 := p.FlagCounter("", "flag-arg2", nil)
 	flag3 := p.FlagCounter("f", "flag-arg3", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -428,7 +428,7 @@ func TestFlagCounterMultiShorthand1(t *testing.T) {
 	flag5 := p.FlagCounter("e", "ee", nil)
 	flag6 := p.FlagCounter("f", "ff", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -466,7 +466,7 @@ func TestFailDuplicate(t *testing.T) {
 	_ = p.Flag("f", "flag-arg1", nil)
 	_ = p.Flag("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed with. Duplicate flag use not detected", t.Name())
 		return
@@ -478,7 +478,7 @@ func TestFailDuplicate(t *testing.T) {
 	_ = p.Flag("f", "flag-arg1", nil)
 	_ = p.Flag("", "flag-arg2", nil)
 
-	_, err = p.Parse(testArgs)
+	err = p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed with. Duplicate flag use not detected", t.Name())
 		return
@@ -490,7 +490,7 @@ func TestFailDuplicate(t *testing.T) {
 	_ = p.Flag("f", "flag-arg1", nil)
 	_ = p.Flag("", "flag-arg2", nil)
 
-	_, err = p.Parse(testArgs)
+	err = p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with. Fake duplicate flag detected", t.Name())
 		return
@@ -503,9 +503,23 @@ func TestFailCaseSensitive(t *testing.T) {
 	p := NewParser("", "description")
 	_ = p.Flag("f", "flag", &Options{Required: true})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed with. Sees -F as -f", t.Name())
+		return
+	}
+}
+
+func TestFailExcessiveArguments(t *testing.T) {
+	testArgs := []string{"progname", "--flag-arg1", "whatever"}
+
+	p := NewParser("", "description")
+	_ = p.Flag("f", "flag-arg1", nil)
+	_ = p.Flag("", "flag-arg2", nil)
+
+	err := p.Parse(testArgs)
+	if err == nil {
+		t.Errorf("Test %s failed with. Excessive argument not detected", t.Name())
 		return
 	}
 }
@@ -546,7 +560,7 @@ func TestStringSimple1(t *testing.T) {
 	s1 := p.String("f", "flag-arg1", nil)
 	s2 := p.String("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -580,7 +594,7 @@ func TestStringSimple2(t *testing.T) {
 	s1 := p.String("f", "flag-arg1", nil)
 	s2 := p.String("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -644,7 +658,7 @@ func TestIntSimple1(t *testing.T) {
 	i1 := p.Int("f", "flag-arg1", nil)
 	i2 := p.Int("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -679,7 +693,7 @@ func TestIntSimple2(t *testing.T) {
 	i1 := p.Int("f", "flag-arg1", nil)
 	i2 := p.Int("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -712,7 +726,7 @@ func TestIntFailSimple1(t *testing.T) {
 	p := NewParser("", "description")
 	i1 := p.Int("f", "flag-arg1", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	errStr := "[-f|--flag-arg1] bad interger value [string]"
 	if err == nil || err.Error() != errStr {
 		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
@@ -777,7 +791,7 @@ func TestFileSimple1(t *testing.T) {
 
 	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: "./non-existent-file.tmp"})
 
-	_, err = p.Parse(testArgs)
+	err = p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -824,7 +838,7 @@ func TestFileSimpleFail1(t *testing.T) {
 
 	_ = p.File("f", "file", os.O_RDWR, 0666, &Options{Default: fpath})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
 	}
@@ -851,7 +865,7 @@ func TestFileSimpleFail2(t *testing.T) {
 
 	_ = p.File("f", "file", os.O_RDWR, 0666, nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
 		return
@@ -891,7 +905,7 @@ func TestFileListSimpleFail1(t *testing.T) {
 
 	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: fpaths})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
 	}
@@ -928,7 +942,7 @@ func TestFileListSimpleFail2(t *testing.T) {
 
 	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: nil})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed. Parsing should fail.", t.Name())
 	}
@@ -986,7 +1000,7 @@ func TestFileListSimple1(t *testing.T) {
 
 	files := p.FileList("f", "file", os.O_RDWR, 0666, &Options{Default: []string{"./non-existent-file1.tmp", "./non-existent-file2.tmp"}})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	switch {
 	case err != nil:
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
@@ -1053,7 +1067,7 @@ func TestFloatListSimple1(t *testing.T) {
 	l1 := p.FloatList("f", "flag-arg1", nil)
 	l2 := p.FloatList("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	switch {
 	case err != nil:
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
@@ -1074,7 +1088,7 @@ func TestFloatListTypeFail(t *testing.T) {
 	p := NewParser("", "description")
 	p.FloatList("f", "flag-arg1", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	failureText := "[-f|--flag-arg1] bad floating point value [10,1]"
 	if err == nil || err.Error() != failureText {
 		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
@@ -1119,7 +1133,7 @@ func TestIntListSimple1(t *testing.T) {
 	l1 := p.IntList("f", "flag-arg1", nil)
 	l2 := p.IntList("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	switch {
 	case err != nil:
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
@@ -1140,7 +1154,7 @@ func TestIntListTypeFail(t *testing.T) {
 	p := NewParser("", "description")
 	p.IntList("f", "flag-arg1", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	failureText := "[-f|--flag-arg1] bad interger value [=10]"
 	if err == nil || err.Error() != failureText {
 		t.Errorf("Test %s failed: expected error: [%s], got error: [%+v]", t.Name(), failureText, err)
@@ -1185,7 +1199,7 @@ func TestStringListSimple1(t *testing.T) {
 	l1 := p.StringList("f", "flag-arg1", nil)
 	l2 := p.StringList("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	switch {
 	case err != nil:
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
@@ -1238,7 +1252,7 @@ func TestListSimple1(t *testing.T) {
 	l1 := p.List("f", "flag-arg1", nil)
 	l2 := p.List("", "flag-arg2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -1303,7 +1317,7 @@ func TestSelectorSimple1(t *testing.T) {
 	p := NewParser("", "")
 	s1 := p.Selector("f", "flag-arg1", allowedValues, nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -1327,7 +1341,7 @@ func TestSelectorFailSimple1(t *testing.T) {
 	p := NewParser("", "")
 	_ = p.Selector("f", "flag-arg1", allowedValues, nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed. Expected error did not happen", t.Name())
 		return
@@ -1479,7 +1493,7 @@ func TestOptsRequired1(t *testing.T) {
 	_ = p.Flag("", "flag-arg1", nil)
 	_ = p.String("", "flag-arg2", &Options{Required: true})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed to detect required argument", t.Name())
 		return
@@ -1493,7 +1507,7 @@ func TestOptsRequired2(t *testing.T) {
 	_ = p.Flag("", "flag-arg1", nil)
 	_ = p.Int("", "int-arg1", &Options{Required: true})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err == nil {
 		t.Errorf("Test %s failed to detect required argument", t.Name())
 		return
@@ -1521,7 +1535,7 @@ func TestOptsValidatePass1(t *testing.T) {
 
 		string1 := p.String("", "string-flag1", stropts)
 
-		_, err := p.Parse(testArgs)
+		err := p.Parse(testArgs)
 
 		if testArgs[2] == "pass" {
 			if err != nil {
@@ -1569,7 +1583,7 @@ func TestOptsValidatePass2(t *testing.T) {
 
 		int1 := p.Int("", "int-flag1", intopts)
 
-		_, err := p.Parse(testArgs)
+		err := p.Parse(testArgs)
 
 		if testArgs[2] == strconv.Itoa(val1) {
 			if err != nil {
@@ -1725,7 +1739,7 @@ func TestStringMissingArgFail(t *testing.T) {
 
 	_ = p.String("s", "string", &Options{Required: true, Help: "A test string"})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	if err != nil {
 		// Test should pass on failure
@@ -1742,7 +1756,7 @@ func TestIntMissingArgFail(t *testing.T) {
 
 	_ = p.Int("i", "integer", &Options{Required: true, Help: "A test integer"})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	if err != nil {
 		// Test should pass on failure
@@ -1760,7 +1774,7 @@ func TestFlagDefaultValuePass(t *testing.T) {
 
 	f := p.Flag("f", "flag", &Options{Default: true})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should fail on failure
 	if err != nil {
@@ -1780,7 +1794,7 @@ func TestFlagDefaultValueFail(t *testing.T) {
 
 	_ = p.Flag("f", "flag", &Options{Default: "string"})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*bool]" {
@@ -1796,7 +1810,7 @@ func TestStringDefaultValuePass(t *testing.T) {
 
 	s := p.String("s", "string", &Options{Default: testString})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should fail on failure
 	if err != nil {
@@ -1816,7 +1830,7 @@ func TestStringDefaultValueFail(t *testing.T) {
 
 	_ = p.String("s", "string", &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
@@ -1832,7 +1846,7 @@ func TestIntDefaultValuePass(t *testing.T) {
 
 	i := p.Int("i", "integer", &Options{Default: testVal})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should fail on failure
 	if err != nil {
@@ -1852,7 +1866,7 @@ func TestIntDefaultValueFail(t *testing.T) {
 
 	_ = p.Int("i", "integer", &Options{Default: "fail"})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*int]" {
@@ -1878,7 +1892,7 @@ func TestFileDefaultValuePass(t *testing.T) {
 
 	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: fpath})
 
-	_, err = p.Parse(testArgs)
+	err = p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -1904,7 +1918,7 @@ func TestFileDefaultValueFail(t *testing.T) {
 
 	file1 := p.File("f", "file", os.O_RDWR, 0666, &Options{Default: true})
 
-	_, err = p.Parse(testArgs)
+	err = p.Parse(testArgs)
 	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
@@ -1930,7 +1944,7 @@ func TestFileListDefaultValuePass(t *testing.T) {
 
 	files := p.FileList("f", "float", os.O_RDWR, 0666, &Options{Default: fpaths})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	if err != nil {
 		t.Error(err.Error())
@@ -1966,7 +1980,7 @@ func TestFloatListDefaultValuePass(t *testing.T) {
 
 	s := p.FloatList("f", "float", &Options{Default: testList})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	switch {
 	// Should fail on failure
@@ -1986,7 +2000,7 @@ func TestIntListDefaultValuePass(t *testing.T) {
 
 	s := p.IntList("i", "int", &Options{Default: testList})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	switch {
 	// Should fail on failure
@@ -2006,7 +2020,7 @@ func TestStringListDefaultValuePass(t *testing.T) {
 
 	s := p.StringList("s", "string", &Options{Default: testList})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	switch {
 	// Should fail on failure
@@ -2026,7 +2040,7 @@ func TestListDefaultValuePass(t *testing.T) {
 
 	s := p.List("s", "string", &Options{Default: testList})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should fail on failure
 	if err != nil {
@@ -2046,7 +2060,7 @@ func TestFileListDefaultValueFail(t *testing.T) {
 
 	_ = p.FileList("f", "float", os.O_RDWR, 0666, &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
@@ -2062,7 +2076,7 @@ func TestFloatListDefaultValueFail(t *testing.T) {
 
 	_ = p.FloatList("f", "float", &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]float64]"
@@ -2078,7 +2092,7 @@ func TestIntListDefaultValueFail(t *testing.T) {
 
 	_ = p.IntList("i", "int", &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]int]"
@@ -2094,7 +2108,7 @@ func TestStringListDefaultValueFail(t *testing.T) {
 
 	_ = p.StringList("s", "string", &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	failureMessage := "cannot use default type [bool] as value of pointer with type [*[]string]"
@@ -2110,7 +2124,7 @@ func TestListDefaultValueFail(t *testing.T) {
 
 	_ = p.List("s", "string", &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*[]string]" {
@@ -2126,7 +2140,7 @@ func TestSelectorDefaultValuePass(t *testing.T) {
 
 	s := p.Selector("s", "string", []string{"opt1", "opt2"}, &Options{Default: testString})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should fail on failure
 	if err != nil {
@@ -2146,7 +2160,7 @@ func TestSelectorDefaultValueFail(t *testing.T) {
 
 	_ = p.Selector("s", "string", []string{"opt1", "opt2"}, &Options{Default: false})
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 
 	// Should pass on failure
 	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
@@ -2192,7 +2206,7 @@ func TestFloatSimple1(t *testing.T) {
 	f1 := p.Float("f", "float1", nil)
 	f2 := p.Float("", "float2", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	if err != nil {
 		t.Errorf("Test %s failed with error: %s", t.Name(), err.Error())
 		return
@@ -2226,7 +2240,7 @@ func TestFloatFail1(t *testing.T) {
 	p := NewParser("", "description")
 	f1 := p.Float("f", "float1", nil)
 
-	_, err := p.Parse(testArgs)
+	err := p.Parse(testArgs)
 	errStr := "[-f|--float1] bad floating point value [stringNotANumber]"
 	if err == nil || err.Error() != errStr {
 		t.Errorf("Test %s expected [%s], got [%+v]", t.Name(), errStr, err)
@@ -2338,7 +2352,7 @@ func TestParserExitOnHelpTrue(t *testing.T) {
 		return 0, nil
 	}
 
-	if _, err := parser.Parse([]string{"parser", "-h"}); err == nil {
+	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
 		if !exited {
 			t.Errorf("Parsing help should have invoked os.Exit")
 		}
@@ -2360,10 +2374,26 @@ func TestParserExitOnHelpFalse(t *testing.T) {
 		return 0, nil
 	}
 
-	if _, err := parser.Parse([]string{"parser", "-h"}); exited {
+	if err := parser.Parse([]string{"parser", "-h"}); exited {
 		t.Errorf("Parsing help should not have invoked os.Exit")
 	} else if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestParserDisableHelp(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.DisableHelp()
+	if len(parser.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
 	}
 }
 
@@ -2399,7 +2429,7 @@ func TestCommandExitOnHelpTrue(t *testing.T) {
 		return 0, nil
 	}
 
-	if _, err := parser.Parse([]string{"parser", "command", "-h"}); exited {
+	if err := parser.Parse([]string{"parser", "command", "-h"}); exited {
 		if err != nil {
 			t.Error(err)
 		}
@@ -2422,10 +2452,27 @@ func TestCommandExitOnHelpFalse(t *testing.T) {
 		return 0, nil
 	}
 
-	if _, err := parser.Parse([]string{"parser", "command", "-h"}); exited {
+	if err := parser.Parse([]string{"parser", "command", "-h"}); exited {
 		t.Error("Parsing help should not have exited")
 	} else if err != nil {
 		t.Error(err)
+	}
+}
+
+func TestCommandDisableHelp(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.NewCommand("command", "")
+	parser.DisableHelp()
+	if len(parser.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"parser", "command", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
 	}
 }
 
