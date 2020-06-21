@@ -41,6 +41,10 @@ func (o arg) GetLname() string {
 	return o.lname
 }
 
+func (o arg) IsFlag() bool {
+	return o.size == 1
+}
+
 type help struct{}
 
 // checkLongName if long argumet present.
