@@ -27,6 +27,7 @@ type Arg interface {
 	GetOpts() *Options
 	GetSname() string
 	GetLname() string
+	IsFlag() bool
 }
 
 func (o arg) GetOpts() *Options {
