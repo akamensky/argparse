@@ -38,11 +38,13 @@ func (o *Command) addArg(a *arg) error {
 	for current != nil {
 		if current.args != nil {
 			for _, v := range current.args {
-				if a.sname != "" && a.sname == v.sname {
-					return fmt.Errorf("short name %s occurs more than once", a.sname)
-				}
-				if a.lname == v.lname {
-					return fmt.Errorf("long name %s occurs more than once", a.lname)
+				if a.lname != "help" || a.sname != "h" {
+					if a.sname != "" && a.sname == v.sname {
+						return fmt.Errorf("short name %s occurs more than once", a.sname)
+					}
+					if a.lname == v.lname {
+						return fmt.Errorf("long name %s occurs more than once", a.lname)
+					}
 				}
 			}
 		}

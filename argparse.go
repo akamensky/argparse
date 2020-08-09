@@ -11,6 +11,9 @@ import (
 // DisableDescription can be assigned as a command or arguments description to hide it from the Usage output
 const DisableDescription = "DISABLEDDESCRIPTIONWILLNOTSHOWUP"
 
+//disable help can be invoked from the parse and then needs to be propogated to subcommands
+var disableHelp = false
+
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
 // Command MUST NOT ever be created manually. Instead one should call NewCommand method of Parser or Command,
 // which will setup appropriate fields and call methods that have to be called when creating new command.
@@ -130,7 +133,11 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	c.description = description
 	c.parsed = false
 	c.parent = o
-	c.exitOnHelp = o.exitOnHelp
+	if !disableHelp {
+		c.help("h", "help")
+		c.exitOnHelp = true
+		c.HelpFunc = (*Command).Usage
+	}
 
 	if o.commands == nil {
 		o.commands = make([]*Command, 0)
@@ -144,9 +151,17 @@ func (o *Command) NewCommand(name string, description string) *Command {
 // DisableHelp removes any help arguments from the commands list of arguments
 // This prevents prevents help from being parsed or invoked from the argument list
 func (o *Parser) DisableHelp() {
+	disableHelp = true
 	for i, arg := range o.args {
 		if _, ok := arg.result.(*help); ok {
 			o.args = append(o.args[:i], o.args[i+1:]...)
+		}
+	}
+	for _, com := range o.commands {
+		for i, arg := range com.args {
+			if _, ok := arg.result.(*help); ok {
+				com.args = append(com.args[:i], com.args[i+1:]...)
+			}
 		}
 	}
 }
@@ -469,15 +484,16 @@ func message2String(msg interface{}) (string, bool) {
 // getPrecedingCommands - collects info on command chain from root to current (o *Command) and all arguments in this chain
 func (o *Command) getPrecedingCommands(chain *[]string, arguments *[]*arg) {
 	current := o
+	// Also add arguments
 	// Get line of commands until root
 	for current != nil {
 		*chain = append(*chain, current.name)
-		// Also add arguments
 		if current.args != nil {
 			*arguments = append(*arguments, current.args...)
 		}
 		current = current.parent
 	}
+
 	// Reverse the slice
 	last := len(*chain) - 1
 	for i := 0; i < len(*chain)/2; i++ {
@@ -503,6 +519,7 @@ func (o *Command) getSubCommands(chain *[]string) []Command {
 
 // precedingCommands2Result - puts info about command chain from root to current (o *Command) into result string buffer
 func (o *Command) precedingCommands2Result(result string, chain []string, arguments []*arg, maxWidth int) string {
+	usedHelp := false
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
 	for _, v := range chain {
@@ -514,7 +531,13 @@ func (o *Command) precedingCommands2Result(result string, chain []string, argume
 		if v.opts.Help == DisableDescription {
 			continue
 		}
-		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+		if v.lname == "help" && usedHelp {
+		} else {
+			result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+		}
+		if v.lname == "help" || v.sname == "h" {
+			usedHelp = true
+		}
 	}
 	// Add program/Command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
@@ -556,6 +579,7 @@ func subCommands2Result(result string, commands []Command, maxWidth int) string 
 
 // arguments2Result - puts info about all arguments of current command into result string buffer
 func arguments2Result(result string, arguments []*arg, maxWidth int) string {
+	usedHelp := false
 	if len(arguments) > 0 {
 		argContent := "Arguments:\n\n"
 		// Get biggest padding
@@ -574,18 +598,24 @@ func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 			if argument.opts.Help == DisableDescription {
 				continue
 			}
-			arg := "  "
-			if argument.sname != "" {
-				arg = arg + "-" + argument.sname + "  "
+			if argument.lname == "help" && usedHelp {
 			} else {
-				arg = arg + "    "
+				arg := "  "
+				if argument.sname != "" {
+					arg = arg + "-" + argument.sname + "  "
+				} else {
+					arg = arg + "    "
+				}
+				arg = arg + "--" + argument.lname
+				arg = arg + strings.Repeat(" ", argPadding-len(arg))
+				if argument.opts != nil && argument.opts.Help != "" {
+					arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
+				}
+				argContent = argContent + arg + "\n"
 			}
-			arg = arg + "--" + argument.lname
-			arg = arg + strings.Repeat(" ", argPadding-len(arg))
-			if argument.opts != nil && argument.opts.Help != "" {
-				arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
+			if argument.lname == "help" || argument.sname == "h" {
+				usedHelp = true
 			}
-			argContent = argContent + arg + "\n"
 		}
 		result = result + argContent + "\n"
 	}
