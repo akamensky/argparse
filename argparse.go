@@ -157,6 +157,13 @@ func (o *Parser) DisableHelp() {
 			o.args = append(o.args[:i], o.args[i+1:]...)
 		}
 	}
+	for _, com := range o.commands {
+		for i, arg := range com.args {
+			if _, ok := arg.result.(*help); ok {
+				com.args = append(com.args[:i], com.args[i+1:]...)
+			}
+		}
+	}
 }
 
 // ExitOnHelp sets the exitOnHelp variable of Parser
@@ -477,28 +484,20 @@ func message2String(msg interface{}) (string, bool) {
 // getPrecedingCommands - collects info on command chain from root to current (o *Command) and all arguments in this chain
 func (o *Command) getPrecedingCommands(chain *[]string, arguments *[]*arg) {
 	current := o
-	// Get line of commands until root
-	*chain = append(*chain, current.name)
 	// Also add arguments
-	if current.args != nil {
-		*arguments = append(*arguments, current.args...)
-	}
-	// Reverse the slice
-	last := len(*chain) - 1
-	for i := 0; i < len(*chain)/2; i++ {
-		(*chain)[i], (*chain)[last-i] = (*chain)[last-i], (*chain)[i]
-	}
-}
-
-func (o *Command) getPrecedingCommandsFull(arguments *[]*arg) {
-	current := o
-
+	// Get line of commands until root
 	for current != nil {
-		// Also add arguments
+		*chain = append(*chain, current.name)
 		if current.args != nil {
 			*arguments = append(*arguments, current.args...)
 		}
 		current = current.parent
+	}
+
+	// Reverse the slice
+	last := len(*chain) - 1
+	for i := 0; i < len(*chain)/2; i++ {
+		(*chain)[i], (*chain)[last-i] = (*chain)[last-i], (*chain)[i]
 	}
 }
 
@@ -533,8 +532,6 @@ func (o *Command) precedingCommands2Result(result string, chain []string, argume
 			continue
 		}
 		if v.lname == "help" && usedHelp {
-			//result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
-			fmt.Print("Found help a second time")
 		} else {
 			result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
 		}
@@ -602,7 +599,6 @@ func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 				continue
 			}
 			if argument.lname == "help" && usedHelp {
-				fmt.Print("Found help again for subcommands")
 			} else {
 				arg := "  "
 				if argument.sname != "" {
@@ -650,7 +646,6 @@ func (o *Command) Usage(msg interface{}) string {
 	maxWidth := 80
 	// List of arguments from all preceding commands
 	arguments := make([]*arg, 0)
-	fullArguments := make([]*arg, 0)
 	// Line of commands until root
 	var chain []string
 
@@ -662,13 +657,12 @@ func (o *Command) Usage(msg interface{}) string {
 
 	//collect info about Preceding Commands into chain and arguments
 	o.getPrecedingCommands(&chain, &arguments)
-	o.getPrecedingCommandsFull(&fullArguments)
 	// If this Command has sub-commands we need their list
 	commands := o.getSubCommands(&chain)
 
 	// Build usage description from description of preceding commands chain and each of subcommands
 	result += "usage:"
-	result = o.precedingCommands2Result(result, chain, fullArguments, maxWidth)
+	result = o.precedingCommands2Result(result, chain, arguments, maxWidth)
 	result = subCommands2Result(result, commands, maxWidth)
 	// Add list of arguments to the result
 	result = arguments2Result(result, arguments, maxWidth)

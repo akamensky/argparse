@@ -1783,8 +1783,8 @@ Arguments:
 `
 
 var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-h|--help] [-f|--verylongflag1]
-                        -a|--verylongflagA [-s|--verylongstring-flag1 
-					    "<value>"] [-i|--integer-flag1 <integer>]
+                        -a|--verylongflagA [-s|--verylongstring-flag1
+                        "<value>"] [-i|--integer-flag1 <integer>]
 
                         cmd1 description
 
@@ -2481,12 +2481,12 @@ func TestParserHelpFuncDefault(t *testing.T) {
 func TestCommandHelpFuncDefault(t *testing.T) {
 	parser := NewParser("parser", "")
 	command := parser.NewCommand("command", "")
-	if command.HelpFunc != nil {
+	if command.HelpFunc == nil || command.Help(nil) != command.Usage(nil) {
 		t.Errorf("HelpFunc should default to Usage function")
 	}
 }
 
-func TestCommandHelpFuncDefaultToParent(t *testing.T) {
+func TestCommandHelpFuncOwnFunc(t *testing.T) {
 	parser := NewParser("parser", "")
 	command := parser.NewCommand("command", "")
 
@@ -2494,7 +2494,7 @@ func TestCommandHelpFuncDefaultToParent(t *testing.T) {
 		return "testing"
 	}
 
-	if command.Help(nil) == command.Usage(nil) || command.Help(nil) != parser.Help(nil) {
+	if command.Help(nil) != command.Usage(nil) || command.Help(nil) == parser.Help(nil) {
 		t.Errorf("command HelpFunc should default to parent function")
 	}
 }
