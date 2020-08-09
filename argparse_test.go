@@ -2556,6 +2556,41 @@ func TestParserDisableHelp(t *testing.T) {
 	}
 }
 
+func TestDisableHelpCommands(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.NewCommand("cmd1", "Cmd1 description")
+	parser.DisableHelp()
+	if len(parser.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"cmd1", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
+	}
+}
+
+func TestDisableHelpCommandsBeforeCommand(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.DisableHelp()
+
+	parser.NewCommand("cmd1", "Cmd1 description")
+	if len(parser.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+
+	print = func(...interface{}) (int, error) {
+		return 0, nil
+	}
+
+	if err := parser.Parse([]string{"cmd1", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
+	}
+}
+
 func TestParserSetHelp(t *testing.T) {
 	sname, lname := "x", "xyz"
 	parser := NewParser("parser", "")
