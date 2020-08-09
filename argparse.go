@@ -11,6 +11,9 @@ import (
 // DisableDescription can be assigned as a command or arguments description to hide it from the Usage output
 const DisableDescription = "DISABLEDDESCRIPTIONWILLNOTSHOWUP"
 
+//disable help can be invoked from the parse and then needs to be propogated to subcommands
+var disableHelp = false
+
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
 // Command MUST NOT ever be created manually. Instead one should call NewCommand method of Parser or Command,
 // which will setup appropriate fields and call methods that have to be called when creating new command.
@@ -130,9 +133,11 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	c.description = description
 	c.parsed = false
 	c.parent = o
-	c.help("h", "help")
-	c.exitOnHelp = true
-	c.HelpFunc = (*Command).Usage
+	if !disableHelp {
+		c.help("h", "help")
+		c.exitOnHelp = true
+		c.HelpFunc = (*Command).Usage
+	}
 
 	if o.commands == nil {
 		o.commands = make([]*Command, 0)
@@ -146,6 +151,7 @@ func (o *Command) NewCommand(name string, description string) *Command {
 // DisableHelp removes any help arguments from the commands list of arguments
 // This prevents prevents help from being parsed or invoked from the argument list
 func (o *Parser) DisableHelp() {
+	disableHelp = true
 	for i, arg := range o.args {
 		if _, ok := arg.result.(*help); ok {
 			o.args = append(o.args[:i], o.args[i+1:]...)
@@ -472,18 +478,27 @@ func message2String(msg interface{}) (string, bool) {
 func (o *Command) getPrecedingCommands(chain *[]string, arguments *[]*arg) {
 	current := o
 	// Get line of commands until root
-	for current != nil {
-		*chain = append(*chain, current.name)
-		// Also add arguments
-		if current.args != nil {
-			*arguments = append(*arguments, current.args...)
-		}
-		current = current.parent
+	*chain = append(*chain, current.name)
+	// Also add arguments
+	if current.args != nil {
+		*arguments = append(*arguments, current.args...)
 	}
 	// Reverse the slice
 	last := len(*chain) - 1
 	for i := 0; i < len(*chain)/2; i++ {
 		(*chain)[i], (*chain)[last-i] = (*chain)[last-i], (*chain)[i]
+	}
+}
+
+func (o *Command) getPrecedingCommandsFull(arguments *[]*arg) {
+	current := o
+
+	for current != nil {
+		// Also add arguments
+		if current.args != nil {
+			*arguments = append(*arguments, current.args...)
+		}
+		current = current.parent
 	}
 }
 
@@ -635,6 +650,7 @@ func (o *Command) Usage(msg interface{}) string {
 	maxWidth := 80
 	// List of arguments from all preceding commands
 	arguments := make([]*arg, 0)
+	fullArguments := make([]*arg, 0)
 	// Line of commands until root
 	var chain []string
 
@@ -646,12 +662,13 @@ func (o *Command) Usage(msg interface{}) string {
 
 	//collect info about Preceding Commands into chain and arguments
 	o.getPrecedingCommands(&chain, &arguments)
+	o.getPrecedingCommandsFull(&fullArguments)
 	// If this Command has sub-commands we need their list
 	commands := o.getSubCommands(&chain)
 
 	// Build usage description from description of preceding commands chain and each of subcommands
 	result += "usage:"
-	result = o.precedingCommands2Result(result, chain, arguments, maxWidth)
+	result = o.precedingCommands2Result(result, chain, fullArguments, maxWidth)
 	result = subCommands2Result(result, commands, maxWidth)
 	// Add list of arguments to the result
 	result = arguments2Result(result, arguments, maxWidth)
