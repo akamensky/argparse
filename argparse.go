@@ -158,8 +158,8 @@ func (o *Parser) DisableHelp() {
 		}
 	}
 	for _, com := range o.commands {
-		for i, arg := range com.args {
-			if _, ok := arg.result.(*help); ok {
+		for i, comArg := range com.args {
+			if _, ok := comArg.result.(*help); ok {
 				com.args = append(com.args[:i], com.args[i+1:]...)
 			}
 		}
