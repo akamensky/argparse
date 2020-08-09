@@ -2558,10 +2558,10 @@ func TestParserDisableHelp(t *testing.T) {
 
 func TestDisableHelpCommands(t *testing.T) {
 	parser := NewParser("parser", "")
-	parser.NewCommand("cmd1", "Cmd1 description")
+	cmd1 := parser.NewCommand("cmd1", "Cmd1 description")
 	parser.DisableHelp()
-	if len(parser.args) > 0 {
-		t.Errorf("Parser should not have any arguments")
+	if len(cmd1.args) > 0 {
+		t.Errorf("Sub command should not have any arguments")
 	}
 
 	print = func(...interface{}) (int, error) {
@@ -2577,8 +2577,8 @@ func TestDisableHelpCommandsBeforeCommand(t *testing.T) {
 	parser := NewParser("parser", "")
 	parser.DisableHelp()
 
-	parser.NewCommand("cmd1", "Cmd1 description")
-	if len(parser.args) > 0 {
+	cmd1 := parser.NewCommand("cmd1", "Cmd1 description")
+	if len(cmd1.args) > 0 {
 		t.Errorf("Parser should not have any arguments")
 	}
 
