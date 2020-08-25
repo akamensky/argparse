@@ -1782,18 +1782,17 @@ Arguments:
 
 `
 
-var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-f|--verylongflag1]
-                        -a|--verylongflagA [-h|--help]
-                        [-s|--verylongstring-flag1 "<value>"]
-                        [-i|--integer-flag1 <integer>]
+var cmd1Usage = `usage: verylongprogname veryverylongcmd1 [-h|--help] [-f|--verylongflag1]
+                        -a|--verylongflagA [-s|--verylongstring-flag1
+                        "<value>"] [-i|--integer-flag1 <integer>]
 
                         cmd1 description
 
 Arguments:
 
+  -h  --help                  Print help information
   -f  --verylongflag1         flag1 description
   -a  --verylongflagA         flag1 description
-  -h  --help                  Print help information
   -s  --verylongstring-flag1  string1 description
   -i  --integer-flag1         integer1 description
 
@@ -2482,12 +2481,12 @@ func TestParserHelpFuncDefault(t *testing.T) {
 func TestCommandHelpFuncDefault(t *testing.T) {
 	parser := NewParser("parser", "")
 	command := parser.NewCommand("command", "")
-	if command.HelpFunc != nil {
+	if command.HelpFunc == nil || command.Help(nil) != command.Usage(nil) {
 		t.Errorf("HelpFunc should default to Usage function")
 	}
 }
 
-func TestCommandHelpFuncDefaultToParent(t *testing.T) {
+func TestCommandHelpFuncOwnFunc(t *testing.T) {
 	parser := NewParser("parser", "")
 	command := parser.NewCommand("command", "")
 
@@ -2495,7 +2494,7 @@ func TestCommandHelpFuncDefaultToParent(t *testing.T) {
 		return "testing"
 	}
 
-	if command.Help(nil) == command.Usage(nil) || command.Help(nil) != parser.Help(nil) {
+	if command.Help(nil) != command.Usage(nil) || command.Help(nil) == parser.Help(nil) {
 		t.Errorf("command HelpFunc should default to parent function")
 	}
 }
@@ -2548,11 +2547,42 @@ func TestParserDisableHelp(t *testing.T) {
 		t.Errorf("Parser should not have any arguments")
 	}
 
+	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
+	}
+}
+
+func TestDisableHelpCommands(t *testing.T) {
+	parser := NewParser("parser", "")
+	cmd1 := parser.NewCommand("cmd1", "Cmd1 description")
+	cmd2 := parser.NewCommand("cmd2", "Cmd2 description")
+	parser.DisableHelp()
+	if len(cmd1.args) > 0 {
+		t.Errorf("Sub command cmd1 should not have any arguments")
+	}
+	if len(cmd2.args) > 0 {
+		t.Errorf("Sub Command cmd2 should not have any arguments")
+	}
+
+	if err := parser.Parse([]string{"cmd1", "-h"}); err == nil {
+		t.Errorf("Parsing should fail, help argument shouldn't exist")
+	}
+}
+
+func TestDisableHelpCommandsBeforeCommand(t *testing.T) {
+	parser := NewParser("parser", "")
+	parser.DisableHelp()
+
+	cmd1 := parser.NewCommand("cmd1", "Cmd1 description")
+	if len(cmd1.args) > 0 {
+		t.Errorf("Parser should not have any arguments")
+	}
+
 	print = func(...interface{}) (int, error) {
 		return 0, nil
 	}
 
-	if err := parser.Parse([]string{"parser", "-h"}); err == nil {
+	if err := parser.Parse([]string{"cmd1", "-h"}); err == nil {
 		t.Errorf("Parsing should fail, help argument shouldn't exist")
 	}
 }
