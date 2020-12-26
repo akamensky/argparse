@@ -439,6 +439,9 @@ func (o *arg) getHelpMessage() string {
 		if !o.opts.Required && o.opts.Default != nil {
 			message += fmt.Sprintf(". Default: %v", o.opts.Default)
 		}
+		if o.opts.Env.Name != "" {
+			message += fmt.Sprintf(". Env: %v", o.opts.Env.Name)
+		}
 	}
 	return message
 }

@@ -868,6 +868,31 @@ func TestIntFromEnv(t *testing.T) {
 	}
 }
 
+func TestIntFromEnvFailed(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	envName := "PROGNAME_FLAG_ARG1"
+	envValue := "xx10"
+
+	p := NewParser("", "descriptiom")
+	p.Int("f", "flag-arg1", &Options{
+		Required: true,
+		Env:      Env{Name: envName},
+	})
+
+	if err := os.Setenv(envName, envValue); err != nil {
+		t.Errorf("Test %s failed. Unable to set env %s=%s: %v", t.Name(), envName, envValue, err)
+		return
+	}
+	defer os.Unsetenv(envName)
+
+	err := p.Parse(testArgs)
+
+	if err == nil {
+		t.Errorf("Test %s expected error but no error occured", t.Name())
+	}
+}
+
 func TestIntFailSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "string"}
 
