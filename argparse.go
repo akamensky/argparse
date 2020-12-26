@@ -8,7 +8,11 @@ import (
 	"strings"
 )
 
+// DisableDescription can be assigned as a command or arguments description to hide it from the Usage output
 const DisableDescription = "DISABLEDDESCRIPTIONWILLNOTSHOWUP"
+
+//disable help can be invoked from the parse and then needs to be propogated to subcommands
+var disableHelp = false
 
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
 // Command MUST NOT ever be created manually. Instead one should call NewCommand method of Parser or Command,
@@ -19,7 +23,51 @@ type Command struct {
 	args        []*arg
 	commands    []*Command
 	parsed      bool
+	happened    bool
 	parent      *Command
+	HelpFunc    func(c *Command, msg interface{}) string
+	exitOnHelp  bool
+}
+
+// GetName exposes Command's name field
+func (o Command) GetName() string {
+	return o.name
+}
+
+// GetDescription exposes Command's description field
+func (o Command) GetDescription() string {
+	return o.description
+}
+
+// GetArgs exposes Command's args field
+func (o Command) GetArgs() (args []Arg) {
+	for _, arg := range o.args {
+		args = append(args, arg)
+	}
+	return
+}
+
+// GetCommands exposes Command's commands field
+func (o Command) GetCommands() []*Command {
+	return o.commands
+}
+
+// GetParent exposes Command's parent field
+func (o Command) GetParent() *Command {
+	return o.parent
+}
+
+// Help calls the overriddable Command.HelpFunc on itself,
+// called when the help argument strings are passed via CLI
+func (o *Command) Help(msg interface{}) string {
+	tempC := o
+	for tempC.HelpFunc == nil {
+		if tempC.parent == nil {
+			return ""
+		}
+		tempC = tempC.parent
+	}
+	return tempC.HelpFunc(o, msg)
 }
 
 // Parser is a top level object of argparse. It MUST NOT ever be created manually. Instead one should use
@@ -65,7 +113,9 @@ func NewParser(name string, description string) *Parser {
 	p.args = make([]*arg, 0)
 	p.commands = make([]*Command, 0)
 
-	p.help()
+	p.help("h", "help")
+	p.exitOnHelp = true
+	p.HelpFunc = (*Command).Usage
 
 	return p
 }
@@ -83,8 +133,11 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	c.description = description
 	c.parsed = false
 	c.parent = o
-
-	c.help()
+	if !disableHelp {
+		c.help("h", "help")
+		c.exitOnHelp = true
+		c.HelpFunc = (*Command).Usage
+	}
 
 	if o.commands == nil {
 		o.commands = make([]*Command, 0)
@@ -95,13 +148,45 @@ func (o *Command) NewCommand(name string, description string) *Command {
 	return c
 }
 
+// DisableHelp removes any help arguments from the commands list of arguments
+// This prevents prevents help from being parsed or invoked from the argument list
+func (o *Parser) DisableHelp() {
+	disableHelp = true
+	for i, arg := range o.args {
+		if _, ok := arg.result.(*help); ok {
+			o.args = append(o.args[:i], o.args[i+1:]...)
+		}
+	}
+	for _, com := range o.commands {
+		for i, comArg := range com.args {
+			if _, ok := comArg.result.(*help); ok {
+				com.args = append(com.args[:i], com.args[i+1:]...)
+			}
+		}
+	}
+}
+
+// ExitOnHelp sets the exitOnHelp variable of Parser
+func (o *Command) ExitOnHelp(b bool) {
+	o.exitOnHelp = b
+	for _, c := range o.commands {
+		c.ExitOnHelp(b)
+	}
+}
+
+// SetHelp removes the previous help argument, and creates a new one with the desired sname/lname
+func (o *Parser) SetHelp(sname, lname string) {
+	o.DisableHelp()
+	o.help(sname, lname)
+}
+
 // Flag Creates new flag type of argument, which is boolean value showing if argument was provided or not.
 // Takes short name, long name and pointer to options (optional).
 // Short name must be single character, but can be omitted by giving empty string.
 // Long name is required.
 // Returns pointer to boolean with starting value `false`. If Parser finds the flag
 // provided on Command line arguments, then the value is changed to true.
-// Only for Flag shorthand arguments can be combined together such as `rm -rf`
+// Set of Flag and FlagCounter shorthand arguments can be combined together such as `tar -cvaf foo.tar foo`
 func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	var result bool
 
@@ -114,7 +199,35 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Flag: %s", err.Error()))
+	}
+
+	return &result
+}
+
+// FlagCounter Creates new flagCounter type of argument, which is integer value showing the number of times the argument has been provided.
+// Takes short name, long name and pointer to options (optional).
+// Short name must be single character, but can be omitted by giving empty string.
+// Long name is required.
+// Returns pointer to integer with starting value `0`. Each time Parser finds the flag
+// provided on Command line arguments, the value is incremented by 1.
+// Set of FlagCounter and Flag shorthand arguments can be combined together such as `tar -cvaf foo.tar foo`
+func (o *Command) FlagCounter(short string, long string, opts *Options) *int {
+	var result int
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   1,
+		opts:   opts,
+		unique: false,
+	}
+
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FlagCounter: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -134,7 +247,9 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add String: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -155,7 +270,9 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Int: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -176,7 +293,9 @@ func (o *Command) Float(short string, long string, opts *Options) *float64 {
 		unique: true,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Float: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -202,16 +321,26 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 		filePerm: perm,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add File: %s", err.Error()))
+	}
 
 	return &result
 }
 
 // List creates new list argument. This is the argument that is allowed to be present multiple times on CLI.
-// All appearances of this argument on CLI will be collected into the list of strings. If no argument
+// All appearances of this argument on CLI will be collected into the list of default type values ​​which is strings. If no argument
 // provided, then the list is empty. Takes same parameters as String
 // Returns a pointer the list of strings.
 func (o *Command) List(short string, long string, opts *Options) *[]string {
+	return o.StringList(short, long, opts)
+}
+
+// StringList creates new string list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of strings. If no argument
+// provided, then the list is empty. Takes same parameters as String
+// Returns a pointer the list of strings.
+func (o *Command) StringList(short string, long string, opts *Options) *[]string {
 	result := make([]string, 0)
 
 	a := &arg{
@@ -223,7 +352,80 @@ func (o *Command) List(short string, long string, opts *Options) *[]string {
 		unique: false,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add StringList: %s", err.Error()))
+	}
+
+	return &result
+}
+
+// IntList creates new integer list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of integers. If no argument
+// provided, then the list is empty. Takes same parameters as Int
+// Returns a pointer the list of integers.
+func (o *Command) IntList(short string, long string, opts *Options) *[]int {
+	result := make([]int, 0)
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: false,
+	}
+
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add IntList: %s", err.Error()))
+	}
+
+	return &result
+}
+
+// FloatList creates new float list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of float64 values. If no argument
+// provided, then the list is empty. Takes same parameters as Float
+// Returns a pointer the list of float64 values.
+func (o *Command) FloatList(short string, long string, opts *Options) *[]float64 {
+	result := make([]float64, 0)
+
+	a := &arg{
+		result: &result,
+		sname:  short,
+		lname:  long,
+		size:   2,
+		opts:   opts,
+		unique: false,
+	}
+
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FloatList: %s", err.Error()))
+	}
+
+	return &result
+}
+
+// FileList creates new file list argument. This is the argument that is allowed to be present multiple times on CLI.
+// All appearances of this argument on CLI will be collected into the list of os.File values. If no argument
+// provided, then the list is empty. Takes same parameters as File
+// Returns a pointer the list of os.File values.
+func (o *Command) FileList(short string, long string, flag int, perm os.FileMode, opts *Options) *[]os.File {
+	result := make([]os.File, 0)
+
+	a := &arg{
+		result:   &result,
+		sname:    short,
+		lname:    long,
+		size:     2,
+		opts:     opts,
+		unique:   false,
+		fileFlag: flag,
+		filePerm: perm,
+	}
+
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add FileList: %s", err.Error()))
+	}
 
 	return &result
 }
@@ -247,33 +449,19 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 		selector: &options,
 	}
 
-	o.addArg(a)
+	if err := o.addArg(a); err != nil {
+		panic(fmt.Errorf("unable to add Selector: %s", err.Error()))
+	}
 
 	return &result
 }
 
-// Happened shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
-// all its descendant commands and arguments are not parsed. Returns a boolean value.
-func (o *Command) Happened() bool {
-	return o.parsed
-}
-
-// Usage returns a multiline string that is the same as a help message for this Parser or Command.
-// Since Parser is a Command as well, they work in exactly same way. Meaning that usage string
-// can be retrieved for any level of commands. It will only include information about this Command,
-// its sub-commands, current Command arguments and arguments of all preceding commands (if any)
-//
+// message2String puts msg in result string
+// done boolean indicates if result is ready to be returned
 // Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
 // All other interface types will be ignored
-func (o *Command) Usage(msg interface{}) string {
+func message2String(msg interface{}) (string, bool) {
 	var result string
-	// Stay classy
-	maxWidth := 80
-	// List of arguments from all preceding commands
-	arguments := make([]*arg, 0)
-	// First get line of commands until root
-	var chain []string
-	current := o
 	if msg != nil {
 		switch msg.(type) {
 		case subCommandError:
@@ -281,7 +469,7 @@ func (o *Command) Usage(msg interface{}) string {
 			if msg.(subCommandError).cmd != nil {
 				result += msg.(subCommandError).cmd.Usage(nil)
 			}
-			return result
+			return result, true
 		case error:
 			result = fmt.Sprintf("%s\n", msg.(error).Error())
 		case string:
@@ -290,23 +478,34 @@ func (o *Command) Usage(msg interface{}) string {
 			result = fmt.Sprintf("%s\n", msg.(fmt.Stringer).String())
 		}
 	}
+	return result, false
+}
+
+// getPrecedingCommands - collects info on command chain from root to current (o *Command) and all arguments in this chain
+func (o *Command) getPrecedingCommands(chain *[]string, arguments *[]*arg) {
+	current := o
+	// Also add arguments
+	// Get line of commands until root
 	for current != nil {
-		chain = append(chain, current.name)
-		// Also add arguments
+		*chain = append(*chain, current.name)
 		if current.args != nil {
-			arguments = append(arguments, current.args...)
+			*arguments = append(*arguments, current.args...)
 		}
 		current = current.parent
 	}
+
 	// Reverse the slice
-	last := len(chain) - 1
-	for i := 0; i < len(chain)/2; i++ {
-		chain[i], chain[last-i] = chain[last-i], chain[i]
+	last := len(*chain) - 1
+	for i := 0; i < len(*chain)/2; i++ {
+		(*chain)[i], (*chain)[last-i] = (*chain)[last-i], (*chain)[i]
 	}
-	// If this Command has sub-commands we need their list
+}
+
+// getSubCommands - collects info on subcommands of current command
+func (o *Command) getSubCommands(chain *[]string) []Command {
 	commands := make([]Command, 0)
 	if o.commands != nil && len(o.commands) > 0 {
-		chain = append(chain, "<Command>")
+		*chain = append(*chain, "<Command>")
 		for _, v := range o.commands {
 			// Skip hidden commands
 			if v.description == DisableDescription {
@@ -315,9 +514,12 @@ func (o *Command) Usage(msg interface{}) string {
 			commands = append(commands, *v)
 		}
 	}
+	return commands
+}
 
-	// Build usage description
-	result += "usage:"
+// precedingCommands2Result - puts info about command chain from root to current (o *Command) into result string buffer
+func (o *Command) precedingCommands2Result(result string, chain []string, arguments []*arg, maxWidth int) string {
+	usedHelp := false
 	leftPadding := len("usage: " + chain[0] + "")
 	// Add preceding commands
 	for _, v := range chain {
@@ -329,14 +531,24 @@ func (o *Command) Usage(msg interface{}) string {
 		if v.opts.Help == DisableDescription {
 			continue
 		}
-		result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+		if v.lname == "help" && usedHelp {
+		} else {
+			result = addToLastLine(result, v.usage(), maxWidth, leftPadding, true)
+		}
+		if v.lname == "help" || v.sname == "h" {
+			usedHelp = true
+		}
 	}
-
 	// Add program/Command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
 	result = addToLastLine(result, o.description, maxWidth, leftPadding, true)
 	result = result + "\n\n"
 
+	return result
+}
+
+// subCommands2Result - puts info about subcommands of current command into result string buffer
+func subCommands2Result(result string, commands []Command, maxWidth int) string {
 	// Add list of sub-commands to the result
 	if len(commands) > 0 {
 		cmdContent := "Commands:\n\n"
@@ -362,8 +574,12 @@ func (o *Command) Usage(msg interface{}) string {
 		}
 		result = result + cmdContent + "\n"
 	}
+	return result
+}
 
-	// Add list of arguments to the result
+// arguments2Result - puts info about all arguments of current command into result string buffer
+func arguments2Result(result string, arguments []*arg, maxWidth int) string {
+	usedHelp := false
 	if len(arguments) > 0 {
 		argContent := "Arguments:\n\n"
 		// Get biggest padding
@@ -382,21 +598,74 @@ func (o *Command) Usage(msg interface{}) string {
 			if argument.opts.Help == DisableDescription {
 				continue
 			}
-			arg := "  "
-			if argument.sname != "" {
-				arg = arg + "-" + argument.sname + "  "
+			if argument.lname == "help" && usedHelp {
 			} else {
-				arg = arg + "    "
+				arg := "  "
+				if argument.sname != "" {
+					arg = arg + "-" + argument.sname + "  "
+				} else {
+					arg = arg + "    "
+				}
+				arg = arg + "--" + argument.lname
+				arg = arg + strings.Repeat(" ", argPadding-len(arg))
+				if argument.opts != nil && argument.opts.Help != "" {
+					arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
+				}
+				argContent = argContent + arg + "\n"
 			}
-			arg = arg + "--" + argument.lname
-			arg = arg + strings.Repeat(" ", argPadding-len(arg))
-			if argument.opts != nil && argument.opts.Help != "" {
-				arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
+			if argument.lname == "help" || argument.sname == "h" {
+				usedHelp = true
 			}
-			argContent = argContent + arg + "\n"
 		}
 		result = result + argContent + "\n"
 	}
+	return result
+}
+
+// Happened shows whether Command was specified on CLI arguments or not. If Command did not "happen", then
+// all its descendant commands and arguments are not parsed. Returns a boolean value.
+func (o *Command) Happened() bool {
+	return o.happened
+}
+
+// Usage returns a multiline string that is the same as a help message for this Parser or Command.
+// Since Parser is a Command as well, they work in exactly same way. Meaning that usage string
+// can be retrieved for any level of commands. It will only include information about this Command,
+// its sub-commands, current Command arguments and arguments of all preceding commands (if any)
+//
+// Accepts an interface that can be error, string or fmt.Stringer that will be prepended to a message.
+// All other interface types will be ignored
+func (o *Command) Usage(msg interface{}) string {
+	for _, cmd := range o.commands {
+		if cmd.Happened() {
+			return cmd.Usage(msg)
+		}
+	}
+
+	// Stay classy
+	maxWidth := 80
+	// List of arguments from all preceding commands
+	arguments := make([]*arg, 0)
+	// Line of commands until root
+	var chain []string
+
+	// Put message in result
+	result, done := message2String(msg)
+	if done {
+		return result
+	}
+
+	//collect info about Preceding Commands into chain and arguments
+	o.getPrecedingCommands(&chain, &arguments)
+	// If this Command has sub-commands we need their list
+	commands := o.getSubCommands(&chain)
+
+	// Build usage description from description of preceding commands chain and each of subcommands
+	result += "usage:"
+	result = o.precedingCommands2Result(result, chain, arguments, maxWidth)
+	result = subCommands2Result(result, commands, maxWidth)
+	// Add list of arguments to the result
+	result = arguments2Result(result, arguments, maxWidth)
 
 	return result
 }
@@ -420,7 +689,7 @@ func (o *Parser) Parse(args []string) error {
 		}
 	}
 	if result == nil && len(unparsed) > 0 {
-		return errors.New("too many arguments")
+		return errors.New("unknown arguments " + strings.Join(unparsed, " "))
 	}
 
 	return result
