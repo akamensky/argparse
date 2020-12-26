@@ -145,7 +145,15 @@ type Options struct {
 	Required bool
 	Validate func(args []string) error
 	Help     string
+	Env      argparse.Env
 	Default  interface{}
+}
+```
+where `argparse.Env` is:
+```go
+type Env struct {
+	Name string
+	Sep  string
 }
 ```
 
@@ -153,6 +161,7 @@ You can Set `Required` to let it know if it should ask for arguments.
 Or you can set `Validate` as a lambda function to make it know while value is valid.
 Or you can set `Help` for your beautiful help document.
 Or you can set `Default` will set the default value if user does not provide a value.
+Or you can set `Env` to set value from envirotnment variable if user does not provide a value.
 
 Example:
 ```

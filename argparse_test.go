@@ -832,6 +832,42 @@ func TestIntSimple2(t *testing.T) {
 	}
 }
 
+func TestIntFromEnv(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	envName := "PROGNAME_FLAG_ARG1"
+	envValue := "10"
+
+	p := NewParser("", "descriptiom")
+	i1 := p.Int("f", "flag-arg1", &Options{
+		Required: true,
+		Env:      Env{Name: envName},
+	})
+
+	if err := os.Setenv(envName, envValue); err != nil {
+		t.Errorf("Test %s failed. Unable to set env %s=%s: %v", t.Name(), envName, envValue, err)
+		return
+	}
+	defer os.Unsetenv(envName)
+
+	err := p.Parse(testArgs)
+
+	if err != nil {
+		t.Errorf("Test %s don't expect error %v", t.Name(), err)
+		return
+	}
+
+	if i1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	if *i1 != 10 {
+		t.Errorf("Test %s failed. Want: [%s], got: [%d]", t.Name(), envValue, *i1)
+		return
+	}
+}
+
 func TestIntFailSimple1(t *testing.T) {
 	testArgs := []string{"progname", "--flag-arg1", "string"}
 
@@ -1400,6 +1436,42 @@ func TestListAddArgumentFail(t *testing.T) {
 			_ = p.StringList("F", "flag1", nil)
 			_ = p.StringList(tc.shortArg, tc.longArg, nil)
 		})
+	}
+}
+
+func TestListFromEnv(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	envName := "PROGNAME_FLAG_ARG1"
+	envValue := "a1,a2,a3"
+
+	p := NewParser("", "descriptiom")
+	l1 := p.List("f", "flag-arg1", &Options{
+		Env: Env{Name: envName, Sep: ","},
+	})
+
+	if err := os.Setenv(envName, envValue); err != nil {
+		t.Errorf("Test %s failed. Unable to set env %s=%s: %v", t.Name(), envName, envValue, err)
+		return
+	}
+	defer os.Unsetenv(envName)
+
+	err := p.Parse(testArgs)
+
+	if err != nil {
+		t.Errorf("Test %s don't expect error %v", t.Name(), err)
+		return
+	}
+
+	if l1 == nil {
+		t.Errorf("Test %s failed with flag1 being nil pointer", t.Name())
+		return
+	}
+
+	expected := []string{"a1", "a2", "a3"}
+	if reflect.DeepEqual(expected, l1) {
+		t.Errorf("Test %s failed. Want: [%s], got: [%v]", t.Name(), envValue, *l1)
+		return
 	}
 }
 

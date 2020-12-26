@@ -2,6 +2,7 @@ package argparse
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -118,13 +119,35 @@ func (o *Command) parseArguments(args *[]string) error {
 			}
 		}
 
+		if oarg.opts == nil {
+			continue
+		}
+
+		// Check for environment variable to initialize argument
+		if !oarg.parsed && oarg.opts.Env.Name != "" {
+			env := os.Getenv(oarg.opts.Env.Name)
+			if env != "" {
+				var argv []string
+				if oarg.opts.Env.Sep != "" {
+					argv = strings.Split(env, oarg.opts.Env.Sep)
+				} else {
+					argv = []string{env}
+				}
+				for _, v := range argv {
+					if err := oarg.parse([]string{v}, 1); err != nil {
+						return err
+					}
+				}
+			}
+		}
+
 		// Check if arg is required and not provided
-		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
+		if !oarg.parsed && oarg.opts.Required {
 			return fmt.Errorf("[%s] is required", oarg.name())
 		}
 
 		// Check for argument default value and if provided try to type cast and assign
-		if oarg.opts != nil && oarg.opts.Default != nil && !oarg.parsed {
+		if !oarg.parsed && oarg.opts.Default != nil {
 			err := oarg.setDefault()
 			if err != nil {
 				return err

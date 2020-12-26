@@ -88,6 +88,8 @@ type Parser struct {
 // (e.g. as String does), then these are provided as args to function. If validation fails the error must be returned,
 // which will be the output of `Parser.Parse` method.
 //
+// Options.Env - Environment variable that will be used to initialize an argument if its value is not provided.
+//
 // Options.Help - A help message to be displayed in Usage output. Can be of any length as the message will be
 // formatted to fit max screen width of 100 characters.
 //
@@ -99,6 +101,16 @@ type Options struct {
 	Validate func(args []string) error
 	Help     string
 	Default  interface{}
+	Env      Env
+}
+
+// Env represents environment variable settings to initialize an arg
+// Env.Name - environment variable name.
+//
+// Env.Sep - separator used for list values.
+type Env struct {
+	Name string
+	Sep  string
 }
 
 // NewParser creates new Parser object that will allow to add arguments for parsing
