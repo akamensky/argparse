@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -2786,5 +2787,41 @@ func TestCommandHelpSetSnameOnly(t *testing.T) {
 
 	if arg.sname != "h" || arg.lname != "help" {
 		t.Error("Help arugment names should have defaulted")
+	}
+}
+
+func TestUsageShowsDefault(t *testing.T) {
+	lname := "long"
+	value := "8"
+
+	parser := NewParser("parser", "")
+	parser.Int("", lname, &Options{
+		Default: value,
+		Help:    "help",
+	})
+
+	usage := parser.Usage(nil)
+	match, _ := regexp.MatchString(fmt.Sprintf("%s.*\\. Default: %s", lname, value), usage)
+
+	if !match {
+		t.Errorf("`Default: %v` not found in usage", value)
+	}
+}
+
+func TestUsageShowsEnv(t *testing.T) {
+	lname := "long"
+	env := "ENV_VAR"
+
+	parser := NewParser("parser", "")
+	parser.Int("", lname, &Options{
+		Help: "help",
+		Env:  Env{Name: env},
+	})
+
+	usage := parser.Usage(nil)
+	match, _ := regexp.MatchString(fmt.Sprintf("%s.*\\. Env: %s", lname, env), usage)
+
+	if !match {
+		t.Errorf("`Env: %v` not found in usage", env)
 	}
 }
