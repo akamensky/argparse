@@ -147,6 +147,33 @@ func TestFlagSimple1(t *testing.T) {
 		t.Errorf("Test %s failed with flag2 being true", t.Name())
 		return
 	}
+
+	if args := p.GetArgs(); args == nil {
+		t.Errorf("Test %s failed with args empty", t.Name())
+	} else if len(args) != 3 { // our two and -h
+		t.Errorf("Test %s failed with wrong len", t.Name())
+	} else {
+		got := 0
+		for _, arg := range args {
+			switch arg.GetLname() {
+			case "flag-arg1":
+				if *arg.GetResult().(*bool) != *flag1 {
+					t.Errorf("Test %s failed with wrong arg value", t.Name())
+				}
+				got += 3
+			case "flag-arg2":
+				if *arg.GetResult().(*bool) != *flag2 {
+					t.Errorf("Test %s failed with wrong arg value", t.Name())
+				}
+				got += 5
+			case "help":
+				got += 11
+			}
+		}
+		if got != 19 {
+			t.Errorf("Test %s failed with wrong args found", t.Name())
+		}
+	}
 }
 
 func TestFlagSimple2(t *testing.T) {
@@ -192,6 +219,7 @@ func TestFlagSimple2(t *testing.T) {
 		t.Errorf("Test %s failed with flag3 being false", t.Name())
 		return
 	}
+
 }
 
 func TestLongFlagEqualChar(t *testing.T) {
@@ -696,6 +724,33 @@ func TestStringSimple1(t *testing.T) {
 	if *s2 != "" {
 		t.Errorf("Test %s failed. Want: [%s], got: [%s]", t.Name(), "\"\"", *s1)
 		return
+	}
+
+	if args := p.GetArgs(); args == nil {
+		t.Errorf("Test %s failed with args empty", t.Name())
+	} else if len(args) != 3 { // our two + help
+		t.Errorf("Test %s failed with wrong len", t.Name())
+	} else {
+		got := 0
+		for _, arg := range args {
+			switch arg.GetLname() {
+			case "flag-arg1":
+				if *arg.GetResult().(*string) != *s1 {
+					t.Errorf("Test %s failed with wrong arg value", t.Name())
+				}
+				got += 3
+			case "flag-arg2":
+				if *arg.GetResult().(*string) != "" {
+					t.Errorf("Test %s failed with non-nil result", t.Name())
+				}
+				got += 5
+			case "help":
+				got += 11
+			}
+		}
+		if got != 19 {
+			t.Errorf("Test %s failed with wrong args found", t.Name())
+		}
 	}
 }
 
