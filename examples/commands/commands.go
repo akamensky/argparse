@@ -16,6 +16,7 @@ func main() {
 
 	// Add top level commands `stop`
 	stopCmd := parser.NewCommand("stop", "Will stop a process")
+	stopCmd.Int("-t", "--time", nil)
 
 	// Parse command line arguments and in case of any error print error and help information
 	err := parser.Parse(os.Args)
@@ -30,6 +31,12 @@ func main() {
 		fmt.Println("Started process")
 	} else if stopCmd.Happened() { // Check if `stop` command was given
 		// Stopping a process
+		for _, arg := range stopCmd.GetArgs() {
+			switch val := arg.GetResult().(type) {
+			case int:
+				fmt.Printf("Arg: %s = %d\n", arg.GetLname(), val)
+			}
+		}
 		fmt.Println("Stopped process")
 	} else {
 		// In fact we will never hit this one

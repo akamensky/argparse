@@ -137,6 +137,13 @@ You can implement sub-commands in your CLI using `parser.NewCommand()` or go eve
 Since parser inherits from command, every command supports exactly same options as parser itself,
 thus allowing to add arguments specific to that command or more global arguments added on parser itself!
 
+You can also dynamically retrieve argument values:
+```
+var myInteger *int = parser.Int("i", "integer", ...)
+parser.Parse()
+fmt.Printf("%d", *parser.GetArgs()[0].GetResult().(*int))
+```
+
 #### Basic Option Structure
 
 The `Option` structure is declared at `argparse.go`:
