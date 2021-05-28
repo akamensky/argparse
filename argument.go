@@ -43,6 +43,8 @@ func (o arg) GetLname() string {
 	return o.lname
 }
 
+// getResult returns the interface{} to the *(type) containing the argument's result value
+// Will contain the empty/default value if argument value was not given
 func (o arg) GetResult() interface{} {
 	return o.result
 }
