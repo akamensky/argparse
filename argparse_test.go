@@ -2708,7 +2708,32 @@ Arguments:
 
 	parser := NewParser("command", "Program with multiline\ndescription.")
 
-		parser.String("s", "string", &Options{Required: true, Help: "String argument example\non several lines"})
+	parser.String("s", "string", &Options{Required: true, Help: "String argument example\non several lines"})
+
+	actual := parser.Help(nil)
+	if expected != actual {
+		t.Errorf("Expectations unmet. expected: %s, actual: %s", expected, actual)
+	}
+}
+
+func TestCommandHelpMultilineWithCustomPadding(t *testing.T) {
+	expected := `usage: command [-h|--help] -s|--string "<value>"
+
+   Program with multiline
+   description.
+
+Arguments:
+
+  -h  --help    Print help information
+  -s  --string  String argument example
+                on several lines
+
+`
+
+	parser := NewParser("command", "Program with multiline\ndescription.")
+
+	parser.String("s", "string", &Options{Required: true, Help: "String argument example\non several lines"})
+	parser.DescriptionPadding = 3
 
 	actual := parser.Help(nil)
 	if expected != actual {

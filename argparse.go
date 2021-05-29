@@ -18,15 +18,16 @@ var disableHelp = false
 // Command MUST NOT ever be created manually. Instead one should call NewCommand method of Parser or Command,
 // which will setup appropriate fields and call methods that have to be called when creating new command.
 type Command struct {
-	name        string
-	description string
-	args        []*arg
-	commands    []*Command
-	parsed      bool
-	happened    bool
-	parent      *Command
-	HelpFunc    func(c *Command, msg interface{}) string
-	exitOnHelp  bool
+	name               string
+	description        string
+	args               []*arg
+	commands           []*Command
+	parsed             bool
+	happened           bool
+	parent             *Command
+	HelpFunc           func(c *Command, msg interface{}) string
+	exitOnHelp         bool
+	DescriptionPadding interface{}
 }
 
 // GetName exposes Command's name field
@@ -116,6 +117,7 @@ func NewParser(name string, description string) *Parser {
 	p.help("h", "help")
 	p.exitOnHelp = true
 	p.HelpFunc = (*Command).Usage
+	p.DescriptionPadding = nil
 
 	return p
 }
@@ -538,6 +540,12 @@ func (o *Command) precedingCommands2Result(result string, chain []string, argume
 		if v.lname == "help" || v.sname == "h" {
 			usedHelp = true
 		}
+	}
+	// Set custom padding
+	customPadding, ok := o.DescriptionPadding.(int)
+	if ok {
+		// -1 because addTolastline inserts extra space
+		leftPadding = customPadding - 1
 	}
 	// Add program/Command description to the result
 	result = result + "\n\n" + strings.Repeat(" ", leftPadding)
