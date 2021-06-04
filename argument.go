@@ -28,6 +28,7 @@ type Arg interface {
 	GetOpts() *Options
 	GetSname() string
 	GetLname() string
+	GetResult() interface{}
 }
 
 func (o arg) GetOpts() *Options {
@@ -40,6 +41,12 @@ func (o arg) GetSname() string {
 
 func (o arg) GetLname() string {
 	return o.lname
+}
+
+// getResult returns the interface{} to the *(type) containing the argument's result value
+// Will contain the empty/default value if argument value was not given
+func (o arg) GetResult() interface{} {
+	return o.result
 }
 
 type help struct{}
