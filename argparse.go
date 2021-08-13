@@ -329,8 +329,9 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 }
 
 // List creates new list argument. This is the argument that is allowed to be present multiple times on CLI.
-// All appearances of this argument on CLI will be collected into the list of default type values ​​which is strings. If no argument
-// provided, then the list is empty. Takes same parameters as String
+// All appearances of this argument on CLI will be collected into the list of default type values which is strings.
+// If no argument provided, then the list is empty.
+// Takes same parameters as String.
 // Returns a pointer the list of strings.
 func (o *Command) List(short string, long string, opts *Options) *[]string {
 	return o.StringList(short, long, opts)
