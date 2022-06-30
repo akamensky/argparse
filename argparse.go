@@ -191,12 +191,13 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	var result bool
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   1,
-		opts:   opts,
-		unique: true,
+		result:    &result,
+		sname:     short,
+		lname:     long,
+		size:      1,
+		opts:      opts,
+		unique:    true,
+		noDefault: true,
 	}
 
 	if err := o.addArg(a); err != nil {
