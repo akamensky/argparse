@@ -2042,12 +2042,12 @@ func TestStringDefaultValueFail(t *testing.T) {
 
 	p := NewParser("progname", "Prog description")
 
-	_ = p.String("s", "string", &Options{Default: false})
+	_ = p.String("s", "string", &Options{Default: true})
 
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
+	if err == nil || err.Error() != "argument [s, string] does not support default values" {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
