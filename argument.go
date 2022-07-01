@@ -435,9 +435,15 @@ func (o *arg) usage() string {
 	case *bool:
 		break
 	case *int:
-		result = result + " <integer>"
+		isFlagCounter := !o.unique && o.size == 1
+		if !isFlagCounter {
+			result = result + " <integer>"
+		}
 	case *float64:
-		result = result + " <float>"
+		isFlagCounter := !o.unique && o.size == 1
+		if !isFlagCounter {
+			result = result + " <integer>"
+		}
 	case *string:
 		if o.selector != nil {
 			result = result + " (" + strings.Join(*o.selector, "|") + ")"
