@@ -1981,18 +1981,43 @@ func TestIntMissingArgFail(t *testing.T) {
 	}
 }
 
-func TestFlagDefaultValueFail(t *testing.T) {
+func TestFlagDefaultValuePass(t *testing.T) {
 	testArgs := []string{"progname"}
 
 	p := NewParser("progname", "Prog description")
 
-	_ = p.Flag("f", "flag", &Options{Default: true})
+	f := p.Flag("f", "flag", &Options{Default: false})
 
 	err := p.Parse(testArgs)
 
-	// Should pass on failure
-	if err == nil || err.Error() != "argument [f, flag] does not support default values" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "argument [f, flag] does not support default values", err)
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not false
+	if *f != false {
+		t.Errorf("expected [false] but found [%t]", *f)
+	}
+}
+
+func TestFlagDefaultValueShouldIgnoreTrue(t *testing.T) {
+	testArgs := []string{"progname"}
+
+	p := NewParser("progname", "Prog description")
+
+	f := p.Flag("f", "flag", &Options{Default: true})
+
+	err := p.Parse(testArgs)
+
+	// Should fail on failure
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// Should fail if not false
+	if *f != false {
+		t.Errorf("expected [false] but found [%t]", *f)
 	}
 }
 

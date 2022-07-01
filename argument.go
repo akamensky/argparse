@@ -528,7 +528,11 @@ func (o *arg) setDefault() error {
 			if reflect.TypeOf(o.result) != reflect.PtrTo(reflect.TypeOf(o.opts.Default)) {
 				return fmt.Errorf("cannot use default type [%T] as value of pointer with type [%T]", o.opts.Default, o.result)
 			}
-			reflect.ValueOf(o.result).Elem().Set(reflect.ValueOf(o.opts.Default))
+			defaultValue := o.opts.Default
+			if o.argType == Flag && defaultValue == true {
+				defaultValue = false
+			}
+			reflect.ValueOf(o.result).Elem().Set(reflect.ValueOf(defaultValue))
 
 		case *os.File:
 			if err := o.setDefaultFile(); err != nil {
