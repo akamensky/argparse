@@ -1981,38 +1981,18 @@ func TestIntMissingArgFail(t *testing.T) {
 	}
 }
 
-func TestFlagDefaultValuePass(t *testing.T) {
-	testArgs := []string{"progname"}
-
-	p := NewParser("progname", "Prog description")
-
-	f := p.Flag("f", "flag", &Options{Default: true})
-
-	err := p.Parse(testArgs)
-
-	// Should fail on failure
-	if err != nil {
-		t.Error(err.Error())
-	}
-
-	// Should fail if not true
-	if *f != true {
-		t.Errorf("expected [true], got [%t]", *f)
-	}
-}
-
 func TestFlagDefaultValueFail(t *testing.T) {
 	testArgs := []string{"progname"}
 
 	p := NewParser("progname", "Prog description")
 
-	_ = p.Flag("f", "flag", &Options{Default: "string"})
+	_ = p.Flag("f", "flag", &Options{Default: true})
 
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "cannot use default type [string] as value of pointer with type [*bool]" {
-		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [string] as value of pointer with type [*bool]", err)
+	if err == nil || err.Error() != "argument [f, flag] does not support default values" {
+		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "argument [f, flag] does not support default values", err)
 	}
 }
 
@@ -2047,7 +2027,7 @@ func TestStringDefaultValueFail(t *testing.T) {
 	err := p.Parse(testArgs)
 
 	// Should pass on failure
-	if err == nil || err.Error() != "argument [s, string] does not support default values" {
+	if err == nil || err.Error() != "cannot use default type [bool] as value of pointer with type [*string]" {
 		t.Errorf("Test %s failed: expected error [%s], got error [%+v]", t.Name(), "cannot use default type [bool] as value of pointer with type [*string]", err)
 	}
 }
