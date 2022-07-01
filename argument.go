@@ -9,20 +9,38 @@ import (
 )
 
 type arg struct {
-	result    interface{} // Pointer to the resulting value
-	opts      *Options    // Options
-	sname     string      // Short name (in Parser will start with "-"
-	lname     string      // Long name (in Parser will start with "--"
-	size      int         // Size defines how many args after match will need to be consumed
-	unique    bool        // Specifies whether flag should be present only ones
-	parsed    bool        // Specifies whether flag has been parsed already
-	fileFlag  int         // File mode to open file with
-	filePerm  os.FileMode // File permissions to set a file
-	selector  *[]string   // Used in Selector type to allow to choose only one from list of options
-	parent    *Command    // Used to get access to specific Command
-	eqChar    bool        // This is used if the command is passed in with an equals char as a seperator
-	noDefault bool        // This is used if Default in argparse.Options should not be allowed
+	result    interface{}  // Pointer to the resulting value
+	opts      *Options     // Options
+	sname     string       // Short name (in Parser will start with "-"
+	lname     string       // Long name (in Parser will start with "--"
+	size      int          // Size defines how many args after match will need to be consumed
+	unique    bool         // Specifies whether flag should be present only ones
+	parsed    bool         // Specifies whether flag has been parsed already
+	fileFlag  int          // File mode to open file with
+	filePerm  os.FileMode  // File permissions to set a file
+	selector  *[]string    // Used in Selector type to allow to choose only one from list of options
+	parent    *Command     // Used to get access to specific Command
+	eqChar    bool         // This is used if the command is passed in with an equals char as a seperator
+	noDefault bool         // This is used if Default in argparse.Options should not be allowed
+	argType   ArgumentType // Used to determine which argument type this is
 }
+
+// enum used to determine the argument type
+type ArgumentType int
+
+const (
+	Flag        ArgumentType = 0
+	FlagCounter              = 1
+	String                   = 2
+	Int                      = 3
+	Float                    = 4
+	File                     = 5
+	StringList               = 6
+	IntList                  = 7
+	FloatList                = 8
+	FileList                 = 9
+	Selector                 = 10
+)
 
 // Arg interface provides exporting of arg structure, while exposing it
 type Arg interface {
