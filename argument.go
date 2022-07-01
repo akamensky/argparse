@@ -440,10 +440,7 @@ func (o *arg) usage() string {
 			result = result + " <integer>"
 		}
 	case *float64:
-		isFlagCounter := !o.unique && o.size == 1
-		if !isFlagCounter {
-			result = result + " <integer>"
-		}
+		result = result + " <float>"
 	case *string:
 		if o.selector != nil {
 			result = result + " (" + strings.Join(*o.selector, "|") + ")"
