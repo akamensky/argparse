@@ -51,7 +51,13 @@ func (o *Command) addArg(a *arg) error {
 		current = current.parent
 	}
 	a.parent = o
+
+	if a.GetPositional() {
+		a.opts.Required = true
+		a.size = 1 // We could allow other sizes in the future
+	}
 	o.args = append(o.args, a)
+
 	return nil
 }
 
@@ -80,21 +86,44 @@ func (o *Command) parseSubCommands(args *[]string) error {
 }
 
 //parseArguments - Parses arguments
-func (o *Command) parseArguments(args *[]string) error {
+func (o *Command) parseArguments(inputArgs *[]string) error {
 	// Iterate over the args
-	for i := 0; i < len(o.args); i++ {
-		oarg := o.args[i]
-		for j := 0; j < len(*args); j++ {
-			arg := (*args)[j]
+	for _, oarg := range o.args {
+		for j := 0; j < len(*inputArgs); j++ {
+			arg := (*inputArgs)[j]
 			if arg == "" {
 				continue
+			}
+			if oarg.GetPositional() {
+				// Skip any flags
+				// This has the subtle effect of requiring flags
+				//    to use `=` for their value pairing if any
+				//    positionals are defined AND are not satisfied yet.
+				//    If they don't use `=` then the positional parse
+				//    will unknowingly consume the arg on next iteration.
+				//
+				// It would be possible to potentially avoid this
+				//    requirement IF we choose to check whether the
+				//    flag in question has a default. If not then we
+				//    know either:
+				//        it must be for that flag OR
+				//        the user made an error
+				//    However this is highly ambiguous so best avoided.
+				if strings.HasPrefix(arg, "-") {
+					continue
+				}
+				if err := oarg.parsePositional(arg); err != nil {
+					return err
+				}
+				oarg.reduce(j, inputArgs)
+				break // Positionals can only occur once
 			}
 			if strings.Contains(arg, "=") {
 				splitInd := strings.LastIndex(arg, "=")
 				equalArg := []string{arg[:splitInd], arg[splitInd+1:]}
 				if cnt, err := oarg.check(equalArg[0]); err != nil {
 					return err
-				} else if cnt > 0 {
+				} else if cnt > 0 { // No args implies we supply default
 					if equalArg[1] == "" {
 						return fmt.Errorf("not enough arguments for %s", oarg.name())
 					}
@@ -105,21 +134,21 @@ func (o *Command) parseArguments(args *[]string) error {
 					if err != nil {
 						return err
 					}
-					oarg.reduce(j, args)
+					oarg.reduce(j, inputArgs)
 					continue
 				}
 			}
 			if cnt, err := oarg.check(arg); err != nil {
 				return err
 			} else if cnt > 0 {
-				if len(*args) < j+oarg.size {
+				if len(*inputArgs) < j+oarg.size {
 					return fmt.Errorf("not enough arguments for %s", oarg.name())
 				}
-				err := oarg.parse((*args)[j+1:j+oarg.size], cnt)
+				err := oarg.parse((*inputArgs)[j+1:j+oarg.size], cnt)
 				if err != nil {
 					return err
 				}
-				oarg.reduce(j, args)
+				oarg.reduce(j, inputArgs)
 				continue
 			}
 		}
@@ -127,10 +156,8 @@ func (o *Command) parseArguments(args *[]string) error {
 		// Check if arg is required and not provided
 		if oarg.opts != nil && oarg.opts.Required && !oarg.parsed {
 			return fmt.Errorf("[%s] is required", oarg.name())
-		}
-
-		// Check for argument default value and if provided try to type cast and assign
-		if oarg.opts != nil && oarg.opts.Default != nil && !oarg.parsed {
+		} else if oarg.opts != nil && oarg.opts.Default != nil && !oarg.parsed {
+			// Check for argument default value and if provided try to type cast and assign
 			err := oarg.setDefault()
 			if err != nil {
 				return err

@@ -80,6 +80,9 @@ type Parser struct {
 // Options are specific options for every argument. They can be provided if necessary.
 // Possible fields are:
 //
+// Options.Positional - tells Parser that the argument is positional (implies Required)
+// Positional arguments do not require the flag name to precede them and must come in a specific order.
+//
 // Options.Required - tells Parser that this argument is required to be provided.
 // useful when specific Command requires some data provided.
 //
@@ -95,10 +98,11 @@ type Parser struct {
 // in case if this argument was not supplied on command line. File default value is a string which it will be open with
 // provided options. In case if provided value type does not match expected, the error will be returned on run-time.
 type Options struct {
-	Required bool
-	Validate func(args []string) error
-	Help     string
-	Default  interface{}
+	Positional bool
+	Required   bool
+	Validate   func(args []string) error
+	Help       string
+	Default    interface{}
 }
 
 // NewParser creates new Parser object that will allow to add arguments for parsing
