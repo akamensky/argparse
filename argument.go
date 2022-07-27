@@ -47,6 +47,14 @@ type Arg interface {
 	GetSname() string
 	GetLname() string
 	GetResult() interface{}
+	GetPositional() bool
+}
+
+func (o arg) GetPositional() bool {
+	if o.opts != nil {
+		return o.opts.Positional
+	}
+	return false
 }
 
 func (o arg) GetOpts() *Options {
@@ -86,7 +94,7 @@ func (o *arg) checkLongName(argument string) int {
 	return 0
 }
 
-// checkShortName if argumet present.
+// checkShortName if argument present.
 // checkShortName - returns the argumet's short name number of occurrences and error.
 // For shorthand argument - 0 if there is no occurrences, or count of occurrences.
 // Shorthand argument with parametr, mast be the only or last in the argument string.
@@ -119,7 +127,7 @@ func (o *arg) checkShortName(argument string) (int, error) {
 	return 0, nil
 }
 
-// check if argumet present.
+// check if argument present.
 // check - returns the argumet's number of occurrences and error.
 // For long name return value is 0 or 1.
 // For shorthand argument - 0 if there is no occurrences, or count of occurrences.
@@ -131,6 +139,10 @@ func (o *arg) check(argument string) (int, error) {
 	}
 
 	return o.checkShortName(argument)
+}
+
+func (o *arg) reducePositional(position int, args *[]string) {
+	(*args)[position] = ""
 }
 
 func (o *arg) reduceLongName(position int, args *[]string) {
@@ -184,8 +196,12 @@ func (o *arg) reduceShortName(position int, args *[]string) {
 
 // clear out already used argument from args at position
 func (o *arg) reduce(position int, args *[]string) {
-	o.reduceLongName(position, args)
-	o.reduceShortName(position, args)
+	if o.GetPositional() {
+		o.reducePositional(position, args)
+	} else {
+		o.reduceLongName(position, args)
+		o.reduceShortName(position, args)
+	}
 }
 
 func (o *arg) parseInt(args []string, argCount int) error {
@@ -398,6 +414,10 @@ func (o *arg) parseSomeType(args []string, argCount int) error {
 		err = fmt.Errorf("unsupported type [%t]", o.result)
 	}
 	return err
+}
+
+func (o *arg) parsePositional(arg string) error {
+	return o.parse([]string{arg}, 1)
 }
 
 func (o *arg) parse(args []string, argCount int) error {
