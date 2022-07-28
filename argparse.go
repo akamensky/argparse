@@ -191,12 +191,13 @@ func (o *Command) Flag(short string, long string, opts *Options) *bool {
 	var result bool
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   1,
-		opts:   opts,
-		unique: true,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    1,
+		opts:    opts,
+		unique:  true,
+		argType: Flag,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -217,12 +218,13 @@ func (o *Command) FlagCounter(short string, long string, opts *Options) *int {
 	var result int
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   1,
-		opts:   opts,
-		unique: false,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    1,
+		opts:    opts,
+		unique:  false,
+		argType: FlagCounter,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -239,12 +241,13 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 	var result string
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   2,
-		opts:   opts,
-		unique: true,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    2,
+		opts:    opts,
+		unique:  true,
+		argType: String,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -262,12 +265,13 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 	var result int
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   2,
-		opts:   opts,
-		unique: true,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    2,
+		opts:    opts,
+		unique:  true,
+		argType: Int,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -285,12 +289,13 @@ func (o *Command) Float(short string, long string, opts *Options) *float64 {
 	var result float64
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   2,
-		opts:   opts,
-		unique: true,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    2,
+		opts:    opts,
+		unique:  true,
+		argType: Float,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -319,6 +324,7 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 		unique:   true,
 		fileFlag: flag,
 		filePerm: perm,
+		argType:  File,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -345,12 +351,13 @@ func (o *Command) StringList(short string, long string, opts *Options) *[]string
 	result := make([]string, 0)
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   2,
-		opts:   opts,
-		unique: false,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    2,
+		opts:    opts,
+		unique:  false,
+		argType: StringList,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -368,12 +375,13 @@ func (o *Command) IntList(short string, long string, opts *Options) *[]int {
 	result := make([]int, 0)
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   2,
-		opts:   opts,
-		unique: false,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    2,
+		opts:    opts,
+		unique:  false,
+		argType: IntList,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -391,12 +399,13 @@ func (o *Command) FloatList(short string, long string, opts *Options) *[]float64
 	result := make([]float64, 0)
 
 	a := &arg{
-		result: &result,
-		sname:  short,
-		lname:  long,
-		size:   2,
-		opts:   opts,
-		unique: false,
+		result:  &result,
+		sname:   short,
+		lname:   long,
+		size:    2,
+		opts:    opts,
+		unique:  false,
+		argType: FloatList,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -422,6 +431,7 @@ func (o *Command) FileList(short string, long string, flag int, perm os.FileMode
 		unique:   false,
 		fileFlag: flag,
 		filePerm: perm,
+		argType:  FileList,
 	}
 
 	if err := o.addArg(a); err != nil {
@@ -448,6 +458,7 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 		opts:     opts,
 		unique:   true,
 		selector: &options,
+		argType:  Selector,
 	}
 
 	if err := o.addArg(a); err != nil {
