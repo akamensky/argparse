@@ -11,6 +11,6 @@ func (p *parser) Parse(args []string) error {
 	panic("implement me")
 }
 
-func New() Parser {
+func New(name, description string) Parser {
 	return &parser{}
 }
