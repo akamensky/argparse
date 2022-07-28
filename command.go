@@ -68,7 +68,13 @@ func (o *Command) parseSubCommands(args *[]string) error {
 			if err != nil {
 				return err
 			}
+			if v.happened {
+				return nil
+			}
 		}
+		// If we got here, there were subcommands to parse,
+		// but none were found, so return an error
+		return newSubCommandError(o)
 	}
 	return nil
 }
@@ -137,7 +143,7 @@ func (o *Command) parseArguments(args *[]string) error {
 // Will parse provided list of arguments
 // common usage would be to pass directly os.Args
 func (o *Command) parse(args *[]string) error {
-	// If we already been parsed do nothing
+	// If already been parsed do nothing
 	if o.parsed {
 		return nil
 	}
@@ -157,7 +163,7 @@ func (o *Command) parse(args *[]string) error {
 		}
 	}
 
-	// Set happened status to true when command happend
+	// Set happened status to true when command happened
 	o.happened = true
 
 	// Reduce arguments by removing Command name
