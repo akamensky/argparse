@@ -28,4 +28,4 @@ jobs:
       - name: Send coverage report
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: goveralls -service=github
+        run: goveralls -coverprofile=covprofile -service=github
