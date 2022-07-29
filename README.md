@@ -66,6 +66,12 @@ String will allow you to get a string from arguments, such as `$ progname --stri
 var myString *string = parser.String("s", "string", ...)
 ```
 
+Positional arguments can be used like this `$ progname value1`.
+See [Basic Option Structure](#basic-option-structure) and [Positionals](#positionals).
+```go
+var myString *string = parser.String("", "posarg", &Options{Positional: true})
+```
+
 Selector works same as a string, except that it will only allow specific values.
 For example like this `$ progname --debug-level WARN`
 ```go
@@ -134,9 +140,9 @@ var myLogFiles *[]os.File = parser.FileList("l", "log-file", os.O_RDWR, 0600, ..
 ```
 
 You can implement sub-commands in your CLI using `parser.NewCommand()` or go even deeper with `command.NewCommand()`.
-Addition of a sub-command does not prevent usage of the parent command with or without flags.
-Sub-commands are always parsed before arguments. 
-If a command has positional arguments and sub-commands then sub-commands take precedence.
+Addition of a sub-command implies that a subcommand is required.
+Sub-commands are always parsed before arguments.
+If a command has `Positional` arguments and sub-commands then sub-commands take precedence.
 Since parser inherits from command, every command supports exactly same options as parser itself,
 thus allowing to add arguments specific to that command or more global arguments added on parser itself!
 
@@ -156,19 +162,21 @@ type Options struct {
 	Validate func(args []string) error
 	Help     string
 	Default  interface{}
+	Positional bool
 }
 ```
 
-You can Set `Required` to let it know if it should ask for arguments.
+You can set `Required` to let it know if it should ask for arguments.
 Or you can set `Validate` as a lambda function to make it know while value is valid.
 Or you can set `Help` for your beautiful help document.
 Or you can set `Default` will set the default value if user does not provide a value.
+You can set `Positional` to indicate an arg is required in a specific position but shouldn't include "--name". Positionals are required in the order they are added. Flags can precede or follow positionals.
 
 Example:
 ```
 dirpath := parser.String("d", "dirpath",
 			 &argparse.Options{
-			 	Require: false,
+			 	Required: false,
 				Help: "the input files' folder path",
 				Default: "input",
 			})
@@ -185,6 +193,14 @@ There are a few caveats (or more like design choices) to know about:
 * There is a pre-defined argument for `-h|--help`, so from above attempting to define any argument using `h` as shorthand will fail
 * `parser.Parse()` returns error in case of something going wrong, but it is not expected to cover ALL cases
 * Any arguments that left un-parsed will be regarded as error
+
+##### Positionals
+* `Positional` has a set of effects and conditions:
+  * It will always set Required=True and Default=nil
+  * It will ignore the shortname
+  * It will fail (and app will panic) to add the argument if it is one of:
+	* Flag
+	* StringList, IntList, FloatList, FileList
 
 
 #### Contributing
