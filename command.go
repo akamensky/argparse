@@ -101,20 +101,6 @@ func (o *Command) parseArguments(inputArgs *[]string) error {
 				continue
 			}
 			if !strings.HasPrefix(arg, "-") && oarg.GetPositional() {
-				// If this arg is a flag we just skip parsing positionals
-				// This has the subtle effect of requiring flags
-				//    to use `=` for their value pairing if any
-				//    positionals are defined AND are not satisfied yet.
-				//    If they don't use `=` then the positional parse
-				//    will unknowingly consume the arg on next iteration.
-				//
-				// It would be possible to potentially avoid this
-				//    requirement IF we choose to check whether the
-				//    flag in question has a default. If not then we
-				//    know either:
-				//        it must be for that flag OR
-				//        the user made an error
-				//    However this is highly ambiguous so best avoided.
 				if err := oarg.parsePositional(arg); err != nil {
 					return err
 				}
