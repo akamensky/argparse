@@ -2814,7 +2814,7 @@ func TestCommandPositionalsErr(t *testing.T) {
 }
 
 func TestPos1(t *testing.T) {
-	testArgs1 := []string{"pos", "subcommand1", "-i=2", "abc"}
+	testArgs1 := []string{"pos", "subcommand1", "-i", "2", "abc"}
 	parser := NewParser("pos", "")
 
 	strval := parser.String("s", "string", &Options{Positional: true})
@@ -2896,6 +2896,23 @@ func TestPos5(t *testing.T) {
 		}
 	}()
 	boolval = parser.Flag("", "booly", &Options{Positional: true})
+}
+
+func TestPos6(t *testing.T) {
+	testArgs1 := []string{"pos", "subcommand1", "-i=2", "abc"}
+	parser := NewParser("pos", "")
+
+	strval := parser.String("s", "string", &Options{Positional: true})
+	com1 := parser.NewCommand("subcommand1", "beep")
+	intval := com1.Int("i", "integer", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "abc" {
+		t.Error("Strval did not match expected")
+	} else if *intval != 2 {
+		t.Error("intval did not match expected")
+	}
 }
 
 func TestPosErr1(t *testing.T) {
