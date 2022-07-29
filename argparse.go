@@ -82,6 +82,8 @@ type Parser struct {
 //
 // Options.Positional - tells Parser that the argument is positional (implies Required)
 // Positional arguments do not require the flag name to precede them and must come in a specific order.
+// Positional sets Required=true, Default=nil, Shortname=""
+// Existence of a positional means that any flags preceding the positional must use `=` to pair with their value.
 //
 // Options.Required - tells Parser that this argument is required to be provided.
 // useful when specific Command requires some data provided.
@@ -704,6 +706,7 @@ func (o *Parser) Parse(args []string) error {
 			unparsed = append(unparsed, v)
 		}
 	}
+
 	if result == nil && len(unparsed) > 0 {
 		return errors.New("unknown arguments " + strings.Join(unparsed, " "))
 	}

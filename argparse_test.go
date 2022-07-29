@@ -2751,3 +2751,215 @@ func TestCommandHelpSetSnameOnly(t *testing.T) {
 		t.Error("Help arugment names should have defaulted")
 	}
 }
+
+func TestCommandPositional(t *testing.T) {
+	testArgs1 := []string{"pos", "heyo"}
+	parser := NewParser("pos", "")
+	strval := parser.String("s", "string", &Options{Positional: true})
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "heyo" {
+		t.Errorf("Strval did not match expected")
+	}
+}
+
+func TestCommandPositionalErr(t *testing.T) {
+	errArgs1 := []string{"pos"}
+	parser := NewParser("pos", "")
+	strval := parser.String("s", "beep", &Options{Positional: true})
+
+	if err := parser.Parse(errArgs1); err == nil {
+		t.Errorf("Positional required")
+	} else if err.Error() != "[beep] is required" {
+		// This is an admittedly slightly confusing error message
+		// but it basically means the parser bailed because the arg list
+		// is empty...?
+		t.Error(err.Error())
+	} else if *strval != "" {
+		t.Errorf("Strval nonempty")
+	}
+}
+
+func TestCommandPositionals(t *testing.T) {
+	testArgs1 := []string{"posint", "5", "abc", "1.0"}
+	parser := NewParser("posint", "")
+	intval := parser.Int("i", "integer", &Options{Positional: true})
+	strval := parser.String("s", "string", &Options{Positional: true})
+	floatval := parser.Float("f", "floats", &Options{Positional: true})
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *intval != 5 {
+		t.Error("Intval did not match expected")
+	} else if *strval != "abc" {
+		t.Error("Strval did not match expected")
+	} else if *floatval != 1.0 {
+		t.Error("Floatval did not match expected")
+	}
+}
+
+func TestCommandPositionalsErr(t *testing.T) {
+	errArgs1 := []string{"posint", "abc", "abc", "1.0"}
+	parser := NewParser("posint", "")
+	_ = parser.Int("i", "cool", &Options{Positional: true})
+	_ = parser.String("s", "string", &Options{Positional: true})
+	_ = parser.Float("f", "floats", &Options{Positional: true})
+
+	if err := parser.Parse(errArgs1); err == nil {
+		t.Error("String argument accepted for integer")
+	} else if err.Error() != "[cool] bad integer value [abc]" {
+		t.Error(err.Error())
+	}
+}
+
+func TestPos1(t *testing.T) {
+	testArgs1 := []string{"pos", "subcommand1", "-i=2", "abc"}
+	parser := NewParser("pos", "")
+
+	strval := parser.String("s", "string", &Options{Positional: true})
+	com1 := parser.NewCommand("subcommand1", "beep")
+	intval := com1.Int("i", "integer", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "abc" {
+		t.Error("Strval did not match expected")
+	} else if *intval != 2 {
+		t.Error("intval did not match expected")
+	}
+}
+
+func TestPos2(t *testing.T) {
+	testArgs1 := []string{"pos", "subcommand1", "a123"}
+	parser := NewParser("pos", "")
+
+	strval := parser.String("s", "string", &Options{Positional: true})
+	com1 := parser.NewCommand("subcommand1", "beep")
+	intval := com1.Int("i", "integer", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "a123" {
+		t.Error("Strval did not match expected")
+	} else if *intval != 0 {
+		t.Error("intval did not match expected")
+	}
+}
+
+func TestPos3(t *testing.T) {
+	testArgs1 := []string{"pos", "subcommand1", "xyz", "--integer", "3"}
+	parser := NewParser("pos", "")
+
+	strval := parser.String("s", "string", &Options{Positional: true})
+	com1 := parser.NewCommand("subcommand1", "beep")
+	intval := com1.Int("i", "integer", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "xyz" {
+		t.Error("Strval did not match expected")
+	} else if *intval != 3 {
+		t.Error("intval did not match expected")
+	}
+}
+
+func TestPos4(t *testing.T) {
+	testArgs1 := []string{"pos", "abc"}
+	parser := NewParser("pos", "")
+
+	strval := parser.String("s", "string", &Options{Positional: true})
+	com1 := parser.NewCommand("subcommand1", "beep")
+	intval := com1.Int("i", "integer", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "abc" {
+		t.Error("Strval did not match expected")
+	} else if *intval != 0 {
+		t.Error("intval did not match expected")
+	}
+}
+func TestPosErr1(t *testing.T) {
+	errArgs1 := []string{"pos", "subcommand1"}
+	parser := NewParser("pos", "")
+
+	strval := parser.String("s", "posy", &Options{Positional: true, Default: "abc"})
+	com1 := parser.NewCommand("subcommand1", "beep")
+	intval := com1.Int("i", "integer", nil)
+
+	if err := parser.Parse(errArgs1); err == nil {
+		t.Error("Subcommand should be required")
+	} else if err.Error() != "[posy] is required" {
+		t.Error(err.Error())
+	} else if *strval != "" {
+		t.Error("strval incorrectly defaulted:" + *strval)
+	} else if *intval != 0 {
+		t.Error("intval did not match expected")
+	}
+}
+
+// Must break up for correct unit testing
+// func TestCommandSubcommandPositionals(t *testing.T) {
+// 	testArgs1 := []string{"pos", "subcommand2", "efg"}
+// 	testArgs2 := []string{"pos", "subcommand1"}
+// 	testArgs3 := []string{"pos", "subcommand2", "abc", "-i", "1"}
+// 	testArgs4 := []string{"pos", "subcommand2", "abc", "--integer", "1"}
+// 	testArgs5 := []string{"pos", "subcommand2", "abc", "-i=1"}
+// 	testArgs6 := []string{"pos", "subcommand2", "abc", "--integer=1"}
+// 	// flags before positional must use `=` for values
+// 	testArgs7 := []string{"pos", "subcommand2", "-i=1", "abc"}
+// 	testArgs8 := []string{"pos", "subcommand2", "--integer=1", "abc"}
+// 	testArgs9 := []string{"pos", "subcommand3", "true"}
+// 	// Error cases
+// 	errArgs1 := []string{"pos", "subcommand2", "--i", "1"}
+// 	errArgs2 := []string{"pos", "subcommand2", "--i", "1", "abc"}
+// 	errArgs3 := []string{"pos", "subcommand3", "abc"}
+// 	parser := NewParser("pos", "")
+
+// 	_ = parser.NewCommand("subcommand1", "")
+// 	com2 := parser.NewCommand("subcommand2", "")
+// 	com2.String("s", "string", &Options{Positional: true})
+// 	com2.Int("i", "integer", nil)
+// 	com2.Flag("b", "bool", nil)
+// 	com3 := parser.NewCommand("subcommand3", "")
+// 	com3.Flag("b", "bool", &Options{Positional: true})
+
+// 	if err := parser.Parse(testArgs1); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs2); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs3); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs4); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs5); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs6); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs7); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs8); err != nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(testArgs9); err != nil {
+// 		t.Error(err.Error())
+// 	}
+
+// 	if err := parser.Parse(errArgs1); err == nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(errArgs2); err == nil {
+// 		t.Error(err.Error())
+// 	}
+// 	if err := parser.Parse(errArgs3); err == nil {
+// 		t.Error(err.Error())
+// 	}
+// }

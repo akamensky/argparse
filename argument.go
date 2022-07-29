@@ -128,7 +128,7 @@ func (o *arg) checkShortName(argument string) (int, error) {
 }
 
 // check if argument present.
-// check - returns the argumet's number of occurrences and error.
+// check - returns the argument's number of occurrences and error.
 // For long name return value is 0 or 1.
 // For shorthand argument - 0 if there is no occurrences, or count of occurrences.
 // Shorthand argument with parametr, mast be the only or last in the argument string.
@@ -417,7 +417,11 @@ func (o *arg) parseSomeType(args []string, argCount int) error {
 }
 
 func (o *arg) parsePositional(arg string) error {
-	return o.parse([]string{arg}, 1)
+	if err := o.parse([]string{arg}, 1); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (o *arg) parse(args []string, argCount int) error {
@@ -437,6 +441,9 @@ func (o *arg) parse(args []string, argCount int) error {
 }
 
 func (o *arg) name() string {
+	if o.GetPositional() {
+		return o.lname
+	}
 	var name string
 	if o.lname == "" {
 		name = "-" + o.sname

@@ -53,7 +53,9 @@ func (o *Command) addArg(a *arg) error {
 	a.parent = o
 
 	if a.GetPositional() {
+		a.sname = ""
 		a.opts.Required = true
+		a.opts.Default = nil
 		a.size = 1 // We could allow other sizes in the future
 	}
 	o.args = append(o.args, a)
@@ -94,8 +96,8 @@ func (o *Command) parseArguments(inputArgs *[]string) error {
 			if arg == "" {
 				continue
 			}
-			if oarg.GetPositional() {
-				// Skip any flags
+			if !strings.HasPrefix(arg, "-") && oarg.GetPositional() {
+				// If this arg is a flag we just skip parsing positionals
 				// This has the subtle effect of requiring flags
 				//    to use `=` for their value pairing if any
 				//    positionals are defined AND are not satisfied yet.
@@ -109,9 +111,6 @@ func (o *Command) parseArguments(inputArgs *[]string) error {
 				//        it must be for that flag OR
 				//        the user made an error
 				//    However this is highly ambiguous so best avoided.
-				if strings.HasPrefix(arg, "-") {
-					continue
-				}
 				if err := oarg.parsePositional(arg); err != nil {
 					return err
 				}
