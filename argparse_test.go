@@ -2872,14 +2872,32 @@ func TestPos4(t *testing.T) {
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
-	if err := parser.Parse(testArgs1); err != nil {
+	if err := parser.Parse(testArgs1); err != nil &&
+		err.Error() != "[sub]Command required" {
 		t.Error(err.Error())
-	} else if *strval != "abc" {
+	} else if *strval != "" {
 		t.Error("Strval did not match expected")
 	} else if *intval != 0 {
 		t.Error("intval did not match expected")
 	}
 }
+
+func TestPos5(t *testing.T) {
+	errStr := "unable to add Flag: argument type cannot be positional"
+	parser := NewParser("pos", "")
+	var boolval *bool
+	// Catch the panic
+	defer func() {
+		err := recover()
+		if err.(error).Error() != errStr {
+			t.Error(err.(error).Error())
+		} else if boolval != nil {
+			t.Error("Boolval was set")
+		}
+	}()
+	boolval = parser.Flag("", "booly", &Options{Positional: true})
+}
+
 func TestPosErr1(t *testing.T) {
 	errArgs1 := []string{"pos", "subcommand1"}
 	parser := NewParser("pos", "")
@@ -2899,67 +2917,70 @@ func TestPosErr1(t *testing.T) {
 	}
 }
 
-// Must break up for correct unit testing
-// func TestCommandSubcommandPositionals(t *testing.T) {
-// 	testArgs1 := []string{"pos", "subcommand2", "efg"}
-// 	testArgs2 := []string{"pos", "subcommand1"}
-// 	testArgs3 := []string{"pos", "subcommand2", "abc", "-i", "1"}
-// 	testArgs4 := []string{"pos", "subcommand2", "abc", "--integer", "1"}
-// 	testArgs5 := []string{"pos", "subcommand2", "abc", "-i=1"}
-// 	testArgs6 := []string{"pos", "subcommand2", "abc", "--integer=1"}
-// 	// flags before positional must use `=` for values
-// 	testArgs7 := []string{"pos", "subcommand2", "-i=1", "abc"}
-// 	testArgs8 := []string{"pos", "subcommand2", "--integer=1", "abc"}
-// 	testArgs9 := []string{"pos", "subcommand3", "true"}
-// 	// Error cases
-// 	errArgs1 := []string{"pos", "subcommand2", "--i", "1"}
-// 	errArgs2 := []string{"pos", "subcommand2", "--i", "1", "abc"}
-// 	errArgs3 := []string{"pos", "subcommand3", "abc"}
-// 	parser := NewParser("pos", "")
+func TestCommandSubcommandPositionals(t *testing.T) {
+	testArgs1 := []string{"pos", "subcommand2", "efg"}
+	testArgs2 := []string{"pos", "subcommand1"}
+	testArgs3 := []string{"pos", "subcommand2", "abc", "-i", "1"}
+	testArgs4 := []string{"pos", "subcommand2", "abc", "--integer", "1"}
+	testArgs5 := []string{"pos", "subcommand2", "abc", "-i=1"}
+	testArgs6 := []string{"pos", "subcommand2", "abc", "--integer=1"}
+	// flags before positional must use `=` for values
+	testArgs7 := []string{"pos", "subcommand2", "-i=1", "abc"}
+	testArgs8 := []string{"pos", "subcommand2", "--integer=1", "abc"}
+	testArgs9 := []string{"pos", "subcommand3", "second"}
+	// Error cases
+	errArgs1 := []string{"pos", "subcommand2", "-i", "1"}
+	errArgs2 := []string{"pos", "subcommand2", "-i", "1", "abc"}
+	errArgs3 := []string{"pos", "subcommand3", "abc"}
 
-// 	_ = parser.NewCommand("subcommand1", "")
-// 	com2 := parser.NewCommand("subcommand2", "")
-// 	com2.String("s", "string", &Options{Positional: true})
-// 	com2.Int("i", "integer", nil)
-// 	com2.Flag("b", "bool", nil)
-// 	com3 := parser.NewCommand("subcommand3", "")
-// 	com3.Flag("b", "bool", &Options{Positional: true})
+	newParser := func() *Parser {
+		parser := NewParser("pos", "")
+		_ = parser.NewCommand("subcommand1", "")
+		com2 := parser.NewCommand("subcommand2", "")
+		com2.String("s", "string", &Options{Positional: true})
+		com2.Int("i", "integer", nil)
+		com2.Flag("b", "bool", nil)
+		com3 := parser.NewCommand("subcommand3", "")
+		com3.Selector("", "select", []string{"first", "second"},
+			&Options{Positional: true})
+		return parser
+	}
 
-// 	if err := parser.Parse(testArgs1); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs2); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs3); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs4); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs5); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs6); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs7); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs8); err != nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(testArgs9); err != nil {
-// 		t.Error(err.Error())
-// 	}
+	if err := newParser().Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs2); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs3); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs4); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs5); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs6); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs7); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs8); err != nil {
+		t.Error(err.Error())
+	}
+	if err := newParser().Parse(testArgs9); err != nil {
+		t.Error(err.Error())
+	}
 
-// 	if err := parser.Parse(errArgs1); err == nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(errArgs2); err == nil {
-// 		t.Error(err.Error())
-// 	}
-// 	if err := parser.Parse(errArgs3); err == nil {
-// 		t.Error(err.Error())
-// 	}
-// }
+	if err := newParser().Parse(errArgs1); err == nil {
+		t.Error("Expected error")
+	}
+	if err := newParser().Parse(errArgs2); err == nil {
+		t.Error("Expected error")
+	}
+	if err := newParser().Parse(errArgs3); err == nil {
+		t.Error("Expected error")
+	}
+}

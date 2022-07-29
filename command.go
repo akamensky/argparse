@@ -53,6 +53,10 @@ func (o *Command) addArg(a *arg) error {
 	a.parent = o
 
 	if a.GetPositional() {
+		switch a.argType {
+		case Flag, StringList, IntList, FloatList, FileList:
+			return fmt.Errorf("argument type cannot be positional")
+		}
 		a.sname = ""
 		a.opts.Required = true
 		a.opts.Default = nil
