@@ -406,11 +406,11 @@ func (o *arg) parse(args []string, argCount int) error {
 		return fmt.Errorf("[%s] can only be present once", o.name())
 	}
 
-	// If validation function provided -- execute, on error return it immediately
+	// If validation function provided -- execute, on error return immediately
 	if o.opts != nil && o.opts.Validate != nil {
 		err := o.opts.Validate(args)
 		if err != nil {
-			return err
+			return fmt.Errorf("[%s] %w", o.name(), err)
 		}
 	}
 	return o.parseSomeType(args, argCount)
