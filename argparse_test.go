@@ -2797,9 +2797,9 @@ func TestCommandPositionalErr(t *testing.T) {
 func TestCommandPositionals(t *testing.T) {
 	testArgs1 := []string{"posint", "5", "abc", "1.0"}
 	parser := NewParser("posint", "")
-	intval := parser.IntPositional(nil)
+	intval := parser.IntPositional(&Options{Required: false})
 	strval := parser.StringPositional(nil)
-	floatval := parser.FloatPositional(nil)
+	floatval := parser.FloatPositional(&Options{Default: 1.5})
 
 	if err := parser.Parse(testArgs1); err != nil {
 		t.Error(err.Error())
@@ -2823,6 +2823,20 @@ func TestCommandPositionalsErr(t *testing.T) {
 		t.Error("String argument accepted for integer")
 	} else if err.Error() != "[_positionalArg_posint_1] bad integer value [abc]" {
 		t.Error(err.Error())
+	}
+}
+
+// Just test we don't panic on add
+// Actual I/O during unit tests already covered by TestFileSimple1
+func TestFilePositional(t *testing.T) {
+	parser := NewParser("pos", "")
+	t1 := parser.FilePositional(os.O_RDWR, 0666, nil)
+	t2 := parser.FilePositional(os.O_RDWR, 0666, &Options{Help: "beep!"})
+
+	if t1 == nil {
+		t.Error("File pos was nil")
+	} else if t2 == nil {
+		t.Error("File pos was nil")
 	}
 }
 
@@ -2926,6 +2940,19 @@ func TestPos6(t *testing.T) {
 		t.Error("Strval did not match expected")
 	} else if *intval != 2 {
 		t.Error("intval did not match expected")
+	}
+}
+
+func TestPos7(t *testing.T) {
+	testArgs1 := []string{"pos", "beep"}
+	parser := NewParser("pos", "")
+
+	strval := parser.SelectorPositional([]string{"beep"}, &Options{Help: "wow"})
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "beep" {
+		t.Error("Strval did not match expected")
 	}
 }
 
