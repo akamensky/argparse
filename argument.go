@@ -52,7 +52,7 @@ type Arg interface {
 
 func (o arg) GetPositional() bool {
 	if o.opts != nil {
-		return o.opts.Positional
+		return o.opts.positional
 	}
 	return false
 }

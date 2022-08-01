@@ -2755,7 +2755,7 @@ func TestCommandHelpSetSnameOnly(t *testing.T) {
 func TestCommandPositional(t *testing.T) {
 	testArgs1 := []string{"pos", "heyo"}
 	parser := NewParser("pos", "")
-	strval := parser.String("s", "string", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 
 	if err := parser.Parse(testArgs1); err != nil {
 		t.Error(err.Error())
@@ -2764,17 +2764,30 @@ func TestCommandPositional(t *testing.T) {
 	}
 }
 
+// Lightly test the Options field
+func TestCommandPositionalOptions(t *testing.T) {
+	testArgs1 := []string{"pos", "heyo"}
+	parser := NewParser("pos", "")
+	validated := false
+	strval := parser.StringPositional(&Options{Validate: func(args []string) error { validated = true; return nil }})
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != "heyo" {
+		t.Errorf("Strval did not match expected")
+	} else if !validated {
+		t.Errorf("Validate function not run")
+	}
+}
+
 func TestCommandPositionalErr(t *testing.T) {
 	errArgs1 := []string{"pos"}
 	parser := NewParser("pos", "")
-	strval := parser.String("s", "beep", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 
 	if err := parser.Parse(errArgs1); err == nil {
 		t.Errorf("Positional required")
-	} else if err.Error() != "[beep] is required" {
-		// This is an admittedly slightly confusing error message
-		// but it basically means the parser bailed because the arg list
-		// is empty...?
+	} else if err.Error() != "[_positionalArg_pos_1] is required" {
 		t.Error(err.Error())
 	} else if *strval != "" {
 		t.Errorf("Strval nonempty")
@@ -2784,9 +2797,9 @@ func TestCommandPositionalErr(t *testing.T) {
 func TestCommandPositionals(t *testing.T) {
 	testArgs1 := []string{"posint", "5", "abc", "1.0"}
 	parser := NewParser("posint", "")
-	intval := parser.Int("i", "integer", &Options{Positional: true})
-	strval := parser.String("s", "string", &Options{Positional: true})
-	floatval := parser.Float("f", "floats", &Options{Positional: true})
+	intval := parser.IntPositional(nil)
+	strval := parser.StringPositional(nil)
+	floatval := parser.FloatPositional(nil)
 
 	if err := parser.Parse(testArgs1); err != nil {
 		t.Error(err.Error())
@@ -2802,13 +2815,13 @@ func TestCommandPositionals(t *testing.T) {
 func TestCommandPositionalsErr(t *testing.T) {
 	errArgs1 := []string{"posint", "abc", "abc", "1.0"}
 	parser := NewParser("posint", "")
-	_ = parser.Int("i", "cool", &Options{Positional: true})
-	_ = parser.String("s", "string", &Options{Positional: true})
-	_ = parser.Float("f", "floats", &Options{Positional: true})
+	_ = parser.IntPositional(nil)
+	_ = parser.StringPositional(nil)
+	_ = parser.FloatPositional(nil)
 
 	if err := parser.Parse(errArgs1); err == nil {
 		t.Error("String argument accepted for integer")
-	} else if err.Error() != "[cool] bad integer value [abc]" {
+	} else if err.Error() != "[_positionalArg_posint_1] bad integer value [abc]" {
 		t.Error(err.Error())
 	}
 }
@@ -2817,7 +2830,7 @@ func TestPos1(t *testing.T) {
 	testArgs1 := []string{"pos", "subcommand1", "-i", "2", "abc"}
 	parser := NewParser("pos", "")
 
-	strval := parser.String("s", "string", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
@@ -2834,7 +2847,7 @@ func TestPos2(t *testing.T) {
 	testArgs1 := []string{"pos", "subcommand1", "a123"}
 	parser := NewParser("pos", "")
 
-	strval := parser.String("s", "string", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
@@ -2851,7 +2864,7 @@ func TestPos3(t *testing.T) {
 	testArgs1 := []string{"pos", "subcommand1", "xyz", "--integer", "3"}
 	parser := NewParser("pos", "")
 
-	strval := parser.String("s", "string", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
@@ -2868,7 +2881,7 @@ func TestPos4(t *testing.T) {
 	testArgs1 := []string{"pos", "abc"}
 	parser := NewParser("pos", "")
 
-	strval := parser.String("s", "string", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
@@ -2882,6 +2895,7 @@ func TestPos4(t *testing.T) {
 	}
 }
 
+// Test is covering internal logical error
 func TestPos5(t *testing.T) {
 	errStr := "unable to add Flag: argument type cannot be positional"
 	parser := NewParser("pos", "")
@@ -2895,14 +2909,14 @@ func TestPos5(t *testing.T) {
 			t.Error("Boolval was set")
 		}
 	}()
-	boolval = parser.Flag("", "booly", &Options{Positional: true})
+	boolval = parser.Flag("", "booly", &Options{positional: true})
 }
 
 func TestPos6(t *testing.T) {
 	testArgs1 := []string{"pos", "subcommand1", "-i=2", "abc"}
 	parser := NewParser("pos", "")
 
-	strval := parser.String("s", "string", &Options{Positional: true})
+	strval := parser.StringPositional(nil)
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
@@ -2919,13 +2933,13 @@ func TestPosErr1(t *testing.T) {
 	errArgs1 := []string{"pos", "subcommand1"}
 	parser := NewParser("pos", "")
 
-	strval := parser.String("s", "posy", &Options{Positional: true, Default: "abc"})
+	strval := parser.StringPositional(nil)
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
 	if err := parser.Parse(errArgs1); err == nil {
 		t.Error("Subcommand should be required")
-	} else if err.Error() != "[posy] is required" {
+	} else if err.Error() != "[_positionalArg_pos_1] is required" {
 		t.Error(err.Error())
 	} else if *strval != "" {
 		t.Error("strval incorrectly defaulted:" + *strval)
@@ -2954,12 +2968,11 @@ func TestCommandSubcommandPositionals(t *testing.T) {
 		parser := NewParser("pos", "")
 		_ = parser.NewCommand("subcommand1", "")
 		com2 := parser.NewCommand("subcommand2", "")
-		com2.String("s", "string", &Options{Positional: true})
+		com2.StringPositional(nil)
 		com2.Int("i", "integer", nil)
 		com2.Flag("b", "bool", nil)
 		com3 := parser.NewCommand("subcommand3", "")
-		com3.Selector("", "select", []string{"first", "second"},
-			&Options{Positional: true})
+		com3.SelectorPositional([]string{"first", "second"}, nil)
 		return parser
 	}
 
