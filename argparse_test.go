@@ -2956,6 +2956,46 @@ func TestPos7(t *testing.T) {
 	}
 }
 
+func TestPos8(t *testing.T) {
+	testArgs1 := []string{"pos", "cmd1", "cmd2", "progPos", "cmd1pos1", "-s", "some string", "cmd1pos2", "cmd2pos1"}
+	parser := NewParser("pos", "")
+
+	cmd1 := parser.NewCommand("cmd1", "")
+	cmd2 := cmd1.NewCommand("cmd2", "")
+
+	cmd2pos1 := cmd2.StringPositional(nil)
+	progPos := parser.StringPositional(nil)
+	cmd1pos1 := cmd1.StringPositional(nil)
+	strval := cmd1.String("s", "str", nil)
+	cmd1pos2 := cmd1.StringPositional(nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	}
+
+	if !cmd1.Happened() {
+		t.Errorf("cmd1 not happened")
+	}
+	if !cmd2.Happened() {
+		t.Errorf("cmd2 not happened")
+	}
+	if *strval != "some string" {
+		t.Errorf(`*strval expected "some string", but got "%s"`, *strval)
+	}
+	if *progPos != "progPos" {
+		t.Errorf(`*progPos expected "progPos", but got "%s"`, *strval)
+	}
+	if *cmd1pos1 != "cmd1pos1" {
+		t.Errorf(`*cmd1pos1 expected "cmd1pos1", but got "%s"`, *strval)
+	}
+	if *cmd1pos2 != "cmd1pos2" {
+		t.Errorf(`*cmd1pos2 expected "cmd1pos1", but got "%s"`, *strval)
+	}
+	if *cmd2pos1 != "cmd2pos1" {
+		t.Errorf(`*cmd2pos1 expected "cmd2pos1", but got "%s"`, *strval)
+	}
+}
+
 func TestPosErr1(t *testing.T) {
 	errArgs1 := []string{"pos", "subcommand1"}
 	parser := NewParser("pos", "")
