@@ -1,6 +1,6 @@
 # Golang argparse V2
 
-[![GoDoc](https://godoc.org/github.com/akamensky/argparse/v2?status.svg)](https://godoc.org/github.com/akamensky/argparse/v2) [![Go Report Card](https://goreportcard.com/badge/github.com/akamensky/argparse/v2)](https://goreportcard.com/report/github.com/akamensky/argparse/v2) [![Coverage Status](https://coveralls.io/repos/github/akamensky/argparse/badge.svg?branch=master)](https://coveralls.io/github/akamensky/argparse?branch=master) [![Build Status](https://travis-ci.org/akamensky/argparse.svg?branch=master)](https://travis-ci.org/akamensky/argparse/v2)
+[![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/akamensky) [![GoDoc](https://godoc.org/github.com/akamensky/argparse/v2?status.svg)](https://godoc.org/github.com/akamensky/argparse/v2) [![Go Report Card](https://goreportcard.com/badge/github.com/akamensky/argparse/v2)](https://goreportcard.com/report/github.com/akamensky/argparse/v2) [![Coverage Status](https://coveralls.io/repos/github/akamensky/argparse/badge.svg?branch=master)](https://coveralls.io/github/akamensky/argparse?branch=master) [![Build Status](https://travis-ci.org/akamensky/argparse.svg?branch=master)](https://travis-ci.org/akamensky/argparse/v2)
 
 Let's be honest -- Go's standard command line arguments parser `flag` terribly sucks. 
 It cannot come anywhere close to the Python's `argparse` module. This is why this project exists.
