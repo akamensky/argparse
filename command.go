@@ -91,21 +91,45 @@ func (o *Command) parseSubCommands(args *[]string) error {
 	return nil
 }
 
-//parseArguments - Parses arguments
-func (o *Command) parseArguments(inputArgs *[]string) error {
-	// Iterate over the args
+// All flags must have been parsed and reduced prior to calling this
+// This will cause positionals to consume any remainig values,
+//     whether they have dashes or equals signs or whatever.
+func (o *Command) parsePositionals(inputArgs *[]string) error {
 	for _, oarg := range o.args {
+		// Two-stage parsing, this is the second stage
+		if !oarg.GetPositional() || oarg.parsed {
+			continue
+		}
 		for j := 0; j < len(*inputArgs); j++ {
 			arg := (*inputArgs)[j]
 			if arg == "" {
 				continue
 			}
-			if !strings.HasPrefix(arg, "-") && oarg.GetPositional() {
-				if err := oarg.parsePositional(arg); err != nil {
-					return err
-				}
-				oarg.reduce(j, inputArgs)
-				break // Positionals can only occur once
+			if err := oarg.parsePositional(arg); err != nil {
+				return err
+			}
+			oarg.reduce(j, inputArgs)
+			break // Positionals can only occur once
+		}
+		// Positionals are implicitly required, if unsatisfied error out
+		if oarg.opts.Required && !oarg.parsed {
+			return fmt.Errorf("[%s] is required", oarg.name())
+		}
+	}
+	return nil
+}
+
+//parseArguments - Parses arguments
+func (o *Command) parseArguments(inputArgs *[]string) error {
+	// Iterate over the args
+	for _, oarg := range o.args {
+		if oarg.GetPositional() { // Two-stage parsing, this is the first stage
+			continue
+		}
+		for j := 0; j < len(*inputArgs); j++ {
+			arg := (*inputArgs)[j]
+			if arg == "" {
+				continue
 			}
 			if strings.Contains(arg, "=") {
 				splitInd := strings.LastIndex(arg, "=")
@@ -153,7 +177,7 @@ func (o *Command) parseArguments(inputArgs *[]string) error {
 			}
 		}
 	}
-	return nil
+	return o.parsePositionals(inputArgs)
 }
 
 // Will parse provided list of arguments
