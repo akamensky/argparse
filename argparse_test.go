@@ -3087,10 +3087,10 @@ func TestCommandSubcommandPositionals(t *testing.T) {
 	testArgs7 := []string{"pos", "subcommand2", "-i=1", "abc"}
 	testArgs8 := []string{"pos", "subcommand2", "--integer=1", "abc"}
 	testArgs9 := []string{"pos", "subcommand3", "second"}
+	testArgs10 := []string{"pos", "subcommand2", "-i", "1", "abc"}
 	// Error cases
 	errArgs1 := []string{"pos", "subcommand2", "-i", "1"}
-	errArgs2 := []string{"pos", "subcommand2", "-i", "1", "abc"}
-	errArgs3 := []string{"pos", "subcommand3", "abc"}
+	errArgs2 := []string{"pos", "subcommand3", "abc"}
 
 	newParser := func() *Parser {
 		parser := NewParser("pos", "")
@@ -3131,14 +3131,14 @@ func TestCommandSubcommandPositionals(t *testing.T) {
 	if err := newParser().Parse(testArgs9); err != nil {
 		t.Error(err.Error())
 	}
+	if err := newParser().Parse(testArgs10); err != nil {
+		t.Error(err.Error())
+	}
 
 	if err := newParser().Parse(errArgs1); err == nil {
 		t.Error("Expected error")
 	}
 	if err := newParser().Parse(errArgs2); err == nil {
-		t.Error("Expected error")
-	}
-	if err := newParser().Parse(errArgs3); err == nil {
 		t.Error("Expected error")
 	}
 }
