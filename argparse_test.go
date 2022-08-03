@@ -2963,6 +2963,13 @@ func TestPos8(t *testing.T) {
 	cmd1 := parser.NewCommand("cmd1", "")
 	cmd2 := cmd1.NewCommand("cmd2", "")
 
+	// The precedence of commands is playing a role here.
+	// We are parsing cmd2's positionals first from left to right.
+	// Consequently:
+	// cmd2.cmd2pos1 = progPos
+	// cmd1.cmd1pos1 = cmd1pos1
+	// cmd1.cmd1pos2 = cmd1pos2
+	// parser.progPos = cmd2pos1
 	cmd2pos1 := cmd2.StringPositional(nil)
 	progPos := parser.StringPositional(nil)
 	cmd1pos1 := cmd1.StringPositional(nil)
@@ -2983,16 +2990,70 @@ func TestPos8(t *testing.T) {
 		t.Errorf(`*strval expected "some string", but got "%s"`, *strval)
 	}
 	if *progPos != "progPos" {
-		t.Errorf(`*progPos expected "progPos", but got "%s"`, *strval)
+		t.Errorf(`*progPos expected "progPos", but got "%s"`, *progPos)
 	}
 	if *cmd1pos1 != "cmd1pos1" {
-		t.Errorf(`*cmd1pos1 expected "cmd1pos1", but got "%s"`, *strval)
+		t.Errorf(`*cmd1pos1 expected "cmd1pos1", but got "%s"`, *cmd1pos1)
 	}
 	if *cmd1pos2 != "cmd1pos2" {
-		t.Errorf(`*cmd1pos2 expected "cmd1pos1", but got "%s"`, *strval)
+		t.Errorf(`*cmd1pos2 expected "cmd1pos1", but got "%s"`, *cmd1pos2)
 	}
 	if *cmd2pos1 != "cmd2pos1" {
-		t.Errorf(`*cmd2pos1 expected "cmd2pos1", but got "%s"`, *strval)
+		t.Errorf(`*cmd2pos1 expected "cmd2pos1", but got "%s"`, *cmd2pos1)
+	}
+}
+
+func TestPos9(t *testing.T) {
+	testArgs1 := []string{"pos", "cmd1", "cmd2", "progPos", "cmd1pos1", "-s", "some string", "cmd1pos2", "cmd2pos1"}
+	parser := NewParser("pos", "")
+
+	cmd1 := parser.NewCommand("cmd1", "")
+	cmd2 := cmd1.NewCommand("cmd2", "")
+
+	// The precedence of commands is playing a role here.
+	// We are parsing cmd2's positionals first from left to right.
+	// Consequently:
+	// cmd2.cmd2pos1 = progPos
+	// cmd1.cmd1pos1 = cmd1pos1
+	// cmd1.cmd1pos2 = cmd1pos2
+	// parser.progPos = cmd2pos1
+	cmd2pos1 := cmd2.StringPositional(nil)
+	progPos := parser.StringPositional(nil)
+	cmd1pos1 := cmd1.StringPositional(nil)
+	cmd1pos2 := cmd1.StringPositional(nil)
+	// Altering the add order of cmd1pos2 versus strval
+	//     changes how the parsing occurs since we parse linearly based on order of addition.
+	//     If strval comes first it cleanly consumes "some string"
+	//     but if cmd1pos2 comes first it skips "-s" then consumes "some string".
+	// This problem can be circumvented if "-s" has no default
+	//     but it's unsolvably ambiguous if "-s" has a default.
+	// In effect users must employ `=` as in '-s="some string"'.
+	strval := cmd1.String("s", "str", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	}
+
+	if !cmd1.Happened() {
+		t.Errorf("cmd1 not happened")
+	}
+	if !cmd2.Happened() {
+		t.Errorf("cmd2 not happened")
+	}
+	if *strval != "some string" {
+		t.Errorf(`*strval expected "some string", but got "%s"`, *strval)
+	}
+	if *progPos != "progPos" {
+		t.Errorf(`*progPos expected "progPos", but got "%s"`, *progPos)
+	}
+	if *cmd1pos1 != "cmd1pos1" {
+		t.Errorf(`*cmd1pos1 expected "cmd1pos1", but got "%s"`, *cmd1pos1)
+	}
+	if *cmd1pos2 != "cmd1pos2" {
+		t.Errorf(`*cmd1pos2 expected "cmd1pos1", but got "%s"`, *cmd1pos2)
+	}
+	if *cmd2pos1 != "cmd2pos1" {
+		t.Errorf(`*cmd2pos1 expected "cmd2pos1", but got "%s"`, *cmd2pos1)
 	}
 }
 
