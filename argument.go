@@ -14,7 +14,7 @@ type arg struct {
 	sname    string       // Short name (in Parser will start with "-"
 	lname    string       // Long name (in Parser will start with "--"
 	size     int          // Size defines how many args after match will need to be consumed
-	unique   bool         // Specifies whether flag should be present only ones
+	unique   bool         // Specifies whether flag should be present only once
 	parsed   bool         // Specifies whether flag has been parsed already
 	fileFlag int          // File mode to open file with
 	filePerm os.FileMode  // File permissions to set a file
@@ -48,6 +48,7 @@ type Arg interface {
 	GetLname() string
 	GetResult() interface{}
 	GetPositional() bool
+	GetParsed() bool
 }
 
 func (o arg) GetPositional() bool {
@@ -55,6 +56,10 @@ func (o arg) GetPositional() bool {
 		return o.opts.positional
 	}
 	return false
+}
+
+func (o arg) GetParsed() bool {
+	return o.parsed
 }
 
 func (o arg) GetOpts() *Options {

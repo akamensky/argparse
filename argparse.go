@@ -86,9 +86,12 @@ type Parser struct {
 // Possible fields are:
 //
 // Options.positional - tells Parser that the argument is positional (implies Required). Set to true by using *Positional functions.
-// Positional arguments do not require the flag name to precede them and must come in a specific order.
-// Positional sets Required=true, Default=nil, Shortname=""
-// Existence of a positional means that any flags preceding the positional must use `=` to pair with their value.
+// Positional arguments must not have arg name preceding them and must come in a specific order.
+// Positionals are parsed breadth-first (left->right from Command tree root to leaf)
+// Positional sets Shortname="", ignores Required
+// Positionals which are not satisfied will be nil but no error will be thrown
+// Defaults are only set for unparsed positionals on commands which happened
+// Use arg.GetParsed() to detect if arg was satisfied or not
 //
 // Options.Required - tells Parser that this argument is required to be provided.
 // useful when specific Command requires some data provided.
@@ -273,10 +276,10 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 // See func String documentation
 func (o *Command) StringPositional(opts *Options) *string {
 	if opts == nil {
-		opts = &Options{positional: true}
-	} else {
-		opts.positional = true
+		opts = &Options{}
 	}
+	opts.positional = true
+
 	// We supply a long name for documentation and internal logic
 	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
 	return o.String("", name, opts)
@@ -309,10 +312,10 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 // See func Int documentation
 func (o *Command) IntPositional(opts *Options) *int {
 	if opts == nil {
-		opts = &Options{positional: true}
-	} else {
-		opts.positional = true
+		opts = &Options{}
 	}
+	opts.positional = true
+
 	// We supply a long name for documentation and internal logic
 	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
 	return o.Int("", name, opts)
@@ -345,10 +348,10 @@ func (o *Command) Float(short string, long string, opts *Options) *float64 {
 // See func Float documentation
 func (o *Command) FloatPositional(opts *Options) *float64 {
 	if opts == nil {
-		opts = &Options{positional: true}
-	} else {
-		opts.positional = true
+		opts = &Options{}
 	}
+	opts.positional = true
+
 	// We supply a long name for documentation and internal logic
 	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
 	return o.Float("", name, opts)
@@ -386,10 +389,10 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 // See func File documentation
 func (o *Command) FilePositional(flag int, perm os.FileMode, opts *Options) *os.File {
 	if opts == nil {
-		opts = &Options{positional: true}
-	} else {
-		opts.positional = true
+		opts = &Options{}
 	}
+	opts.positional = true
+
 	// We supply a long name for documentation and internal logic
 	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
 	return o.File("", name, flag, perm, opts)
@@ -532,10 +535,10 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 // See func Selector documentation
 func (o *Command) SelectorPositional(allowed []string, opts *Options) *string {
 	if opts == nil {
-		opts = &Options{positional: true}
-	} else {
-		opts.positional = true
+		opts = &Options{}
 	}
+	opts.positional = true
+
 	// We supply a long name for documentation and internal logic
 	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
 	return o.Selector("", name, allowed, opts)
@@ -767,6 +770,9 @@ func (o *Parser) Parse(args []string) error {
 	copy(subargs, args)
 
 	result := o.parse(&subargs)
+	if result == nil {
+		result = o.parsePositionals(&subargs)
+	}
 	unparsed := make([]string, 0)
 	for _, v := range subargs {
 		if v != "" {
