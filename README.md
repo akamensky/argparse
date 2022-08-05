@@ -69,7 +69,12 @@ var myString *string = parser.String("s", "string", ...)
 Positional arguments can be used like this `$ progname value1`.
 See [Basic Option Structure](#basic-option-structure) and [Positionals](#positionals).
 ```go
-var myString *string = parser.String("", "posarg", &Options{Positional: true})
+var myString *string = parser.StringPositional(nil)
+var myString *string = parser.FilePositional(nil)
+var myString *string = parser.FloatPositional(nil)
+var myString *string = parser.IntPositional(nil)
+var myString *string = parser.SelectorPositional([]string{"a", "b"}, nil)
+var myString1 *string = parser.StringPositional(Options{Default: "beep"})
 ```
 
 Selector works same as a string, except that it will only allow specific values.
@@ -146,11 +151,12 @@ If a command has `Positional` arguments and sub-commands then sub-commands take 
 Since parser inherits from command, every command supports exactly same options as parser itself,
 thus allowing to add arguments specific to that command or more global arguments added on parser itself!
 
-You can also dynamically retrieve argument values:
+You can also dynamically retrieve argument values and if they were parsed:
 ```
 var myInteger *int = parser.Int("i", "integer", ...)
 parser.Parse()
 fmt.Printf("%d", *parser.GetArgs()[0].GetResult().(*int))
+fmt.Printf("%v", *parser.GetArgs()[0].GetParsed())
 ```
 
 #### Basic Option Structure
@@ -162,7 +168,6 @@ type Options struct {
 	Validate func(args []string) error
 	Help     string
 	Default  interface{}
-	Positional bool
 }
 ```
 
@@ -170,7 +175,6 @@ You can set `Required` to let it know if it should ask for arguments.
 Or you can set `Validate` as a lambda function to make it know while value is valid.
 Or you can set `Help` for your beautiful help document.
 Or you can set `Default` will set the default value if user does not provide a value.
-You can set `Positional` to indicate an arg is required in a specific position but shouldn't include "--name". Positionals are required in the order they are added. Flags can precede or follow positionals.
 
 Example:
 ```
@@ -195,13 +199,14 @@ There are a few caveats (or more like design choices) to know about:
 * Any arguments that left un-parsed will be regarded as error
 
 ##### Positionals
-* `Positional` has a set of effects and conditions:
-  * It will always set Required=True and Default=nil
-  * It will ignore the shortname
-  * It will fail (and app will panic) to add the argument if it is one of:
-	* Flag
-	* StringList, IntList, FloatList, FileList
-
+* `Positional` args have a set of effects and conditions:
+  * Always parsed after subcommands and non-positional args
+  * Always set Required=False
+  * Default is only used if the command or subcommand owning the arg `Happened`
+  * Parsed in Command root->leaf left->right order (breadth-first)
+	* Top level cmd consumes as many positionals as it can, from left to right
+	* Then in a descendeding loop for any command which `Happened` it repeats
+	* Positionals which are not satisfied (due to lack of input args) are not errors
 
 #### Contributing
 

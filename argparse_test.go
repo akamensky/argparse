@@ -2780,17 +2780,33 @@ func TestCommandPositionalOptions(t *testing.T) {
 	}
 }
 
-func TestCommandPositionalErr(t *testing.T) {
-	errArgs1 := []string{"pos"}
+func TestCommandPositionalUnsatisfied(t *testing.T) {
+	errArgs1 := []string{"pos", "--test1"}
 	parser := NewParser("pos", "")
 	strval := parser.StringPositional(nil)
+	flag1 := parser.Flag("", "test1", nil)
 
-	if err := parser.Parse(errArgs1); err == nil {
-		t.Errorf("Positional required")
-	} else if err.Error() != "[_positionalArg_pos_1] is required" {
+	if err := parser.Parse(errArgs1); err != nil {
 		t.Error(err.Error())
 	} else if *strval != "" {
 		t.Errorf("Strval nonempty")
+	} else if parser.GetArgs()[0].GetParsed() {
+		t.Errorf("Strval was parsed")
+	} else if *flag1 != true {
+		t.Errorf("flag not set")
+	}
+}
+
+func TestCommandPositionalUnsatisfiedDefault(t *testing.T) {
+	errArgs1 := []string{"pos"}
+	parser := NewParser("pos", "")
+	defval := "defaultation"
+	strval := parser.StringPositional(&Options{Default: defval})
+
+	if err := parser.Parse(errArgs1); err != nil {
+		t.Error(err.Error())
+	} else if *strval != defval {
+		t.Errorf("Strval (%s) != (%s)", *strval, defval)
 	}
 }
 
@@ -2899,8 +2915,9 @@ func TestPos4(t *testing.T) {
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
-	if err := parser.Parse(testArgs1); err != nil &&
-		err.Error() != "[sub]Command required" {
+	if err := parser.Parse(testArgs1); err == nil {
+		t.Error("Error expected")
+	} else if err.Error() != "[sub]Command required" {
 		t.Error(err.Error())
 	} else if *strval != "" {
 		t.Error("Strval did not match expected")
@@ -2964,12 +2981,7 @@ func TestPos8(t *testing.T) {
 	cmd2 := cmd1.NewCommand("cmd2", "")
 
 	// The precedence of commands is playing a role here.
-	// We are parsing cmd2's positionals first from left to right.
-	// Consequently:
-	// cmd2.cmd2pos1 = progPos
-	// cmd1.cmd1pos1 = cmd1pos1
-	// cmd1.cmd1pos2 = cmd1pos2
-	// parser.progPos = cmd2pos1
+	// We should be parsing in root->leaf, left->right order
 	cmd2pos1 := cmd2.StringPositional(nil)
 	progPos := parser.StringPositional(nil)
 	cmd1pos1 := cmd1.StringPositional(nil)
@@ -3010,26 +3022,14 @@ func TestPos9(t *testing.T) {
 	cmd1 := parser.NewCommand("cmd1", "")
 	cmd2 := cmd1.NewCommand("cmd2", "")
 
-	// The precedence of commands is playing a role here.
-	// We are parsing cmd2's positionals first from left to right.
-	// Consequently:
-	// cmd2.cmd2pos1 = progPos
-	// cmd1.cmd1pos1 = cmd1pos1
-	// cmd1.cmd1pos2 = cmd1pos2
-	// parser.progPos = cmd2pos1
+	// The precedence of commands controls which values parsed to where
+	// We should be parsing in root->leaf, left->right order
 	cmd2pos1 := cmd2.StringPositional(nil)
 	progPos := parser.StringPositional(nil)
 	cmd1pos1 := cmd1.StringPositional(nil)
 	cmd1pos2 := cmd1.StringPositional(nil)
-	// Altering the add order of cmd1pos2 versus strval
-	//     changes how the parsing occurs since we parse linearly based on order of addition.
-	//     If strval comes first it cleanly consumes "some string"
-	//     but if cmd1pos2 comes first it skips "-s" then consumes "some string".
-	// This problem can be circumvented if "-s" has no default
-	//     but it's unsolvably ambiguous if "-s" has a default.
-	// In effect users must employ `=` as in '-s="some string"'.
-	strval := cmd1.String("s", "str", nil)
 
+	strval := cmd1.String("s", "str", nil)
 	if err := parser.Parse(testArgs1); err != nil {
 		t.Error(err.Error())
 	}
@@ -3057,7 +3057,7 @@ func TestPos9(t *testing.T) {
 	}
 }
 
-func TestPosErr1(t *testing.T) {
+func TestSubcommandParsed(t *testing.T) {
 	errArgs1 := []string{"pos", "subcommand1"}
 	parser := NewParser("pos", "")
 
@@ -3065,14 +3065,42 @@ func TestPosErr1(t *testing.T) {
 	com1 := parser.NewCommand("subcommand1", "beep")
 	intval := com1.Int("i", "integer", nil)
 
-	if err := parser.Parse(errArgs1); err == nil {
-		t.Error("Subcommand should be required")
-	} else if err.Error() != "[_positionalArg_pos_1] is required" {
+	if err := parser.Parse(errArgs1); err != nil {
 		t.Error(err.Error())
+	} else if !com1.Happened() {
+		t.Error("Subcommand should have happened")
 	} else if *strval != "" {
 		t.Error("strval incorrectly defaulted:" + *strval)
 	} else if *intval != 0 {
 		t.Error("intval did not match expected")
+	}
+}
+
+func TestSubcommandMultiarg(t *testing.T) {
+	errArgs1 := []string{"ma0", "ma1", "ma2", "strval1", "2.0", "5", "1.0"}
+	parser := NewParser("ma0", "")
+
+	strval := parser.StringPositional(nil)
+	floatval1 := parser.FloatPositional(nil)
+	com1 := parser.NewCommand("ma1", "beep")
+	intval := com1.IntPositional(nil)
+	com2 := com1.NewCommand("ma2", "beep")
+	floatval2 := com2.FloatPositional(nil)
+
+	if err := parser.Parse(errArgs1); err != nil {
+		t.Error(err.Error())
+	} else if !com1.Happened() {
+		t.Error("ma1 should have happened")
+	} else if !com2.Happened() {
+		t.Error("ma2 should have happened")
+	} else if *strval != "strval1" {
+		t.Error("strval did not match expected")
+	} else if *floatval1 != 2.0 {
+		t.Error("strval did not match expected")
+	} else if *intval != 5 {
+		t.Errorf("intval did not match expected: %v", *intval)
+	} else if *floatval2 != 1.0 {
+		t.Error("floatval did not match expected")
 	}
 }
 
@@ -3088,9 +3116,9 @@ func TestCommandSubcommandPositionals(t *testing.T) {
 	testArgs8 := []string{"pos", "subcommand2", "--integer=1", "abc"}
 	testArgs9 := []string{"pos", "subcommand3", "second"}
 	testArgs10 := []string{"pos", "subcommand2", "-i", "1", "abc"}
+	testArgs11 := []string{"pos", "subcommand2", "-i", "1"}
 	// Error cases
-	errArgs1 := []string{"pos", "subcommand2", "-i", "1"}
-	errArgs2 := []string{"pos", "subcommand3", "abc"}
+	errArgs1 := []string{"pos", "subcommand3", "abc"}
 
 	newParser := func() *Parser {
 		parser := NewParser("pos", "")
@@ -3134,11 +3162,11 @@ func TestCommandSubcommandPositionals(t *testing.T) {
 	if err := newParser().Parse(testArgs10); err != nil {
 		t.Error(err.Error())
 	}
+	if err := newParser().Parse(testArgs11); err != nil {
+		t.Error(err.Error())
+	}
 
 	if err := newParser().Parse(errArgs1); err == nil {
-		t.Error("Expected error")
-	}
-	if err := newParser().Parse(errArgs2); err == nil {
 		t.Error("Expected error")
 	}
 }

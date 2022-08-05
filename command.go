@@ -58,8 +58,7 @@ func (o *Command) addArg(a *arg) error {
 			return fmt.Errorf("argument type cannot be positional")
 		}
 		a.sname = ""
-		a.opts.Required = true
-		a.opts.Default = nil
+		a.opts.Required = false
 		a.size = 1 // We could allow other sizes in the future
 	}
 	o.args = append(o.args, a)
@@ -91,13 +90,16 @@ func (o *Command) parseSubCommands(args *[]string) error {
 	return nil
 }
 
+// Breadth-first parse style for positionals
+// Each command proceeds left to right consuming as many
+//     positionals as it needs before beginning sub-command parsing
 // All flags must have been parsed and reduced prior to calling this
-// This will cause positionals to consume any remainig values,
-//     whether they have dashes or equals signs or whatever.
+// Positionals will consume any remaining values,
+//     disregarding if they have dashes or equals signs or other "delims".
 func (o *Command) parsePositionals(inputArgs *[]string) error {
 	for _, oarg := range o.args {
 		// Two-stage parsing, this is the second stage
-		if !oarg.GetPositional() || oarg.parsed {
+		if !oarg.GetPositional() {
 			continue
 		}
 		for j := 0; j < len(*inputArgs); j++ {
@@ -111,9 +113,17 @@ func (o *Command) parsePositionals(inputArgs *[]string) error {
 			oarg.reduce(j, inputArgs)
 			break // Positionals can only occur once
 		}
-		// Positionals are implicitly required, if unsatisfied error out
-		if oarg.opts.Required && !oarg.parsed {
-			return fmt.Errorf("[%s] is required", oarg.name())
+		// positional was unsatisfiable, use the default
+		if !oarg.parsed {
+			err := oarg.setDefault()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for _, c := range o.commands {
+		if c.happened { // presumption of only one sub-command happening
+			return c.parsePositionals(inputArgs)
 		}
 	}
 	return nil
@@ -177,11 +187,14 @@ func (o *Command) parseArguments(inputArgs *[]string) error {
 			}
 		}
 	}
-	return o.parsePositionals(inputArgs)
+	return nil
 }
 
 // Will parse provided list of arguments
 // common usage would be to pass directly os.Args
+// Depth-first parsing: We will reach the deepest
+//    node of the command tree and then parse arguments,
+//    stepping back up only after each node is satisfied.
 func (o *Command) parse(args *[]string) error {
 	// If already been parsed do nothing
 	if o.parsed {
