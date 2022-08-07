@@ -3170,3 +3170,64 @@ func TestCommandSubcommandPositionals(t *testing.T) {
 		t.Error("Expected error")
 	}
 }
+
+func TestPositionalsLessArgumentsThanPositionals(t *testing.T) {
+	testArgs1 := []string{"pos", "cmd1", "progPos", "cmd1pos1"}
+	parser := NewParser("pos", "")
+
+	cmd1 := parser.NewCommand("cmd1", "")
+
+	// The precedence of commands is playing a role here.
+	// We should be parsing in root->leaf, left->right order
+	progPos := parser.StringPositional(nil)
+	cmd1pos1 := cmd1.StringPositional(nil)
+	cmd1pos2 := cmd1.StringPositional(nil)
+	strval := cmd1.String("s", "str", nil)
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	}
+
+	if !cmd1.Happened() {
+		t.Errorf("cmd1 not happened")
+	}
+	if *strval != "" {
+		t.Errorf(`*strval expected "", but got "%s"`, *strval)
+	}
+	if *progPos != "progPos" {
+		t.Errorf(`*progPos expected "progPos", but got "%s"`, *progPos)
+	}
+	if *cmd1pos1 != "cmd1pos1" {
+		t.Errorf(`*cmd1pos1 expected "cmd1pos1", but got "%s"`, *cmd1pos1)
+	}
+	if *cmd1pos2 != "" {
+		t.Errorf(`*cmd1pos2 expected "", but got "%s"`, *cmd1pos2)
+	}
+}
+
+func TestPositionalDefaults(t *testing.T) {
+	testArgs1 := []string{"pos"}
+	parser := NewParser("pos", "")
+
+	pos1 := parser.StringPositional(&Options{Default: "pos1"})
+	pos2 := parser.IntPositional(&Options{Default: 2})
+	pos3 := parser.FloatPositional(&Options{Default: 3.3})
+	pos4 := parser.SelectorPositional([]string{"notallowed", "pos4"}, &Options{Default: "pos4"})
+
+	if err := parser.Parse(testArgs1); err != nil {
+		t.Error(err.Error())
+	}
+
+	if *pos1 != "pos1" {
+		t.Errorf(`*pos1 expected "pos1", but got "%s"`, *pos1)
+	}
+	if *pos2 != 2 {
+		t.Errorf(`*pos2 expected "2", but got "%d"`, *pos2)
+	}
+	if *pos3 != 3.3 {
+		t.Errorf(`*pos3 expected "3.3", but got "%f"`, *pos3)
+	}
+	if *pos4 != "pos4" {
+		t.Errorf(`*pos4 expected "pos4", but got "%s"`, *pos4)
+	}
+}
