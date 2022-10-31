@@ -16,7 +16,7 @@ const DisableDescription = "DISABLEDDESCRIPTIONWILLNOTSHOWUP"
 // will panic.
 const positionalArgName = "_positionalArg_%s_%d"
 
-//disable help can be invoked from the parse and then needs to be propogated to subcommands
+// disable help can be invoked from the parse and then needs to be propogated to subcommands
 var disableHelp = false
 
 // Command is a basic type for this package. It represents top level Parser as well as any commands and sub-commands
@@ -274,17 +274,21 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 }
 
 // See func String documentation
-func (o *Command) StringPositional(string name, opts *Options) *string {
+func (o *Command) StringPositional(name string, opts *Options) *string {
 	if opts == nil {
 		opts = &Options{}
 	}
 	opts.positional = true
 
-	// We supply a long name for documentation and internal logic
+	var sname string
 	if name == "" {
-	    name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
+		sname = fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	} else {
+		sname = name
 	}
-	return o.String("", name, opts)
+
+	// We supply a long name for documentation and internal logic
+	return o.String("", sname, opts)
 }
 
 // Int creates new int argument, which will attempt to parse following argument as int.
@@ -312,15 +316,21 @@ func (o *Command) Int(short string, long string, opts *Options) *int {
 }
 
 // See func Int documentation
-func (o *Command) IntPositional(opts *Options) *int {
+func (o *Command) IntPositional(name string, opts *Options) *int {
 	if opts == nil {
 		opts = &Options{}
 	}
 	opts.positional = true
 
+	var sname string
+	if name == "" {
+		sname = fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	} else {
+		sname = name
+	}
+
 	// We supply a long name for documentation and internal logic
-	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
-	return o.Int("", name, opts)
+	return o.Int("", sname, opts)
 }
 
 // Float creates new float argument, which will attempt to parse following argument as float64.
@@ -348,15 +358,21 @@ func (o *Command) Float(short string, long string, opts *Options) *float64 {
 }
 
 // See func Float documentation
-func (o *Command) FloatPositional(opts *Options) *float64 {
+func (o *Command) FloatPositional(name string, opts *Options) *float64 {
 	if opts == nil {
 		opts = &Options{}
 	}
 	opts.positional = true
 
+	var sname string
+	if name == "" {
+		sname = fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	} else {
+		sname = name
+	}
+
 	// We supply a long name for documentation and internal logic
-	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
-	return o.Float("", name, opts)
+	return o.Float("", sname, opts)
 }
 
 // File creates new file argument, which is when provided will check if file exists or attempt to create it
@@ -389,15 +405,20 @@ func (o *Command) File(short string, long string, flag int, perm os.FileMode, op
 }
 
 // See func File documentation
-func (o *Command) FilePositional(flag int, perm os.FileMode, opts *Options) *os.File {
+func (o *Command) FilePositional(name string, flag int, perm os.FileMode, opts *Options) *os.File {
 	if opts == nil {
 		opts = &Options{}
 	}
 	opts.positional = true
 
+	var sname string
+	if name == "" {
+		sname = fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	} else {
+		sname = name
+	}
 	// We supply a long name for documentation and internal logic
-	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
-	return o.File("", name, flag, perm, opts)
+	return o.File("", sname, flag, perm, opts)
 }
 
 // List creates new list argument. This is the argument that is allowed to be present multiple times on CLI.
@@ -535,15 +556,21 @@ func (o *Command) Selector(short string, long string, options []string, opts *Op
 }
 
 // See func Selector documentation
-func (o *Command) SelectorPositional(allowed []string, opts *Options) *string {
+func (o *Command) SelectorPositional(name string, allowed []string, opts *Options) *string {
 	if opts == nil {
 		opts = &Options{}
 	}
 	opts.positional = true
 
+	var sname string
+	if name == "" {
+		sname = fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	} else {
+		sname = name
+	}
 	// We supply a long name for documentation and internal logic
-	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
-	return o.Selector("", name, allowed, opts)
+
+	return o.Selector("", sname, allowed, opts)
 }
 
 // message2String puts msg in result string
@@ -696,7 +723,11 @@ func arguments2Result(result string, arguments []*arg, maxWidth int) string {
 				} else {
 					arg = arg + "    "
 				}
-				arg = arg + "--" + argument.lname
+				if argument.opts.positional {
+					arg = arg + fmt.Sprintf("<%s>", argument.lname)
+				} else {
+					arg = arg + "--" + argument.lname
+				}
 				arg = arg + strings.Repeat(" ", argPadding-len(arg))
 				if argument.opts != nil && argument.opts.Help != "" {
 					arg = addToLastLine(arg, argument.getHelpMessage(), maxWidth, argPadding, true)
@@ -788,3 +819,4 @@ func (o *Parser) Parse(args []string) error {
 
 	return result
 }
+
