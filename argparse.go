@@ -274,14 +274,16 @@ func (o *Command) String(short string, long string, opts *Options) *string {
 }
 
 // See func String documentation
-func (o *Command) StringPositional(opts *Options) *string {
+func (o *Command) StringPositional(string name, opts *Options) *string {
 	if opts == nil {
 		opts = &Options{}
 	}
 	opts.positional = true
 
 	// We supply a long name for documentation and internal logic
-	name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	if name == "" {
+	    name := fmt.Sprintf(positionalArgName, o.name, len(o.args))
+	}
 	return o.String("", name, opts)
 }
 
